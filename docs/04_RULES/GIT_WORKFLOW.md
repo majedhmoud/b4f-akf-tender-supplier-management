@@ -7,7 +7,7 @@ Status: accepted.
 | Branch | Purpose | Rule |
 |---|---|---|
 | `main` | Versions trusted for demo or hand-in | Protected. Receives only merges from `develop`. Every merge is tagged. |
-| `develop` | Where finished tasks come together | Protected. Receives only reviewed pull requests. |
+| `develop` | Where finished tasks come together | Protected. Receives task pull requests under the review rule below. |
 
 ## Task branches
 
@@ -25,7 +25,7 @@ Status: accepted.
 
 ## Merging
 
-1. Open a pull request into `develop`. The task's reviewer approves it. Owners cannot approve their own pull requests.
+1. Open task pull requests into `develop`. Opening or closing a pull request requires no review. Merging into `develop` or `main` requires one teammate approval unless `majedhmoud`, the sole repository admin, uses the pull-request bypass. This applies to the person performing the merge, including when merging their own pull request. Direct pushes stay blocked.
 2. Merge with a merge commit. Never squash-merge or rebase-merge: the history must show each member's own commits, and it is checked against the Project Brief. Use the pull request title as the merge commit title, for example `feat(s1): publish tender (backend)` or `docs(p1): add ERD`.
 3. Merge `develop` into `main` at each checkpoint, and tag it:
 
