@@ -54,6 +54,7 @@ We build S1 together first. Then S2 and S3 run in parallel, then S4, S5, and S6 
 - Propose each task for human verification. Codex and Claude can give review feedback.
 - The human decides. **ACCEPT** means carry out the proposal. **MODIFY** means revise and resubmit it. **REJECT** means stop the task.
 - Commit only at points we trust and can return to.
+- Branches, pull requests, merges, and tags follow [`docs/04-rules/GIT_WORKFLOW.md`](04-rules/GIT_WORKFLOW.md): work on a task branch from `develop`, have your reviewer approve the PR, and squash-merge it.
 
 ## Words we use
 
