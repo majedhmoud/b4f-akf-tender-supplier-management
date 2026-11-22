@@ -36,7 +36,7 @@ The phases (P0–P5) and the seven slices (S1–S7) are in the [hackathon roadma
 - Propose each task for human verification. Codex and Claude can give review feedback.
 - The human decides. **ACCEPT** means carry out the proposal. **MODIFY** means revise and resubmit it. **REJECT** means stop the task.
 - Commit only at points we trust and can return to.
-- Branches, pull requests, merges, and tags follow [`docs/04_RULES/GIT_WORKFLOW.md`](04_RULES/GIT_WORKFLOW.md): work on a task branch from `develop`, commit from your own GitHub account, have your reviewer approve the PR, and merge it with a merge commit (never squash).
+- Branches, pull requests, merges, and tags follow [`docs/04_RULES/GIT_WORKFLOW.md`](04_RULES/GIT_WORKFLOW.md): work on a task branch from `develop`, commit from your own GitHub account, follow the review rule and owner exception, and merge it with a merge commit (never squash).
 
 ## Words we use
 
