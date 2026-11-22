@@ -9,6 +9,7 @@ Legend: ✓ allowed · ✗ not allowed · blank = not decided yet
 | Explore available tenders | ✓ | | | | | | | |
 | Submit legal information for sign-up | ✓ | | | | | | | |
 | Accept a supplier's sign-up | | | | | | ✓ | | |
+| Raise the supplier's information to the admin | | | | | | ✓ | | |
 | Create a supplier account | | | | | ✓ | | | |
 | Send email verification | | | | ✓ | | | | |
 | Fill in technical information | | ✓ | | | | | | |

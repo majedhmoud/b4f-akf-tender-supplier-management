@@ -23,7 +23,7 @@ A technical reviewer opens a technical offer and signs out. A financial reviewer
 
 ## Considered options
 
-- **CASL instead of manual guards:** rejected for setup time. Because of that, the separation between `technical_committee` and `financial_committee` ([ADR 0002](0002-independent-technical-and-financial-evaluation.md)) depends on the single access service and on tests for each row of the capability matrix.
+- **CASL instead of manual guards:** rejected for setup time. Because of that, the separation between `technical_committee` and `financial_committee` ([ADR 0002](0002_INDEPENDENT_TECHNICAL_AND_FINANCIAL_EVALUATION.md)) depends on the single access service and on tests for each row of the capability matrix.
 - **Server Actions with a server-only client:** the `b4f-board-final` pattern, rejected in favour of TanStack Query caching. As a result, the API must handle CORS and CSRF.
 - **Redux:** rejected. TanStack Query manages API data, and React state and context cover the current screen-state needs.
 - **argon2:** bcrypt kept, because the team already uses it.
