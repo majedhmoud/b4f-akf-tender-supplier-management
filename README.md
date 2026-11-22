@@ -1,17 +1,19 @@
 # Tender and Supplier Management Platform (AKF)
 
-A web platform for the Aga Khan Foundation's procurement department. It publishes tenders, receives sealed bids, and keeps the legal, technical, and financial evaluations separate. Built by Team 2 for the B4F hackathon.
+A web and mobile platform for the Aga Khan Foundation's procurement department. It publishes tenders, receives sealed bids, and keeps the legal, technical, and financial evaluations separate. Built by Team2 for the B4F hackathon.
 
 ## Repository map
 
 | Path | Contents |
 |---|---|
 | `docs/` | Requirements, design, and decisions |
-| `api/` | Back end (added in P2) |
-| `web/` | Front end (added in P2) |
+| `backend/` | Back end (added in P2) |
+| `frontend/` | Front end (added in P2) |
+| `mobile/` | Mobile app (added in P2) |
 
 ## Start here
 
+- [Submission requirements](docs/01_PROBLEM/SUBMISSION_REQUIREMENTS.md)
 - [Product requirements](docs/01_PROBLEM/PRODUCT_REQUIREMENTS_V1.md)
 - [Glossary](docs/GLOSSARY.md): the terms we use
 - [Workflows](docs/01_PROBLEM/WORKFLOWS.md)
@@ -23,4 +25,4 @@ A web platform for the Aga Khan Foundation's procurement department. It publishe
 
 ## How to run
 
-Added in P2.
+Added in P2. The README is completed with every required section in P3 (see [Submission requirements](docs/01_PROBLEM/SUBMISSION_REQUIREMENTS.md#readme)).
