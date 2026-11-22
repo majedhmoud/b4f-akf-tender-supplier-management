@@ -153,9 +153,10 @@ These are starting values, not universal limits. Adjust them based on load testi
 
 - Never commit API keys, database passwords, JWT secrets, or storage credentials.
 - Use environment variables or a dedicated secrets manager.
-- Keep a `.env.example` without real credentials.
+- Keep a `.env.example` without real credentials in each of `backend/`, `frontend/`, and `mobile/`.
 - Rotate exposed secrets immediately.
 - Never log passwords, tokens, private keys, or confidential bid contents.
+- Exception: the demo accounts' passwords are listed in the README and created by the seed script, as the submission requirements ask. They are not secrets, work only with demo data, and are never reused elsewhere.
 
 ### 2.7 DTOs
 
@@ -388,7 +389,7 @@ Do not create abstractions only to reduce the number of lines.
 - Use appropriate HTTP methods and status codes.
 - Use consistent response structures.
 - Validate request parameters and bodies.
-- Document endpoints with Swagger/OpenAPI.
+- Document endpoints with Swagger/OpenAPI at `/api/docs`, and in the Postman collection (v2.1) described in the submission requirements.
 - Support pagination and filtering on collection endpoints.
 - Never expose database models directly. Define request and response DTOs.
 
@@ -517,7 +518,7 @@ A task is not complete until:
 
 - Hiding buttons, pages, or routes is not security. Next.js middleware handles redirects only. The API makes every access decision.
 - The JWT cookie is httpOnly and set by the API. The front end never reads it, and requests send it with `credentials: 'include'`.
-- Only `NEXT_PUBLIC_API_URL` may be public. Never put secrets in `NEXT_PUBLIC_*` variables.
+- Only `NEXT_PUBLIC_API_URL` (front end) and `EXPO_PUBLIC_API_URL` (mobile) may be public. Never put secrets in `NEXT_PUBLIC_*` or `EXPO_PUBLIC_*` variables.
 - Never render user content with `dangerouslySetInnerHTML`.
 
 **Data**
