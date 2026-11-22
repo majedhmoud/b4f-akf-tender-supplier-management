@@ -7,7 +7,7 @@ The path for developing the product. Steps 1–7 are done once; steps 8–14 rep
 | 1 | Understand the real problem: who needs this and why, before any code. | [01-problem/](01-problem/), [GLOSSARY.md](GLOSSARY.md) | In progress |
 | 2 | Inspect what already exists: real code, real API, real design. Don't assume. | [02-existing/](02-existing/) | In progress (Team Brief pending review) |
 | 3 | Define the first useful scope: what V1 means, and what is deliberately postponed. | `03-scope/` | Not started |
-| 4 | Write the rules: engineering standards, before feature code exists. | [AGENTS.md](../AGENTS.md) | Started (documentation rules only) |
+| 4 | Write the rules: engineering standards, before feature code exists. | [AGENTS.md](../AGENTS.md), [04-rules/](04-rules/) | Started (documentation and Git rules) |
 | 5 | Decide architecture boundaries: how the pieces may talk to each other, decided once for the whole app. | [05-architecture/](05-architecture/) | Started (ADRs, capability matrix) |
 | 6 | Choose one small slice: a thin, complete path through every layer. | `06-slices/` | Not started |
 | 7 | Verify real external contracts: check what an outside system actually does. | `07-contracts/` | Not started |
@@ -16,7 +16,7 @@ The path for developing the product. Steps 1–7 are done once; steps 8–14 rep
 | 10 | The human chooses ACCEPT, MODIFY, or REJECT. | Per task | — |
 | 11 | Act on the accepted proposal. | Per task | — |
 | 12 | Verify with evidence: diff, typecheck, tests, the running app, real data. | Per slice | — |
-| 13 | Record a known Git state: commit at a point you can trust. | Git history | Blocked: not a Git repository yet |
+| 13 | Record a known Git state: commit at a point you can trust. | Git history, [04-rules/GIT_WORKFLOW.md](04-rules/GIT_WORKFLOW.md) | Ready: repository set up; `develop` not created yet |
 | 14 | Repeat for the next slice, feature, or decision. | — | — |
 
 ## Hackathon plan
