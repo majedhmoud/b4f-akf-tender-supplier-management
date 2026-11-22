@@ -43,6 +43,15 @@ _Avoid_: bid draft
 A supplier's application to a **tender**, made of legal information, a technical offer, and a financial offer.
 _Avoid_: offer, application
 
+**tender status**:
+The stage a **tender** is in: `accepted`, `published`, `closed`, `under_evaluation`, or `awarded`. Before `accepted`, it is a **draft tender**.
+
+**bid part**:
+One of the three parts of a **bid**: legal information, technical offer, or financial offer. Each has its own deadline.
+
+**bidder code**:
+The label, such as "Bidder A", that the `technical_committee` and `financial_committee` see instead of the supplier's identity.
+
 ## Evaluations
 
 Each evaluation is named after the user who performs it.

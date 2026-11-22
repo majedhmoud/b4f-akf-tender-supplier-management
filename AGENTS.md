@@ -13,6 +13,7 @@
 - Store original PDFs in `docs/02_EXISTING/`. Use the Arabic project PDF as the source for the English description and keep the product requirements aligned with that description. Both Markdown documents belong in `docs/01_PROBLEM/`.
 - Put teammate files that still need review, and their Markdown placeholders, in `docs/02_EXISTING/PENDING_REVIEW/`. Do not treat their content as requirements until reviewed.
 - Follow `docs/04_RULES/GIT_WORKFLOW.md` for branches, pull requests, merges, and tags.
+- Follow `docs/04_RULES/ENGINEERING_STANDARDS.md`.
 - Keep the glossary in `docs/GLOSSARY.md`, and the capability matrix and decision records (ADRs) in `docs/05_ARCHITECTURE/`.
 - `GLOSSARY.md` holds the shared language only: terms, definitions, and words to avoid. Put workflows in `docs/01_PROBLEM/WORKFLOWS.md`, duties in the capability matrix, and decisions in ADRs.
 - The product is expandable. Keep domain areas separate and loosely coupled, so new areas can be added without reworking existing ones.
