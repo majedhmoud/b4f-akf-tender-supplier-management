@@ -24,7 +24,7 @@ The path for developing the product. Steps 1–7 are done once; steps 8–14 rep
 Status: accepted.
 
 - Day 1–3 (Nov 22–24): build. Hand-in on Tue Nov 24 at 16:00 (official deadline; see [SUBMISSION_REQUIREMENTS.md](01_PROBLEM/SUBMISSION_REQUIREMENTS.md)).
-- Day 4 (Nov 25): presentation to our internship instructors. The product is handed to the AKF.
+- Day 4 (Nov 25): presentation to our internship instructors. We present the product; it is not deployed.
 - Budget: 8 hours a day per person; day 1 counts as half a day.
 
 ### Phases
