@@ -156,12 +156,12 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | T1 | Tender list | Anyone. `published` only | `GET /tenders` |
 | T2 | Tender detail (`PublicTender`) | Anyone. `published` only; otherwise 404 | `GET /tenders/:tenderId` |
 | T2d | Terms of Reference download | Same as T2 | `GET /tenders/:tenderId/documents/:docId/download` |
-| **Requester Tenders** | | | |
-| Q1 | Create a draft tender | `requester` | `POST /requester/tenders` |
-| Q2 | My tenders | `requester`, their own only | `GET /requester/tenders` |
-| Q3 | Tender detail (`RequesterTender`) | `requester`, their own only | `GET /requester/tenders/:tenderId` |
-| Q4 | Edit draft | `requester`, own, while `draft` | `PATCH /requester/tenders/:tenderId` |
-| Q5 | Document download | `requester`, own | `GET /requester/tenders/:tenderId/documents/:docId/download` |
+| **Employee Tenders** | | | |
+| Q1 | Create a draft tender | `employee` | `POST /employee/tenders` |
+| Q2 | My tenders | `employee`, their own only | `GET /employee/tenders` |
+| Q3 | Tender detail (`EmployeeTender`) | `employee`, their own only | `GET /employee/tenders/:tenderId` |
+| Q4 | Edit draft | `employee`, own, while `draft` | `PATCH /employee/tenders/:tenderId` |
+| Q5 | Document download | `employee`, own | `GET /employee/tenders/:tenderId/documents/:docId/download` |
 | **Tender Management** | | | |
 | M1 | Tender list | `procurement_officer` | `GET /manage/tenders?status=` |
 | M2 | Tender detail (`ManagedTender`) | `procurement_officer` | `GET /manage/tenders/:tenderId` |
@@ -253,7 +253,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
-- `roles` are account roles only: `supplier`, `requester`, `procurement_officer`, `admin`, and the standing `legal_committee` role.
+- `roles` are account roles only: `supplier`, `employee`, `procurement_officer`, `admin`, and the standing `legal_committee` role.
 - Tender assignments always come from `GET /me/assignments`. A standing legal reviewer can also hold tender assignments.
 - After sign-in: clear the cache, fetch a new CSRF token, then load `/me/assignments`.
 
@@ -290,13 +290,13 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
-- Never included: estimated balance, scoring settings, committees, requester, bid counts.
+- Never included: estimated balance, scoring settings, committees, requesting employee, bid counts.
 - Statuses other than `published` return 404 here. A participating supplier reads the tender through `GET /me/bids/:bidId`.
 - `GET /tenders/t-1001/documents/d-8/download` returns `{ "url": "…", "expiresAt": "2026-11-23T09:05:00Z" }`.
 
-### Requester Tenders
+### Employee Tenders
 
-`POST /requester/tenders`:
+`POST /employee/tenders`:
 
 ```json
 { "categoryCode": "construction",
@@ -308,7 +308,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 - Deadline, committee, supplier, and scoring fields return `400` with field code `FIELD_NOT_EDITABLE`.
 - Each translation must have both a title and a description.
 
-`GET /requester/tenders/t-1001` (`RequesterTender`):
+`GET /employee/tenders/t-1001` (`EmployeeTender`):
 
 ```json
 { "id": "t-1001", "status": "draft", "revision": 2, "categoryCode": "construction",
@@ -319,14 +319,14 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 ```
 
 - Never included: scoring settings, committees, ranking, award details, bids.
-- `PATCH /requester/tenders/t-1001` takes `{ "revision": 2, "translations": [ … ] }` and returns `200 { "revision": 3 }`.
+- `PATCH /employee/tenders/t-1001` takes `{ "revision": 2, "translations": [ … ] }` and returns `200 { "revision": 3 }`.
 - After the officer accepts the tender, editing returns `409 TENDER_STATUS_CHANGED`.
 
 ### Tender Management
 
 A draft and an accepted tender are the same resource, with the same id and one `revision` counter. The current revision comes from `GET /manage/tenders/:tenderId`. These changes increase it:
 
-- the requester's edits
+- the employee's edits
 - the officer's edits to content, category, estimated balance, or scoring
 - uploading or removing Terms of Reference
 - accepting and publishing
@@ -337,7 +337,7 @@ Raising committees and nominating members don't change it.
 
 ```json
 { "id": "t-1001", "status": "accepted", "revision": 5, "categoryCode": "construction",
-  "requester": { "id": "u-20", "name": "Lina H." },
+  "requestedBy": { "id": "u-20", "name": "Lina H." },
   "estimatedBalance": { "amount": "125000.00", "currency": "USD" },
   "translations": [{ "language": "en", "title": "School maintenance", "description": "…" },
                    { "language": "ar", "title": "صيانة مدرسة الروضة", "description": "…" }],
@@ -355,7 +355,7 @@ Raising committees and nominating members don't change it.
 { "revision": 3, "technicalWeight": 70, "financialWeight": 30, "minimumTechnicalScore": 60 }
 ```
 
-Returns `200 { "status": "accepted", "revision": 4 }`. If the requester edited the draft in the meantime, the officer gets `409 VERSION_CONFLICT`.
+Returns `200 { "status": "accepted", "revision": 4 }`. If the employee edited the draft in the meantime, the officer gets `409 VERSION_CONFLICT`.
 
 `POST /manage/tenders/t-1001/documents` uploads Terms of Reference as multipart:
 
@@ -493,7 +493,7 @@ Neither supplier endpoint returns bids, tender participation, or evaluations.
 - With an existing account, the body is ignored and no email is sent: `200 { "status": "approved", "accountCreated": false }`.
 - Rule violations return `409`:
   - `ASSIGNMENT_ONE_COMMITTEE_PER_TENDER`
-  - `ASSIGNMENT_REQUESTER_CONFLICT`
+  - `ASSIGNMENT_REQUESTING_EMPLOYEE_CONFLICT`
   - `ASSIGNMENT_STAFF_CONFLICT`
 - If the tender is already `under_evaluation`, approval returns `409 TENDER_STATUS_CHANGED`.
 

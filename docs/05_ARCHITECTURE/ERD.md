@@ -20,7 +20,7 @@ erDiagram
   }
   USER_ROLE {
     uuid user_id PK, FK
-    enum role PK "supplier | requester | procurement_officer | admin | legal_committee"
+    enum role PK "supplier | employee | procurement_officer | admin | legal_committee"
   }
   ACCOUNT_SETUP_TOKEN {
     uuid id PK
@@ -100,7 +100,7 @@ erDiagram
     enum status "draft | accepted | published | closed | under_evaluation | awarded | cancelled"
     int revision "increases on every edit"
     text category_code FK
-    uuid requester_user_id FK
+    uuid requested_by_user_id FK
     decimal estimated_balance
     char currency_code
     timestamp application_deadline
@@ -316,7 +316,7 @@ erDiagram
 - `TENDER_COMMITTEE` is unique on (`tender_id`, `type`).
 - `COMMITTEE_ASSIGNMENT.tender_id` matches its committee: composite foreign key (`committee_id`, `tender_id`) to the unique `TENDER_COMMITTEE(id, tender_id)` pair.
 - Unique (`tender_id`, `user_id`) on `COMMITTEE_ASSIGNMENT`: one committee per person per tender.
-- The tender's `requester`, and any `procurement_officer` or `admin`, are never assigned to that tender's committees. The approval checks this.
+- The tender's requesting `employee`, and any `procurement_officer` or `admin`, are never assigned to that tender's committees. The approval checks this.
 - The `procurement_officer` nominates members by name and email. The `admin` approves them and creates or links their accounts.
 - When the nominee has no account, approval creates a `USER_ACCOUNT` (`pending_setup`, no password, no `USER_ROLE`) in the `preferred_language` the `admin` chooses, its first `ACCOUNT_SETUP_TOKEN`, and an `account_setup` email, in one transaction with the approval. Setting a password activates the account.
 - When the nominee already has an account, approval links it to the assignment. No token or email is created.
@@ -346,7 +346,7 @@ erDiagram
 | | Values |
 |---|---|
 | Entered at accept (`procurement_officer`) | `TENDER_SCORING` |
-| Entered by the `requester` | `estimated_balance` |
+| Entered by the `employee` | `estimated_balance` |
 | Entered at publish (`procurement_officer`) | The three deadlines, in the order application → technical → financial |
 | Locked from publish | `TENDER_SCORING`, deadlines, `estimated_balance`, category, translations, Terms of Reference |
 | Entered by committees | Legal outcome, technical score, financial score, confirmed total bid price |
@@ -372,7 +372,7 @@ erDiagram
 ### Copying a cancelled tender
 
 - The source is `cancelled`. The copy starts at `accepted`.
-- Copied: category, requester, `estimated_balance` and currency, translations, `TENDER_SCORING` (editable until the copy is published), and Terms of Reference. Each Terms of Reference file is copied to a new storage object, with a new `DOCUMENT` row.
+- Copied: category, requesting employee, `estimated_balance` and currency, translations, `TENDER_SCORING` (editable until the copy is published), and Terms of Reference. Each Terms of Reference file is copied to a new storage object, with a new `DOCUMENT` row.
 - Not copied: deadlines, bids, committees, emails.
 - A cancelled tender can be copied at most once (unique `copied_from_tender_id`).
 

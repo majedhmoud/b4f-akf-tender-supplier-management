@@ -20,10 +20,11 @@ The committee that evaluates financial offers.
 A record of a person’s nomination and approval status for one **tender**’s `legal_committee`, `technical_committee`, or `financial_committee`.
 
 **procurement_officer**:
-The AKF employee who runs tenders from draft to award.
+The AKF staff member who runs tenders from draft to award.
 
-**requester**:
-The AKF employee who requests a **tender**.
+**employee**:
+An AKF staff member who can request a **tender**.
+_Avoid_: requester
 
 **supplier**:
 A `guest` who has completed the **supplier_signup_process**.
@@ -42,7 +43,7 @@ A published request with three deadlines (application, technical, and financial)
 _Avoid_: bidding, RFP
 
 **draft tender**:
-A requester's proposal for a **tender**. It has estimated technical requirements and financial requirements based on the project's balance, but no deadlines, suppliers, or committees.
+An employee's proposal for a **tender**. It has estimated technical requirements and financial requirements based on the project's balance, but no deadlines, suppliers, or committees.
 _Avoid_: bid draft
 
 **bid**:
