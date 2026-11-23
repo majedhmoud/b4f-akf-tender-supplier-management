@@ -60,6 +60,9 @@ _Avoid_: budget, ceiling
 **bid part**:
 One of the three parts of a **bid**: legal information, technical offer, or financial offer. Each has its own deadline.
 
+**supplier bid form**:
+The form a `supplier` fills in to submit a **bid**: the standard fields and files for each **bid part**, plus any custom fields the `procurement_officer` adds before publishing.
+
 **bidder code**:
 The label, such as "Bidder A", that the `technical_committee` and `financial_committee` see instead of the supplier's identity.
 

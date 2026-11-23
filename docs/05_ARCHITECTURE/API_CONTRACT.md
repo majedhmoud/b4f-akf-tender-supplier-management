@@ -172,6 +172,8 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | M7 | Document download | `procurement_officer` | `GET /manage/tenders/:tenderId/documents/:docId/download` |
 | M8 | Publish | `procurement_officer`, while `accepted` | `POST /manage/tenders/:tenderId/publish` |
 | M9 | Copy a cancelled tender | `procurement_officer`, while `cancelled` and not yet copied | `POST /manage/tenders/:tenderId/copy` |
+| M10 | Read supplier form editor | `procurement_officer`, from acceptance | `GET /manage/tenders/:tenderId/bid-form` |
+| M11 | Save supplier form template | `procurement_officer`, while `accepted` | `PUT /manage/tenders/:tenderId/bid-form` |
 | **Sign-up** | | | |
 | U1 | Submit a sign-up application | `guest` | `POST /supplier-applications` |
 | U2 | Review queue | Standing `legal_committee` role | `GET /signup-reviews?status=pending` |
@@ -323,6 +325,17 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 - After the officer accepts the tender, editing returns `409 TENDER_STATUS_CHANGED`.
 
 ### Tender Management
+
+**Supplier form editor (M10/M11).** GET returns `revision`, `allowedActions` and the three `parts`. Each part has its `partType`, read-only standard `fields` and `documents` as in B1, and an ordered `customFields` array. Only an accepted tender allows saving. Management responses contain definitions only.
+
+PUT takes the current `revision` and all three parts, each containing its `partType` and complete ordered `customFields` array. An empty array clears that part’s custom fields. Omission of an existing field removes it. For new fields omit `fieldId`; for existing ones retain the server-issued ID. Example field:
+
+```json
+{ "type": "number", "required": true, "unit": "GB", "minimum": 16,
+  "translations": [{ "language": "en", "label": "Memory per laptop", "instructions": "Enter the installed RAM." }] }
+```
+
+Types are `text`, `number`, `boolean`, and `file`. Unit and minimum are optional and numeric-field-only. Require at least one labelled language, with at most one entry per language. Reject unknown or duplicate IDs, foreign fields, invalid sections and attempts to replace standard inputs. A changed template increments the tender revision once. Return 200 with the saved M10 body and assigned IDs. Apply status before revision checks and save all parts atomically. Publish locks the template.
 
 A draft and an accepted tender are the same resource, with the same id and one `revision` counter. The current revision comes from `GET /manage/tenders/:tenderId`. These changes increase it:
 
@@ -540,6 +553,8 @@ Neither supplier endpoint returns bids, tender participation, or evaluations.
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
+B1 also returns `customFields` per part (empty for the example above). For each published field return its stable `fieldId`, type, required flag, numeric settings if any, and the resolved label, instructions and language with English/Arabic fallback.
+
 When `canSubmit` is false, `reasonCode` is one of:
 
 - `SUPPLIER_SUSPENDED`
@@ -623,6 +638,8 @@ The list shows the tender status only, never "won" or "not won".
 - A failed replacement changes nothing: on a validation error, a deadline error, or a lost connection with no replay, the previous part stays exactly as it was.
 - After the deadline: `422 BID_PART_LOCKED`.
 - Allowed while the supplier is suspended.
+
+**Custom answers in B2 and B4.** In B2 add `answers` to the multipart `bid` JSON, keyed by part type and then field ID. For example, `{"answers":{"technical_offer":{"field-ram":32}}}` adds a number. In B4 send the current part’s complete scalar answer map in a multipart JSON field named `answers`. For custom file fields use the field ID in place of the document kind in the existing file, language and translation inputs. Standard inputs remain required as specified. Reject missing required answers, foreign field IDs, wrong types and values below a field’s minimum with `400 VALIDATION_FAILED`. A failed validation preserves the previous part. Supplier detail returns saved values keyed by field ID; committee responses expose only their authorized part, with the existing blind download rules.
 
 **B5: one translation.** `PUT /me/bids/bid-3/parts/technical_offer/documents/d-31/translations/en` is multipart with a `file` field.
 
