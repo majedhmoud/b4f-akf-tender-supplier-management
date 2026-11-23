@@ -287,7 +287,7 @@ erDiagram
 | The `financial_committee` gives the financial score. | It enters `financial_score` and, separately, `confirmed_total_price` for the above-balance flag. |
 | The system chooses the top-ranked bid. | `TENDER_AWARD.selection = top_rank`. Bids tied at the top share the rank, and the `procurement_officer` chooses among them (`tie_break`). |
 | One committee per person per tender. | Unique (`tender_id`, `user_id`) on `COMMITTEE_ASSIGNMENT`. |
-| The bid form requires every field and file. | A bid is created with all three bid parts. The `legal_committee` fails a bid whose legal information is not qualified. |
+| The bid form requires all three bid parts, and every field and file marked required. | A bid is created with all three bid parts. The `legal_committee` fails a bid whose legal information is not qualified. |
 | Suppliers have their own status. | `SUPPLIER.status`: `active` or `suspended`. The `admin` suspends or reactivates a supplier at their discretion. |
 | Supplier ratings are postponed. | Not in V1. See [Extension](#extension). |
 | Concurrent edits and retries are safe (approved with the [API contract](API_CONTRACT.md)). | `TENDER.revision`, `EMAIL_MESSAGE.revision` and status `sending`, and the `SESSION`, `SESSION_REFRESH_TOKEN`, and `IDEMPOTENCY_KEY` supporting tables. |

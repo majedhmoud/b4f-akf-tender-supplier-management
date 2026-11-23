@@ -170,11 +170,15 @@ classDiagram
   CommitteeAssignment "1" --> "0..*" FinancialEvaluation : records
   Bid "1" --> "0..1" BidRanking
   Tender "1" --> "0..1" TenderAward
-  TenderAward "0..1" --> "1" Bid : wins
-  BidPart "1" --> "0..*" Document
-  Tender "1" --> "0..*" Document : Terms of Reference
+  TenderAward "0..1" --> "1" Bid : selects
+  SupplierApplication "0..1" --> "0..*" Document
+  Supplier "0..1" --> "0..*" Document
+  Tender "0..1" --> "0..*" Document : Terms of Reference
+  BidPart "0..1" --> "0..*" Document
   Document "0..1" --> "0..*" Document : translated as
 ```
+
+Each document has exactly one owner: an application, a supplier, a tender, or a bid part ([ERD](ERD.md#document-ownership)). `UserAccount.roles` is derived from `USER_ROLE`.
 
 ## Enumerations
 
@@ -253,7 +257,7 @@ classDiagram
   }
   class EmployeeTender {
     <<view>>
-    own draft and its status
+    own tender at any status, editable while draft
   }
   class ManagedTender {
     <<view>>
