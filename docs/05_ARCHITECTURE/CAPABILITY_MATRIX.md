@@ -15,6 +15,7 @@ Legend: ✓ allowed · ✗ not allowed · blank = not decided yet
 | Fill in technical information | | ✓ | | | | | | |
 | Create a draft tender | | | ✓ | | | | | |
 | Accept a draft tender | | | | ✓ | | | | |
+| Set score weights and minimum technical score | | | | ✓ | | | | |
 | Publish a tender | | | | ✓ | | | | |
 | Raise committees | | | | ✓ | | | | |
 | Approve committee members and register their accounts | | | | | ✓ | | | |
@@ -22,5 +23,9 @@ Legend: ✓ allowed · ✗ not allowed · blank = not decided yet
 | Legal Evaluation | | | | | | ✓ | | |
 | See and evaluate the technical offer (Technical Evaluation) | | | | | | | ✓ | ✗ |
 | See and evaluate the financial offer (Financial Evaluation) | | | | | | | ✗ | ✓ |
-| Send the winning supplier to the procurement_officer | | | | | | | | |
-| Receive the winning supplier and contact them | | | | ✓ | | | | |
+| Rank bids by combined score (done by the system, no user) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| See the ranking (names and scores, no bid contents) | | | | ✓ | | | ✗ | ✗ |
+| Confirm the winning bid | | | | ✓ | | | | |
+| Review and send award and cancellation emails | | | | ✓ | | | | |
+| Contact Supplier | | | | ✓ | | | | |
+| Copy a cancelled tender into a new tender | | | | ✓ | | | | |
