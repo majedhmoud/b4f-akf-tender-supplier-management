@@ -34,7 +34,7 @@ flowchart LR
 
   DB[("PostgreSQL<br/>via Prisma")]
   REDIS[("Redis<br/>BullMQ queues")]
-  FILES[("Private object storage<br/>tool not chosen yet")]
+  FILES[("Local disk directory<br/>ADR 0006")]
   SMTP["SMTP via Nodemailer<br/>Mailpit in development"]
 
   WEB -- "HTTPS, HttpOnly cookie + X-CSRF-Token" --> GUARD
@@ -44,23 +44,23 @@ flowchart LR
   REDIS --> JOBS
   JOBS --> DB
   JOBS --> SMTP
-  Modules -- "store, short-lived signed URLs" --> FILES
-  WEB -. "download via signed URL" .-> FILES
-  MOB -. "Terms of Reference download" .-> FILES
+  Modules -- "store and read through the storage adapter" --> FILES
+  WEB -. "download via signed URL, served by the API" .-> GUARD
+  MOB -. "Terms of Reference download, served by the API" .-> GUARD
 ```
 
 ## Boundaries
 
 | Part | Responsibility | Talks to |
 |---|---|---|
-| Web app | Every V1 screen for guests, suppliers, staff, and committees. English and Arabic with right-to-left layout. | The API authorizes access and issues the signed URL. The browser downloads the file directly from object storage. Never decides access; `allowedActions` only shows or hides controls. |
-| Mobile app | Supplier companion: browse tenders, tender detail with countdowns, sign-in, My bids ([V1 scope](../03_SCOPE/V1_SCOPE.md#mobile-app-react-native-s7-supplier-companion)). | The same API, and object storage through signed URLs. Never downloads sealed bid documents. |
-| API | All business rules, permissions, and deadlines, by server time. | PostgreSQL, Redis, object storage. |
+| Web app | Every V1 screen for guests, suppliers, staff, and committees. English and Arabic with right-to-left layout. | The API authorizes access, signs the URL, and serves the file. Never decides access; `allowedActions` only shows or hides controls. |
+| Mobile app | Supplier companion: browse tenders, tender detail with countdowns, sign-in, My bids ([V1 scope](../03_SCOPE/V1_SCOPE.md#mobile-app-react-native-s7-supplier-companion)). | The same API, including signed file URLs. Never downloads sealed bid documents. |
+| API | All business rules, permissions, and deadlines, by server time. | PostgreSQL, Redis, the local file directory. |
 | Modules | One business domain each ([standards §1.1](../04_RULES/ENGINEERING_STANDARDS.md#11-modular-monolith)). | Each other only through public services. No module reads another's tables directly. |
 | Access service | Decides who sees which tender, bid, and bid part. Committee views select only their allowed fields. | Every module that returns tender, bid, or evaluation data. |
 | BullMQ processors | Status changes at each deadline, email delivery. Retry-safe. | Redis, PostgreSQL, SMTP. |
 | PostgreSQL | The [ERD](ERD.md). | — |
-| Object storage | Uploaded files under random server-generated keys. | Reached by clients only through short-lived signed URLs. |
+| File storage | Uploaded files under random server-generated keys, in a private local directory ([ADR 0006](ADR/0006_LOCAL_DISK_FILE_STORAGE.md)). | The API only, through the storage adapter. Clients receive files through short-lived signed URLs the API serves. |
 | SMTP | Account setup, award, cancellation, and Contact Supplier emails. | — |
 
 ## Main data flows

@@ -138,7 +138,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 ### 2.5 File upload security
 
 - Never store confidential files in publicly accessible directories.
-- Store files in private object storage.
+- Store files in private object storage (hackathon exception: [ADR 0006](../05_ARCHITECTURE/ADR/0006_LOCAL_DISK_FILE_STORAGE.md)).
 - Validate file size, extension, MIME type, and actual file content.
 - Generate storage keys on the server. Never trust user-provided file paths.
 - Rename uploaded files using generated identifiers.
@@ -315,7 +315,7 @@ Use a queue such as BullMQ with Redis when asynchronous processing is required. 
 - Keep modules loosely coupled.
 - Avoid shared mutable state between modules.
 - Keep application instances stateless where possible.
-- Store uploaded files outside the application server's local filesystem.
+- Store uploaded files outside the application server's local filesystem (hackathon exception: [ADR 0006](../05_ARCHITECTURE/ADR/0006_LOCAL_DISK_FILE_STORAGE.md)).
 - Use database connection pooling appropriately.
 - Design background jobs to support retries.
 - Use idempotency for critical operations.

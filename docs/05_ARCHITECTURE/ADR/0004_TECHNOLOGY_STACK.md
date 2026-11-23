@@ -16,6 +16,7 @@ We use tools the team already knows from `b4f-board-final`, plus background jobs
 | Front end | Next.js App Router, Tailwind with some native CSS, shadcn/ui |
 | Data fetching | TanStack Query with an Orval-generated client from Swagger; the browser calls the API, protected by CORS and CSRF |
 | Screen state | React state and context; no Redux |
+| Local services | PostgreSQL, Redis, and Mailpit, installed natively by each member |
 
 ## Sealed-bid acceptance check
 
