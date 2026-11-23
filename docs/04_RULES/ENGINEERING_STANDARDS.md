@@ -383,6 +383,16 @@ Do not create abstractions only to reduce the number of lines.
 - Keep shared utilities independent of specific business modules.
 - Avoid a giant shared module that couples to everything.
 
+### 6.6 Documentation
+
+Each rule has one source document. Diagrams, use cases, and summaries point to it; they do not reword it.
+
+- Copy a rule's exact conditions, or link to the source instead of restating them. Keep qualifiers such as "eligible", "marked required", "own", and "while `draft`".
+- Name endpoints and resources explicitly. Do not write rules for a path prefix such as `/tenders…`.
+- Show multiplicities and owners as the ERD defines them.
+- When a source rule changes, search the docs for every restatement of it and update them in the same change.
+- Reviews check each diagram and summary against its source, not only against itself.
+
 ## 7. API design
 
 - Follow REST conventions with consistent resource names.
