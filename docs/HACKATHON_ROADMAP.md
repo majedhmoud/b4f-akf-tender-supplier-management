@@ -6,7 +6,7 @@ The path for developing the product. Steps 1–7 are done once; steps 8–14 rep
 |---|---|---|---|
 | 1 | Understand the real problem: who needs this and why, before any code. | [01_PROBLEM/](01_PROBLEM/), [GLOSSARY.md](GLOSSARY.md) | In progress |
 | 2 | Inspect what already exists: real code, real API, real design. Don't assume. | [02_EXISTING/](02_EXISTING/), [SUBMISSION_REQUIREMENTS.md](01_PROBLEM/SUBMISSION_REQUIREMENTS.md) | In progress (Team Brief pending review) |
-| 3 | Define the first useful scope: what V1 means, and what is deliberately postponed. | [03_SCOPE/](03_SCOPE/) | Started (postponed items) |
+| 3 | Define the first useful scope: what V1 means, and what is deliberately postponed. | [03_SCOPE/V1_SCOPE.md](03_SCOPE/V1_SCOPE.md) | Done |
 | 4 | Write the rules: engineering standards, before feature code exists. | [AGENTS.md](../AGENTS.md), [04_RULES/](04_RULES/) | Started (documentation, Git, and engineering standards) |
 | 5 | Decide architecture boundaries: how the pieces may talk to each other, decided once for the whole app. | [05_ARCHITECTURE/](05_ARCHITECTURE/) | Started (ADRs, capability matrix) |
 | 6 | Choose one small slice: a thin, complete path through every layer. | `06_SLICES/` | Not started |
@@ -51,7 +51,7 @@ Each slice goes through every layer. Running S1–S7 in order is the demo.
 | S4 Bid submission | An active supplier submits all three parts and required files before the application deadline. Late new bids are rejected; existing parts can be replaced until their own deadlines. | Not started |
 | S5 Sealed evaluation | Legal, Technical and Financial Evaluations, with technical and financial hidden from each other | Not started |
 | S6 Award | the system ranks the bids and awards the top-ranked one (`procurement_officer` breaks a tie at the top) → `procurement_officer` reviews and sends the award emails | Not started |
-| S7 Mobile | Scope decided in `03_SCOPE/V1_SCOPE.md`; built in `mobile/` against the same API | Not started |
+| S7 Mobile | `guest` or `supplier` browses tenders on mobile → `supplier` signs in and follows their bids (see [V1_SCOPE.md](03_SCOPE/V1_SCOPE.md#mobile-app-react-native-s7-supplier-companion)); built in `mobile/` against the same API | Not started |
 
 ### Team split
 
