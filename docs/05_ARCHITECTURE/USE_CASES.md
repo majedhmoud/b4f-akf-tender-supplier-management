@@ -90,7 +90,7 @@ In UC1, the `guest` only sees the published tender. In UC5, the system moves the
   1. The `procurement_officer` raises the tender's `legal_committee`, `technical_committee`, and `financial_committee`.
   2. The officer nominates members by name and email.
   3. The `admin` approves each nomination. A nominee without an account receives an **account setup link** in the language the `admin` chooses.
-  4. The member signs in and sees the tender in My assignments.
+  4. A new member sets a password through the link and lands on My assignments. An existing member sees the assignment when signed in.
 - **Alternatives and failures:**
   - The `admin` rejects a nomination: it ends there.
   - The nominee is already on another committee of this tender, or is the tender's requesting `employee`, the `procurement_officer`, or an `admin`: the approval is refused.
@@ -99,7 +99,9 @@ In UC1, the `guest` only sees the published tender. In UC5, the system moves the
 ## UC4 Submit and replace a bid (S4)
 
 - **Actor:** `supplier`.
-- **Precondition:** the supplier is `active`, and the tender is `published` and before its application deadline.
+- **Preconditions:**
+  - Submit: the supplier is `active`, and the tender is `published` and before its application deadline.
+  - Replace: the supplier owns the bid, and the part's own deadline has not passed. This holds even after the tender is `closed` or the supplier is `suspended`.
 - **Main scenario:**
   1. The supplier opens the tender and fills in one form with all three **bid parts**: legal information, technical offer, and financial offer, with every required file.
   2. The platform creates the **bid** and gives it a random **bidder code**.
@@ -119,25 +121,26 @@ In UC1, the `guest` only sees the published tender. In UC5, the system moves the
   1. **Legal Evaluation:** the `legal_committee` passes or fails each bid on its legal information.
   2. **Technical Evaluation:** the `technical_committee` sees only the passed bids, by bidder code, and gives each a **technical score**. Bids below the **minimum technical score** fail.
   3. **Financial Evaluation:** the `financial_committee` sees only the remaining bids, by bidder code, and enters a **financial score** and the **confirmed total bid price**.
-  4. The system calculates each bid's **combined score** and the **ranking**, and flags bids priced above the **estimated balance**.
+  4. The system calculates each eligible bid's **combined score** and the **ranking**, and flags bids priced above the **estimated balance**.
 - **Alternatives and failures:**
   - A completed stage leaves no eligible bid: the tender becomes `cancelled`.
   - A committee member requests a bid of another stage or tender: `404`.
-- **Result:** a complete ranking. No committee has seen the supplier's identity in the technical or financial stage, or another stage's offer.
+- **Result:** either a complete ranking of the eligible bids, or a `cancelled` tender (`no_qualified_bid`). No committee has seen the supplier's identity in the technical or financial stage, or another stage's offer.
 
 ## UC6 Award the tender and notify bidders (S6)
 
 - **Actors:** the system, `procurement_officer`.
-- **Precondition:** the ranking is complete.
+- **Precondition:** the ranking is complete, or the tender is `cancelled`.
 - **Main scenario:**
   1. One bid has the highest combined score, so the system awards it and the tender becomes `awarded`.
   2. The platform prepares one email per bidder in their language: one for the winner, one for every other bidder.
   3. The `procurement_officer` reviews and edits the emails, then sends them.
 - **Alternatives and failures:**
   - Several bids share the top rank: the officer chooses one of them.
-  - Delivery fails: the email shows `failed`, and the officer retries it.
-  - The tender was `cancelled` instead: the platform prepares cancellation emails, which the officer reviews and sends.
-- **Result:** the tender is `awarded`. Bidders who did not win receive no scores or details about the winning bid.
+  - Confirmed non-delivery: the email shows `failed`, and the officer may retry it. If delivery is uncertain, the email stays `sending` until the platform confirms the outcome.
+  - Cancelled after evaluation (`no_qualified_bid`): the platform prepares one cancellation email per bidder, which the officer reviews and sends.
+  - Cancelled because no bids arrived (`no_bids`): there are no bidders, so no emails are prepared.
+- **Result:** the tender is `awarded` or `cancelled`, and every bidder has an email for the officer to review and send. Bidders who did not win receive no scores or details about the winning bid.
 
 ## UC7 Follow tenders and bids on mobile (S7)
 

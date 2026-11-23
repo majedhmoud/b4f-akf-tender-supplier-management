@@ -19,7 +19,7 @@ The ERD changes this contract depends on are listed in [section 4](#4-erd-change
 - **Cookies.** The API sets two HttpOnly, Secure, `SameSite=Lax` cookies: `access_token` (10 minutes) and `refresh_token`. The web app and the API run on the same site. The frontend never reads either cookie.
 - **Credentials.** Every request uses `credentials: 'include'`, set once in the Orval mutator. CORS allows credentials only from the web app's exact origin.
 - **CSRF.**
-  - `GET /auth/csrf` returns `{ "csrfToken": "…" }`. It works without a session, so guest forms are covered too.
+  - `GET /auth/csrf` returns `{ "csrfToken": "…", "serverTime": "…" }`. It works without a session, so guest forms are covered too.
   - The token is bound to the current session, or to the anonymous visitor.
   - Keep it in memory, and send it as `X-CSRF-Token` on every POST, PUT, PATCH, and DELETE.
   - Fetch a new token on app load and after sign-in, sign-out, refresh, account setup, and `SESSION_REVOKED`.
@@ -30,7 +30,7 @@ The ERD changes this contract depends on are listed in [section 4](#4-erd-change
   - Each refresh replaces the refresh token. If an old refresh token is used again, the server revokes every session in that chain and returns `401 SESSION_REVOKED`.
 - **Session ended.** On `401 UNAUTHENTICATED` or `401 SESSION_REVOKED`, clear the cache and go to sign-in with `?returnTo=`.
 - **Sign-out.** `POST /auth/sign-out` revokes the session on the server. Every access token for that session stops working at once, because each request checks the session.
-- **Server enforcement.** The server enforces every permission and deadline. Detail responses include `allowedActions`, which the UI uses only to show or hide controls. Responses with deadlines include `serverTime`, so countdowns use server time, not the device clock.
+- **Server enforcement.** The server enforces every permission and deadline. Detail responses include `allowedActions`, which the UI uses only to show or hide controls. Countdowns use the deadline from the response, anchored to the `serverTime` from the latest `GET /auth/csrf` response and advanced by elapsed time, never the device clock.
 
 ### 1.2 Query cache and HTTP caching
 
@@ -39,8 +39,9 @@ The ERD changes this contract depends on are listed in [section 4](#4-erd-change
   - Private data: `['me', userId, …]`, always including the signed-in user's id.
 - **Clearing.** Clear the whole TanStack Query cache on sign-in, sign-out, successful account setup, and `SESSION_REVOKED`. Never persist the cache to browser storage.
 - **HTTP caching.**
-  - Public tender endpoints (`/tenders…` and `/reference/…`) send `Cache-Control: public, max-age=60` and `Vary: Accept-Language`.
-  - Every other response sends `Cache-Control: private, no-store`, including signed download URLs.
+  - Only `GET /tenders`, `GET /tenders/:tenderId`, and `GET /reference/…` send `Cache-Control: public, max-age=60` and `Vary: Accept-Language`.
+  - Every other response sends `Cache-Control: private, no-store`. This includes B1 (`GET /tenders/:tenderId/bid-form`) and every download endpoint, the public Terms of Reference download among them, because they return supplier-specific data or signed URLs.
+  - Clients use the `serverTime` from `GET /auth/csrf`, which is never cached, for countdowns, not the `serverTime` in a cached tender response.
 
 ### 1.3 Idempotency
 
@@ -244,7 +245,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 
 ### Auth
 
-`GET /auth/csrf` returns `200 { "csrfToken": "c1f…" }`.
+`GET /auth/csrf` returns `200 { "csrfToken": "c1f…", "serverTime": "2026-11-23T09:00:00Z" }`.
 
 `POST /auth/sign-in` with `{ "email": "rana@akf.org", "password": "••••••••" }` sets the cookies and returns `200`:
 

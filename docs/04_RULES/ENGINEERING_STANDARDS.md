@@ -175,7 +175,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 
 | Response DTO | Shows | Never shows |
 |---|---|---|
-| `PublicTender` (`guest`, `supplier`) | The published tender's details and deadlines | Estimated financial requirements, the project's balance, committees |
+| `PublicTender` (anyone, signed in or not) | The published tender's details and deadlines | Estimated financial requirements, the project's balance, committees |
 | `SupplierBid` | The supplier's own full bid | Other suppliers' bids, evaluations |
 | `LegalBidView` | Legal information | Technical offer, financial offer |
 | `TechnicalBidView` | Technical offer, **bidder code** | Financial offer, supplier identity |
