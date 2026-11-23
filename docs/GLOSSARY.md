@@ -44,7 +44,11 @@ A supplier's application to a **tender**, made of legal information, a technical
 _Avoid_: offer, application
 
 **tender status**:
-The stage a **tender** is in: `accepted`, `published`, `closed`, `under_evaluation`, or `awarded`. Before `accepted`, it is a **draft tender**.
+The stage a **tender** is in: `accepted`, `published`, `closed`, `under_evaluation`, `awarded`, or `cancelled`. Before `accepted`, it is a **draft tender**.
+
+**estimated balance**:
+The estimated budget for a **tender**, based on the project's balance.
+_Avoid_: budget, ceiling
 
 **bid part**:
 One of the three parts of a **bid**: legal information, technical offer, or financial offer. Each has its own deadline.
@@ -59,6 +63,21 @@ Each evaluation is named after the user who performs it.
 - **Legal Evaluation**: performed by `legal_committee`.
 - **Technical Evaluation**: performed by `technical_committee`.
 - **Financial Evaluation**: performed by `financial_committee`.
+
+**score weights**:
+The share of the **combined score** given to the **technical score** and to the **financial score**, such as 70/30. Set per **tender**.
+
+**minimum technical score**:
+The lowest **technical score** a **bid** needs to pass the **Technical Evaluation**. Set per **tender**.
+
+**technical score**:
+The score out of 100 that the `technical_committee` gives a **bid**.
+
+**financial score**:
+The score out of 100 that the system calculates for a **bid**: the lowest confirmed total bid price divided by this bid's price, times 100.
+
+**combined score**:
+A **bid**'s technical score and financial score, combined using the **score weights**.
 
 ## Processes
 
