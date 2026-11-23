@@ -1,0 +1,428 @@
+# Entity–Relationship Diagram (V1)
+
+Status: accepted.
+
+The V1 data model, in the terms of the [glossary](../GLOSSARY.md). Processes follow [WORKFLOWS.md](../01_PROBLEM/WORKFLOWS.md), and access follows the [capability matrix](CAPABILITY_MATRIX.md) and [ADR 0002](ADR/0002_INDEPENDENT_TECHNICAL_AND_FINANCIAL_EVALUATION.md). Supplier ratings, contracts, and delivery are postponed and left out.
+
+Columns ending in `_by_user_id` or `_user_id` without a drawn line reference `USER_ACCOUNT`. `AUDIT_EVENT` is a supporting table and is not drawn.
+
+## Diagram
+
+```mermaid
+erDiagram
+  USER_ACCOUNT {
+    uuid id PK
+    text email UK
+    text password_hash "null until account setup"
+    enum preferred_language "en | ar"
+    enum status "pending_setup | active | disabled"
+    timestamp email_verified_at "set by account setup"
+  }
+  USER_ROLE {
+    uuid user_id PK, FK
+    enum role PK "supplier | requester | procurement_officer | admin | legal_committee"
+  }
+  ACCOUNT_SETUP_TOKEN {
+    uuid id PK
+    uuid user_id FK
+    text token_hash UK
+    timestamp expires_at
+    timestamp used_at
+  }
+  SUPPLIER_APPLICATION {
+    uuid id PK
+    text legal_name
+    text registration_number
+    text contact_email
+    enum preferred_language "UI language when submitted"
+    timestamp submitted_at
+  }
+  SIGNUP_REVIEW {
+    uuid id PK
+    uuid application_id FK, UK
+    uuid reviewer_user_id FK "legal_committee role"
+    enum decision "accepted | rejected"
+    text reason
+    timestamp decided_at
+    timestamp raised_to_admin_at "null unless accepted"
+    uuid admin_user_id FK
+    timestamp admin_accepted_at
+  }
+  SUPPLIER {
+    uuid id PK
+    uuid application_id FK, UK
+    uuid user_id FK, UK
+    text legal_name "current value"
+    text registration_number UK "current value"
+    text technical_information
+    enum status "active | suspended"
+  }
+  DOCUMENT {
+    uuid id PK
+    enum owner_type "application | supplier | tender | bid_part"
+    text storage_key UK "random, server-generated"
+    text original_name "never sent to blind reviewers"
+    text mime_type
+    int size_bytes
+    text language "original language, ISO 639-1"
+    uuid translation_of_id FK "null = original"
+    uuid uploaded_by_user_id FK "null for guest"
+    timestamp uploaded_at
+  }
+  APPLICATION_DOCUMENT {
+    uuid document_id PK, FK
+    enum owner_type FK "always application"
+    uuid application_id FK
+    enum kind
+  }
+  SUPPLIER_DOCUMENT {
+    uuid document_id PK, FK
+    enum owner_type FK "always supplier"
+    uuid supplier_id FK
+    enum kind
+  }
+  TENDER_DOCUMENT {
+    uuid document_id PK, FK
+    enum owner_type FK "always tender"
+    uuid tender_id FK
+    enum kind "terms_of_reference | other"
+  }
+  BID_PART_DOCUMENT {
+    uuid document_id PK, FK
+    enum owner_type FK "always bid_part"
+    uuid bid_part_id FK
+  }
+  TENDER_CATEGORY {
+    text code PK "labels live in app translations"
+  }
+  TENDER {
+    uuid id PK
+    enum status "draft | accepted | published | closed | under_evaluation | awarded | cancelled"
+    text category_code FK
+    uuid requester_user_id FK
+    decimal estimated_balance
+    char currency_code
+    timestamp application_deadline
+    timestamp technical_deadline
+    timestamp financial_deadline
+    timestamp accepted_at
+    timestamp published_at
+    timestamp cancelled_at
+    enum cancellation_reason "no_bids | no_qualified_bid"
+    uuid copied_from_tender_id FK, UK "null = original"
+  }
+  TENDER_TRANSLATION {
+    uuid tender_id PK, FK
+    enum language PK "en | ar"
+    text title "not null, not empty"
+    text description "not null, not empty"
+  }
+  TENDER_SCORING {
+    uuid tender_id PK, FK
+    int technical_weight "0-100"
+    int financial_weight "0-100, sum = 100"
+    int minimum_technical_score "0-100"
+  }
+  TENDER_COMMITTEE {
+    uuid id PK
+    uuid tender_id FK
+    enum type "legal_committee | technical_committee | financial_committee"
+    timestamp raised_at
+  }
+  COMMITTEE_ASSIGNMENT {
+    uuid id PK
+    uuid committee_id FK
+    uuid tender_id FK "copied from committee"
+    text nominee_name
+    text nominee_email
+    uuid user_id FK "set on approval"
+    enum status "nominated | approved | rejected"
+    uuid approved_by_user_id FK "admin"
+    timestamp decided_at
+  }
+  BID {
+    uuid id PK
+    uuid tender_id FK
+    uuid supplier_id FK
+    text bidder_code "system, random, unique per tender"
+    timestamp submitted_at
+  }
+  BID_PART {
+    uuid id PK
+    uuid bid_id FK
+    enum part_type "legal_information | technical_offer | financial_offer"
+    timestamp last_submitted_at
+  }
+  LEGAL_EVALUATION {
+    uuid bid_id PK, FK
+    uuid assignment_id FK
+    enum outcome "pass | fail"
+    text reason
+    timestamp submitted_at
+  }
+  TECHNICAL_EVALUATION {
+    uuid bid_id PK, FK
+    uuid assignment_id FK
+    int technical_score "entered, 0-100"
+    bool meets_minimum "system"
+    text comments
+    timestamp submitted_at
+  }
+  FINANCIAL_EVALUATION {
+    uuid bid_id PK, FK
+    uuid assignment_id FK
+    int financial_score "entered, 0-100"
+    decimal confirmed_total_price "entered, in tender currency"
+    text comments
+    timestamp submitted_at
+  }
+  BID_RANKING {
+    uuid bid_id PK, FK
+    uuid tender_id FK
+    decimal combined_score "system, numeric(5,2)"
+    bool above_estimated_balance "system"
+    timestamp calculated_at
+  }
+  TENDER_AWARD {
+    uuid tender_id PK, FK
+    uuid winning_bid_id FK, UK
+    enum selection "top_rank | tie_break"
+    uuid tie_broken_by_user_id FK "procurement_officer, tie only"
+    timestamp awarded_at
+  }
+  EMAIL_MESSAGE {
+    uuid id PK
+    enum kind "account_setup | award_winner | award_other | cancellation | contact_supplier"
+    uuid recipient_user_id FK
+    text recipient_email "snapshot"
+    enum language "en | ar, snapshot"
+    text subject
+    text body
+    uuid tender_id FK
+    enum status "draft | sent | failed"
+    uuid sent_by_user_id FK "null when automatic"
+    timestamp prepared_at
+    timestamp sent_at
+  }
+
+  USER_ACCOUNT ||--o{ USER_ROLE : holds
+  USER_ACCOUNT ||--o{ ACCOUNT_SETUP_TOKEN : "sets up with"
+  USER_ACCOUNT ||--o| SUPPLIER : "signs in as"
+  USER_ACCOUNT ||--o{ SIGNUP_REVIEW : reviews
+  SUPPLIER_APPLICATION ||--o| SIGNUP_REVIEW : "reviewed in"
+  SUPPLIER_APPLICATION ||--o| SUPPLIER : becomes
+  SUPPLIER_APPLICATION ||--o{ APPLICATION_DOCUMENT : attaches
+  SUPPLIER ||--o{ SUPPLIER_DOCUMENT : keeps
+  DOCUMENT ||--o| APPLICATION_DOCUMENT : "filed as"
+  DOCUMENT ||--o| SUPPLIER_DOCUMENT : "filed as"
+  DOCUMENT ||--o| TENDER_DOCUMENT : "filed as"
+  DOCUMENT ||--o| BID_PART_DOCUMENT : "filed as"
+  DOCUMENT |o--o{ DOCUMENT : "translated as"
+  TENDER_CATEGORY ||--o{ TENDER : classifies
+  USER_ACCOUNT ||--o{ TENDER : requests
+  TENDER ||--|{ TENDER_TRANSLATION : "written in"
+  TENDER ||--o{ TENDER_DOCUMENT : attaches
+  TENDER ||--o| TENDER_SCORING : "scored by"
+  TENDER |o--o| TENDER : "copied into"
+  TENDER ||--o{ TENDER_COMMITTEE : raises
+  TENDER_COMMITTEE ||--o{ COMMITTEE_ASSIGNMENT : staffs
+  USER_ACCOUNT |o--o{ COMMITTEE_ASSIGNMENT : "serves via"
+  TENDER ||--o{ BID : receives
+  SUPPLIER ||--o{ BID : submits
+  BID ||--|{ BID_PART : "made of (exactly 3)"
+  BID_PART ||--o{ BID_PART_DOCUMENT : contains
+  BID ||--o| LEGAL_EVALUATION : "legally evaluated"
+  BID ||--o| TECHNICAL_EVALUATION : "technically evaluated"
+  BID ||--o| FINANCIAL_EVALUATION : "financially evaluated"
+  COMMITTEE_ASSIGNMENT ||--o{ LEGAL_EVALUATION : records
+  COMMITTEE_ASSIGNMENT ||--o{ TECHNICAL_EVALUATION : records
+  COMMITTEE_ASSIGNMENT ||--o{ FINANCIAL_EVALUATION : records
+  BID ||--o| BID_RANKING : "ranked as"
+  TENDER ||--o| TENDER_AWARD : "awarded by"
+  BID ||--o| TENDER_AWARD : wins
+  USER_ACCOUNT ||--o{ EMAIL_MESSAGE : receives
+  TENDER |o--o{ EMAIL_MESSAGE : concerns
+```
+
+## Decisions applied
+
+| Decision | Effect on the model |
+|---|---|
+| Tender committee access is per tender. | Committee access to a tender comes only from an approved `COMMITTEE_ASSIGNMENT`. `TENDER_COMMITTEE.type` uses the glossary role names. |
+| Sign-up review is a standing `legal_committee` duty. | `USER_ROLE` value `legal_committee` allows reviewing `SUPPLIER_APPLICATION`s only. It gives no tender access. |
+| The `admin` only accepts the request raised by the `legal_committee`. | Acceptance creates `USER_ACCOUNT` (`pending_setup`, no password) and `SUPPLIER`, and sends an `account_setup` email automatically. |
+| The supplier sets a password through the emailed link. | Using the single-use `ACCOUNT_SETUP_TOKEN` sets the password, `email_verified_at`, and status `active`. The supplier is then signed up. |
+| One shared technical score per bid. | `TECHNICAL_EVALUATION` is keyed on `bid_id`. |
+| The `financial_committee` gives the financial score. | It enters `financial_score` and, separately, `confirmed_total_price` for the above-balance flag. |
+| The system chooses the top-ranked bid. | `TENDER_AWARD.selection = top_rank`. Bids tied at the top share the rank, and the `procurement_officer` chooses among them (`tie_break`). |
+| One committee per person per tender. | Unique (`tender_id`, `user_id`) on `COMMITTEE_ASSIGNMENT`. |
+| The bid form requires every field and file. | A bid is created with all three bid parts. The `legal_committee` fails a bid whose legal information is not qualified. |
+| Suppliers have their own status. | `SUPPLIER.status`: `active` or `suspended`. The `admin` suspends or reactivates a supplier at their discretion. |
+| Supplier ratings are postponed. | Not in V1. See [Extension](#extension). |
+
+## Distinctions the model keeps
+
+| Distinction | How |
+|---|---|
+| Reusable supplier profile vs sign-up review | `SUPPLIER_APPLICATION` + `SIGNUP_REVIEW` record the one-time sign-up and never change after review. `SUPPLIER` is the current profile and the source of truth from then on. |
+| Profile vs bid and Legal Evaluation | A `BID` and its `legal_information` part hold the tender-specific legal information. `LEGAL_EVALUATION` belongs to the bid. |
+| Committee assignment vs evaluation | `TENDER_COMMITTEE` + `COMMITTEE_ASSIGNMENT` put a person on one tender's committee. Evaluations reference the assignment that recorded them. |
+| Supplier identity vs bidder code | Technical and financial views use (`tender_id`, `bidder_code`), never `BID.id` or `BID.supplier_id`. |
+| Scoring settings vs results | Settings in `TENDER_SCORING`. Values people enter in the evaluation tables. Values the system calculates in `BID_RANKING` and `TENDER_AWARD`. |
+| Cancelled tender vs its copy | `TENDER.copied_from_tender_id` links the copy to its source. Bids, committees, and deadlines stay with the source. |
+
+## Constraints the diagram does not show
+
+### Language
+
+- `USER_ACCOUNT.preferred_language` drives the web and mobile interface, including right-to-left layout for Arabic. Interface labels and category labels live in application translations.
+- A `TENDER_TRANSLATION` row exists only when complete: title and description are both non-empty. A tender has at least one row. A reader sees their preferred language, or the other row when it is missing.
+- **Email language:** `EMAIL_MESSAGE.language` is the recipient's `preferred_language` when the email is prepared, and is fixed for that message. A supplier account starts with `SUPPLIER_APPLICATION.preferred_language`. Staff accounts start with the language chosen at account creation. Users can change it later.
+- A translated `DOCUMENT` points to its original through `translation_of_id`:
+  - An original has no `translation_of_id`. A translation must reference an original directly.
+  - Unique (`translation_of_id`, `language`), and the language differs from the original's.
+  - A translation has the same owner as its original.
+  - Replacing or deleting an original deletes its translations.
+
+### Document ownership
+
+- Each link table carries a fixed `owner_type` and references a unique `DOCUMENT(id, owner_type)` pair. This prevents links to multiple owner types. Require exactly one owner link at transaction commit, including when a document is created or its link is removed.
+- `storage_key` is random and contains no supplier or tender data.
+- Blind reviewers never receive `original_name` or `uploaded_by_user_id`. Files are downloaded under neutral names through short-lived signed URLs.
+- Identifying content inside a file, such as a letterhead or file metadata, cannot be prevented by the model. The bid form instructs suppliers not to identify themselves in technical and financial files.
+
+### Sealed, blind evaluation (enforced by the access service)
+
+| Audience | Reads | Never reads |
+|---|---|---|
+| `legal_committee` (sign-up) | `SUPPLIER_APPLICATION` and its documents | Tenders, bids |
+| `legal_committee` assignment | The bid's legal information and documents, supplier identity | Technical and financial offers, other evaluations |
+| `technical_committee` assignment | (`tender_id`, `bidder_code`), the technical offer and documents, for bids with `LEGAL_EVALUATION.outcome = pass` | `SUPPLIER`, `BID.id`, financial offers, `FINANCIAL_EVALUATION`, `TENDER_SCORING`, `BID_RANKING`, `estimated_balance` |
+| `financial_committee` assignment | (`tender_id`, `bidder_code`), the financial offer and documents, for bids with `meets_minimum = true` | `SUPPLIER`, `BID.id`, technical offers, `technical_score`, `TENDER_SCORING`, `BID_RANKING`, `estimated_balance` |
+| `procurement_officer` | `BID_RANKING` with supplier names and scores, `TENDER_AWARD` | `BID_PART` and its documents |
+
+- A committee reviewer sees a tender’s bids only through an approved assignment of the matching type on that tender. Anything else returns 404.
+- An evaluation's assignment is approved and belongs to the bid's tender and the matching committee type. The evaluation transaction checks this.
+- One evaluation per committee per bid (`bid_id` is the key). Evaluations are insert-only.
+
+### Committees
+
+- `TENDER_COMMITTEE` is unique on (`tender_id`, `type`).
+- `COMMITTEE_ASSIGNMENT.tender_id` matches its committee: composite foreign key (`committee_id`, `tender_id`) to the unique `TENDER_COMMITTEE(id, tender_id)` pair.
+- Unique (`tender_id`, `user_id`) on `COMMITTEE_ASSIGNMENT`: one committee per person per tender.
+- The tender's `requester`, and any `procurement_officer` or `admin`, are never assigned to that tender's committees. The approval checks this.
+- The `procurement_officer` nominates members by name and email. The `admin` approves them and creates or links their accounts.
+
+### Sign-up
+
+- `SIGNUP_REVIEW.reviewer_user_id` holds the `legal_committee` role.
+- `raised_to_admin_at` is set only when `decision = accepted`. `admin_accepted_at` is set only after `raised_to_admin_at`.
+- `SUPPLIER`, its `USER_ACCOUNT`, the first `ACCOUNT_SETUP_TOKEN`, and the `account_setup` email are created in one transaction with the admin's acceptance.
+- `ACCOUNT_SETUP_TOKEN` is stored hashed, expires, and is single-use. A new token can be issued if one expires.
+
+### Bids
+
+- `BID` is unique on (`tender_id`, `supplier_id`), on (`tender_id`, `bidder_code`), and on (`id`, `tender_id`) for composite foreign keys.
+- A bid is created with all three `BID_PART`s, each with its required files, in one transaction, before the application deadline. `BID_PART` is unique on (`bid_id`, `part_type`).
+- A part can be replaced only before its own deadline, by server time. Replacing overwrites the row and deletes its documents. Earlier versions are not kept.
+- Only an `active` supplier can submit a bid.
+
+### Lifecycle jobs
+
+- Each status change updates only from the expected current status, so a retried job does nothing.
+- Bid creation and the application-deadline job both lock the tender row, so a last-second bid cannot be missed when deciding between `closed` and `cancelled`.
+- An evaluation stage is complete when every bid eligible for it has an evaluation row. The check runs inside each evaluation transaction. If a complete stage leaves no eligible bid, the tender becomes `cancelled` with `no_qualified_bid`.
+
+### Scoring and award
+
+| | Values |
+|---|---|
+| Entered at accept (`procurement_officer`) | `TENDER_SCORING` |
+| Entered by the `requester` | `estimated_balance` |
+| Entered at publish (`procurement_officer`) | The three deadlines, in the order application → technical → financial |
+| Locked from publish | `TENDER_SCORING`, deadlines, `estimated_balance`, category, translations, Terms of Reference |
+| Entered by committees | Legal outcome, technical score, financial score, confirmed total bid price |
+| Calculated by the system | `bidder_code`, `meets_minimum`, status changes, `cancellation_reason`, `combined_score`, `above_estimated_balance`, the top-ranked winner |
+
+- CHECKs: every score and weight is 0–100, and `technical_weight + financial_weight = 100`.
+- `combined_score = (technical_weight × technical_score + financial_weight × financial_score) / 100`, stored as `numeric(5,2)`. Rank is calculated on read, highest first. Equal scores share a rank.
+- `BID_RANKING` references `BID(id, tender_id)`.
+- When the Financial Evaluation is complete, the system writes `BID_RANKING`. If one bid has the highest score, the system writes `TENDER_AWARD` (`top_rank`) and sets `awarded` in the same transaction. If several bids share the highest score, the `procurement_officer` chooses one of them (`tie_break`).
+- `TENDER_AWARD` references `BID(id, tender_id)` through (`winning_bid_id`, `tender_id`), and the winner has a `BID_RANKING` row with the highest `combined_score`.
+- The above-balance flag is informational. It does not stop a bid from winning.
+
+### Emails
+
+- `account_setup` emails are sent automatically. Award and cancellation emails are prepared as drafts that the `procurement_officer` reviews and sends.
+- Partial unique index on (`tender_id`, `recipient_user_id`, `kind`) for `award_winner`, `award_other`, and `cancellation`, so retries never prepare a duplicate. `contact_supplier` can repeat.
+- Sending changes `draft` to `sent` only from `draft`.
+
+### Copying a cancelled tender
+
+- The source is `cancelled`. The copy starts at `accepted`.
+- Copied: category, requester, `estimated_balance` and currency, translations, `TENDER_SCORING` (editable until the copy is published), and Terms of Reference. Each Terms of Reference file is copied to a new storage object, with a new `DOCUMENT` row.
+- Not copied: deadlines, bids, committees, emails.
+- A cancelled tender can be copied at most once (unique `copied_from_tender_id`).
+
+### Indexes
+
+Primary and unique keys already cover: `USER_ACCOUNT.email`, `SUPPLIER.registration_number`, `BID(tender_id, supplier_id)`, `BID_PART(bid_id, part_type)`, evaluation `bid_id`, `COMMITTEE_ASSIGNMENT(tender_id, user_id)`.
+
+Add:
+
+- `TENDER(status)`, `TENDER(published_at)`, and `TENDER(status, application_deadline)`, `(status, financial_deadline)` for the deadline jobs.
+- `SUPPLIER(status)`, `BID(supplier_id)`, `COMMITTEE_ASSIGNMENT(user_id)`, `SIGNUP_REVIEW(reviewer_user_id)`.
+- Each evaluation's `assignment_id`, `BID_RANKING(tender_id, combined_score)`.
+- Every link-table owner foreign key, and `EMAIL_MESSAGE(tender_id)`.
+- `AUDIT_EVENT(resource_type, resource_id, occurred_at)` and `AUDIT_EVENT(occurred_at)`.
+
+### Extension
+
+A future `SUPPLIER_RATING` references `BID(id)`, the supplier's actual participation in a tender, or `TENDER_AWARD`. Neither changes historical bids or evaluations. `DOCUMENT` is a shared file-storage service used by the domain modules, not a domain module itself.
+
+## Traces
+
+**Supplier sign-up**
+
+1. A `guest` submits `SUPPLIER_APPLICATION` with their legal information and documents.
+2. A `legal_committee` reviewer records `SIGNUP_REVIEW` as `accepted`, which raises it to the `admin`.
+3. The `admin` accepts. One transaction creates `SUPPLIER` (`active`), `USER_ACCOUNT` (`pending_setup`), an `ACCOUNT_SETUP_TOKEN`, and an `account_setup` email in the applicant's language.
+4. The supplier opens the link and sets a password. The account becomes `active` and the email is verified.
+
+**One bid, submission to award**
+
+1. The `supplier` submits the bid form before the application deadline. One transaction creates `BID` (random `bidder_code`) and its three parts with their files. A retry hits the (`tender_id`, `supplier_id`) unique key.
+2. The supplier may replace each part until its own deadline.
+3. At the financial deadline, a job moves the tender from `closed` to `under_evaluation`.
+4. A legal assignment records `LEGAL_EVALUATION` with outcome `pass`.
+5. A technical assignment enters 78. With a minimum of 60, the system sets `meets_minimum = true`.
+6. A financial assignment enters a financial score and the confirmed total bid price.
+7. When the Financial Evaluation is complete, the system writes `BID_RANKING`, flagging prices above `estimated_balance`. This bid has the highest combined score, so the system writes `TENDER_AWARD` (`top_rank`) and sets `awarded`.
+8. The platform prepares one award email per bidder in that bidder's language. The `procurement_officer` reviews and sends them.
+
+**One cancelled tender, through copying**
+
+1. Tender T1 is published and receives no bids by the application deadline. The system sets `cancelled` with reason `no_bids`.
+2. The `procurement_officer` copies T1. T2 has `copied_from_tender_id = T1`, status `accepted`, no deadlines, copied translations and scoring, and copied Terms of Reference files. It has no bids or committees.
+3. The officer edits T2, raises its committees, sets new deadlines, and publishes it. T1 and its history are unchanged.
+
+## Assumptions
+
+- **A1:** a draft tender is a `TENDER` row with status `draft`, without deadlines, scoring, or committees.
+- **A2:** tender content, Terms of Reference, `estimated_balance`, and category lock at publication.
+- **A3:** each tender has one currency. The `financial_committee` converts the bid's total into it when entering `confirmed_total_price`.
+- **A4:** each supplier has one user account. Its email is the verified address used for Contact Supplier.
+- **A5:** a cancelled tender is copied at most once. Committees are not copied.
+- **A6:** the `procurement_officer` nominates committee members by name and email. The `admin` approves them and creates or links their accounts.
+- **A7:** categories are a fixed seeded list.
+- **A8:** bid documents are uploaded per bid. Reusing a profile document in a bid creates a new `DOCUMENT` row and storage object.
+- **A9:** the actors of status changes are recorded in `AUDIT_EVENT`.
+- **A10:** document `language` accepts any ISO 639-1 code. Interface and tender content use `en` and `ar` only.
+- **A11:** the `financial_committee` scores bids and does not fail them.
+- **A12:** the `admin` can accept a raised request but not reject it.
+- **A13:** the `legal_committee` fails a bid only on its legal information. It never sees the technical or financial offer, so an unqualified technical or financial file lowers that committee's score instead.
+- **A14:** suspension blocks new bids only. A suspended supplier keeps signing in, and its existing bids continue through evaluation.
+
+## Open items
+
+None. The glossary, workflows, capability matrix, ADR 0001, engineering standards, roadmap, and [V1 scope](../03_SCOPE/V1_SCOPE.md) are aligned with this ERD.
