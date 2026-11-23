@@ -148,6 +148,28 @@ erDiagram
     text bidder_code "system, random, unique per tender"
     timestamp submitted_at
   }
+  TENDER_FORM_FIELD {
+    uuid id PK
+    uuid tender_id FK
+    enum part_type
+    enum input_type "text | number | boolean | file"
+    int position
+    bool required
+    text unit "optional for numbers"
+    decimal minimum "optional for numbers"
+  }
+  TENDER_FORM_FIELD_TRANSLATION {
+    uuid field_id PK, FK
+    enum language PK "en | ar"
+    text label
+    text instructions "optional"
+  }
+  BID_FIELD_ANSWER {
+    uuid bid_part_id PK, FK
+    uuid field_id PK, FK
+    json scalar_value "typed scalar, null for files"
+    uuid document_id FK "optional original bid part document"
+  }
   BID_PART {
     uuid id PK
     uuid bid_id FK
@@ -234,6 +256,11 @@ erDiagram
   TENDER ||--o{ BID : receives
   SUPPLIER ||--o{ BID : submits
   BID ||--|{ BID_PART : "made of (exactly 3)"
+  TENDER ||--o{ TENDER_FORM_FIELD : defines
+  TENDER_FORM_FIELD ||--|{ TENDER_FORM_FIELD_TRANSLATION : labels
+  TENDER_FORM_FIELD ||--o{ BID_FIELD_ANSWER : receives
+  BID_PART ||--o{ BID_FIELD_ANSWER : contains
+  BID_PART_DOCUMENT |o--o| BID_FIELD_ANSWER : supplies
   BID_PART ||--o{ BID_PART_DOCUMENT : contains
   BID ||--o| LEGAL_EVALUATION : "legally evaluated"
   BID ||--o| TECHNICAL_EVALUATION : "technically evaluated"
@@ -348,7 +375,7 @@ erDiagram
 | Entered at accept (`procurement_officer`) | `TENDER_SCORING` |
 | Entered by the `employee` | `estimated_balance` |
 | Entered at publish (`procurement_officer`) | The three deadlines, in the order application → technical → financial |
-| Locked from publish | `TENDER_SCORING`, deadlines, `estimated_balance`, category, translations, Terms of Reference |
+| Locked from publish | `TENDER_SCORING`, deadlines, `estimated_balance`, category, translations, Terms of Reference, form fields |
 | Entered by committees | Legal outcome, technical score, financial score, confirmed total bid price |
 | Calculated by the system | `bidder_code`, `meets_minimum`, status changes, `cancellation_reason`, `combined_score`, `above_estimated_balance`, the top-ranked winner |
 
@@ -376,9 +403,16 @@ erDiagram
 - Not copied: deadlines, bids, committees, emails.
 - A cancelled tender can be copied at most once (unique `copied_from_tender_id`).
 
+### Supplier bid form
+
+- Each tender starts with the standard bid fields and document requirements. Custom fields supplement them. Order custom fields by position, unique within the tender and part. Each field needs a non-empty label in at least one supported language. Apply tender language fallback per field.
+- Only the procurement officer edits the template while the tender is `accepted`. Publication locks it. A cancelled-tender copy receives new field IDs and copies their definitions and translations, excluding answers.
+- Store at most one answer per part and field. Validate that tender and part type match the definition. Require every mandatory answer and validate scalar types and any numeric minimum. A file answer references exactly one original document of that bid part, unique among answers. Translations follow the original document. Scalar answers contain only a scalar value.
+- Commit answers with their bid part. Replacement overwrites that part’s complete answer set atomically. An evaluation view can read answers and files only for its own part. Technical and financial answers must preserve bidder anonymity.
+
 ### Tender revision
 
-- `TENDER.revision` starts at 1 and increases on every change to the tender's content, category, `estimated_balance`, `TENDER_SCORING`, or Terms of Reference, and on accept and publish. Raising committees and nominating members do not change it.
+- `TENDER.revision` starts at 1 and increases on every change to the tender's content, category, `estimated_balance`, `TENDER_SCORING`, Terms of Reference, or form fields (including labels and order), and on accept and publish. Raising committees and nominating members do not change it.
 - An edit names the `revision` it was based on. A mismatch is rejected as a conflict. A status that no longer allows the edit is rejected first, as a status change.
 
 ### Supporting tables

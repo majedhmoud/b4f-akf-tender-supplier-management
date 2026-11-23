@@ -8,10 +8,10 @@ V1 is the path the slices S1–S7 in the [roadmap](../HACKATHON_ROADMAP.md) cove
 
 | Area | V1 includes |
 |---|---|
-| Tenders (S1) | Draft tender → accept with scoring → Terms of Reference → publish. Public browsing in English and Arabic, with fallback. Copying a cancelled tender. |
+| Tenders (S1) | Draft tender → accept with scoring → Terms of Reference → publish. Custom fields on the supplier bid form, added before publishing. Public browsing in English and Arabic, with fallback. Copying a cancelled tender. |
 | Sign-up (S2) | Guest application → sign-up review → admin acceptance → account setup link. Supplier technical profile. Suspending and reactivating suppliers. |
 | Committees (S3) | Raising committees, nominating members, admin approval, account setup links for new members, My assignments. |
-| Bids (S4) | Submitting all three bid parts together, replacing each part until its deadline, translated copies of files. |
+| Bids (S4) | Submitting all three bid parts together, including answers to the tender's custom fields, replacing each part until its deadline, translated copies of files. |
 | Evaluation (S5) | Sealed Legal → Technical → Financial Evaluations, blind review by bidder code. |
 | Award (S6) | Automatic ranking and award, procurement officer tie-break, award and cancellation emails, Contact Supplier. |
 | Cross-cutting | English and Arabic with right-to-left layout, email in the recipient's language, audit events, Swagger, Postman collection, seed data with demo accounts. |

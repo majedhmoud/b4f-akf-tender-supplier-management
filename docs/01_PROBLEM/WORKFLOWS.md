@@ -19,7 +19,7 @@ A **tender status** changes only through these transitions. Any other change is 
 | From → To | Triggered by |
 |---|---|
 | `draft tender` → `accepted` | `procurement_officer` accepts it and sets the **score weights** and the **minimum technical score** |
-| `accepted` → `published` | `procurement_officer` publishes it. The score weights and minimum technical score are locked from here on. |
+| `accepted` → `published` | `procurement_officer` publishes it. The score weights, minimum technical score, and **supplier bid form** are locked from here on. |
 | `published` → `closed` | Automatically at the application deadline if at least one bid was received. No new bidders; existing bidders can still replace their technical and financial offers until those deadlines. |
 | `published` → `cancelled` | Automatically at the application deadline, if the tender received no bids |
 | `closed` → `under_evaluation` | Automatically at the financial deadline |
@@ -41,7 +41,7 @@ A `cancelled` tender is final. The `procurement_officer` may copy it into a new 
 
 ## Bid submission
 
-1. An `active` `supplier` submits a bid before the application deadline, through one form with all three **bid parts**. The form includes all required fields and files.
+1. An `active` `supplier` submits a bid before the application deadline, through the **supplier bid form** with all three **bid parts**. The form includes all required fields and files.
 2. Until its own deadline, the owning `supplier` may replace a bid part. Earlier versions are not kept.
    - legal information: the application deadline
    - technical offer: the technical deadline
