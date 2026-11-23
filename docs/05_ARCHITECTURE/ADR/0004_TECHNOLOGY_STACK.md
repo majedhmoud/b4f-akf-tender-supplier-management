@@ -17,6 +17,7 @@ We use tools the team already knows from `b4f-board-final`, plus background jobs
 | Data fetching | TanStack Query with an Orval-generated client from Swagger; the browser calls the API, protected by CORS and CSRF |
 | Screen state | React state and context; no Redux |
 | Local services | PostgreSQL, Redis, and Mailpit, installed natively by each member |
+| Code quality and tests | ESLint and Prettier in both apps; `class-validator` and `@nestjs/config` in the back end; Jest (back end); Vitest with Testing Library (front end) |
 
 ## Sealed-bid acceptance check
 
