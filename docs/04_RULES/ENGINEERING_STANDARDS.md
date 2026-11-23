@@ -76,12 +76,12 @@ Security is a critical requirement because the platform handles confidential sup
 ### 2.2 Authorization
 
 - Follow the principle of least privilege.
-- Implement role-based access control. Account roles are `supplier`, `requester`, `procurement_officer`, `admin`, and `legal_committee` (sign-up review only). Access to a tender's committee work comes only from an approved **committee assignment**.
+- Implement role-based access control. Account roles are `supplier`, `employee`, `procurement_officer`, `admin`, and `legal_committee` (sign-up review only). Access to a tender's committee work comes only from an approved **committee assignment**.
 - Add resource-level authorization checks.
 - Never trust role information or permissions supplied by the front end.
 - Enforce authorization on the back end for every protected operation.
 - Deny access by default when permissions are missing or unclear.
-- Keep each user's permissions separate: `guest`, `supplier`, `requester`, `procurement_officer`, `admin`, `legal_committee`, `technical_committee`, and `financial_committee`.
+- Keep each user's permissions separate: `guest`, `supplier`, `employee`, `procurement_officer`, `admin`, `legal_committee`, `technical_committee`, and `financial_committee`.
 
 Critical rules:
 
@@ -92,9 +92,9 @@ Critical rules:
 - The `legal_committee` accesses only the information its Legal Evaluation needs.
 - Committee members access only the tenders and evaluations they are assigned to. The standing `legal_committee` role gives access to sign-up reviews only, never to tenders.
 - Evaluation is blind: the `technical_committee` and `financial_committee` see a **bidder code**, never the supplier's identity. Only the `legal_committee` and the `procurement_officer` see who the supplier is; the `procurement_officer` sees it only in the **ranking**. Technical and financial views identify bids by bidder code, never by the bid's ID.
-- `admin`, `requester`, and `procurement_officer` never see bid contents. The `procurement_officer` sees the ranking: supplier names and scores.
+- `admin`, `employee`, and `procurement_officer` never see bid contents. The `procurement_officer` sees the ranking: supplier names and scores.
 - One person serves on at most one committee of the same tender.
-- The tender's `requester`, the `procurement_officer`, and the `admin` cannot serve on any of that tender's committees.
+- The tender's requesting `employee`, the `procurement_officer`, and the `admin` cannot serve on any of that tender's committees.
 - The access service enforces the last two rules when committee members are approved.
 
 Hiding buttons, pages, or routes in Next.js is never a security mechanism.
@@ -163,7 +163,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 **Request DTOs:**
 
 - Ownership, role, and status always come from the server, never from the request body:
-  - The `supplier` of a bid, the committee member of an evaluation, and the `requester` of a draft tender come from the JWT.
+  - The `supplier` of a bid, the committee member of an evaluation, and the requesting `employee` of a draft tender come from the JWT.
   - Clients cannot set tender status directly. Manual actions and automatic lifecycle transitions follow WORKFLOWS.md. A manual action uses a dedicated endpoint, for example `POST /api/v1/tenders/:id/publish`.
 - A draft tender DTO rejects deadlines, suppliers, and committees.
 - A publish DTO requires the three deadlines, in the order application → technical → financial, all in the future, and a category.
@@ -457,7 +457,7 @@ Every feature includes appropriate tests.
 - A `supplier` cannot access other suppliers' bids.
 - The `technical_committee` never receives financial information.
 - The `technical_committee` and `financial_committee` never receive the supplier's identity.
-- `admin`, `requester`, and `procurement_officer` cannot read bid contents.
+- `admin`, `employee`, and `procurement_officer` cannot read bid contents.
 - One person cannot be approved for more than one committee of one tender.
 - A suspended supplier cannot submit a new bid. Existing bids remain eligible for timely part replacement and evaluation.
 - Invalid tender status changes are rejected.
