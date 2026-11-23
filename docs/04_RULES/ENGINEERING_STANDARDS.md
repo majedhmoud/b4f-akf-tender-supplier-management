@@ -69,14 +69,14 @@ Security is a critical requirement because the platform handles confidential sup
 - Use short-lived access tokens and a secure refresh-token strategy where applicable.
 - Protect refresh tokens against theft and replay.
 - Check account status during authentication.
-- Email verification uses expiring, single-use tokens.
+- Account setup links use expiring, single-use tokens, stored hashed. Using one sets the password and verifies the email address.
 - Password reset tokens are single-use and expire after a limited period.
 - Never send passwords by email.
 
 ### 2.2 Authorization
 
 - Follow the principle of least privilege.
-- Implement role-based access control, with a role for each user in the glossary.
+- Implement role-based access control. Account roles are `supplier`, `requester`, `procurement_officer`, `admin`, and `legal_committee` (sign-up review only). Access to a tender's committee work comes only from an approved **committee assignment**.
 - Add resource-level authorization checks.
 - Never trust role information or permissions supplied by the front end.
 - Enforce authorization on the back end for every protected operation.
@@ -90,11 +90,11 @@ Critical rules:
 - The `technical_committee` never sees financial information. There are no exceptions.
 - The `financial_committee` never sees the technical offer and gains no access to unrelated evaluations.
 - The `legal_committee` accesses only the information its Legal Evaluation needs.
-- Committee members access only the tenders and evaluations they are assigned to.
-- Evaluation is blind: the `technical_committee` and `financial_committee` see a **bidder code**, never the supplier's identity. Only the `legal_committee` and, after the award, the `procurement_officer` see who the supplier is.
-- `admin`, `requester`, and `procurement_officer` never see bid contents. The `procurement_officer` receives only the winning supplier.
-- One person cannot serve on both the `technical_committee` and the `financial_committee` for the same tender.
-- The tender's `requester` cannot serve on any of that tender's committees.
+- Committee members access only the tenders and evaluations they are assigned to. The standing `legal_committee` role gives access to sign-up reviews only, never to tenders.
+- Evaluation is blind: the `technical_committee` and `financial_committee` see a **bidder code**, never the supplier's identity. Only the `legal_committee` and the `procurement_officer` see who the supplier is; the `procurement_officer` sees it only in the **ranking**. Technical and financial views identify bids by bidder code, never by the bid's ID.
+- `admin`, `requester`, and `procurement_officer` never see bid contents. The `procurement_officer` sees the ranking: supplier names and scores.
+- One person serves on at most one committee of the same tender.
+- The tender's `requester`, the `procurement_officer`, and the `admin` cannot serve on any of that tender's committees.
 - The access service enforces the last two rules when committee members are approved.
 
 Hiding buttons, pages, or routes in Next.js is never a security mechanism.
@@ -121,7 +121,7 @@ Suggested initial policies:
 |---|---|
 | Login | 5 attempts / minute / IP, with additional account-based controls |
 | Password reset | 3 requests / hour / account |
-| Email verification | 5 requests / hour / account |
+| Account setup link | 5 requests / hour / account |
 | Public tender browsing | 60 requests / minute / IP |
 | Authenticated API | 120 requests / minute / user |
 | File upload | 10 requests / minute / user |
@@ -164,7 +164,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 
 - Ownership, role, and status always come from the server, never from the request body:
   - The `supplier` of a bid, the committee member of an evaluation, and the `requester` of a draft tender come from the JWT.
-  - A tender status changes only through an explicit action, for example `POST /api/v1/tenders/:id/publish`.
+  - Clients cannot set tender status directly. Manual actions and automatic lifecycle transitions follow WORKFLOWS.md. A manual action uses a dedicated endpoint, for example `POST /api/v1/tenders/:id/publish`.
 - A draft tender DTO rejects deadlines, suppliers, and committees.
 - A publish DTO requires the three deadlines, in the order application → technical → financial, all in the future, and a category.
 - A sign-up DTO accepts legal information only, with no role, account, or password fields.
@@ -180,6 +180,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 | `LegalBidView` | Legal information | Technical offer, financial offer |
 | `TechnicalBidView` | Technical offer, **bidder code** | Financial offer, supplier identity |
 | `FinancialBidView` | Financial offer, **bidder code** | Technical offer, supplier identity |
+| `BidRankingView` (`procurement_officer`) | Supplier names, scores, ranking, above-balance flags, the winner | Bid contents |
 
 ## 3. Database and data integrity
 
@@ -199,7 +200,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 
 Use transactions whenever several database operations must succeed or fail together. Examples:
 
-- Submitting a bid part and its document records.
+- Creating a bid with all three parts and their required documents, or replacing one existing part with its documents.
 - Submitting an evaluation and updating its submission status.
 - Accepting a supplier's sign-up and recording the audit event.
 - Awarding a tender and updating its **tender status**.
@@ -328,10 +329,10 @@ Use a queue such as BullMQ with Redis when asynchronous processing is required. 
 
 - Bid part submission.
 - Evaluation submission.
-- Award confirmation.
+- Award, including a tie broken by the `procurement_officer`.
 - Payment or contract actions, if introduced later.
 
-If a `supplier` submits a bid part and the network fails before the response arrives, retrying must not create a second bid.
+If a `supplier` submits a complete bid and the network fails before the response arrives, retrying must not create a second bid.
 
 ## 6. Clean code and maintainability
 
@@ -412,11 +413,12 @@ Auditability is a core business requirement. Record only the actions defined in 
 - Draft tender created and accepted.
 - Tender published, closed, moved to `under_evaluation`, and awarded.
 - Legal information submitted for sign-up, sign-up accepted, and supplier information raised to the `admin`.
-- Supplier account created, verification email sent, and email verified.
+- Sign-up request accepted by the `admin`, supplier account created, account setup link sent, and password set.
+- Supplier suspended and reactivated.
 - Committees raised, and committee members approved.
 - Bid part submitted and bid part replaced (who and when, without content).
 - Evaluation submitted.
-- Winning supplier sent to the `procurement_officer`.
+- Ranking calculated, tender awarded, and a tie broken by the `procurement_officer`.
 - Unauthorized access attempts.
 
 Add events as new workflows are agreed.
@@ -456,7 +458,8 @@ Every feature includes appropriate tests.
 - The `technical_committee` never receives financial information.
 - The `technical_committee` and `financial_committee` never receive the supplier's identity.
 - `admin`, `requester`, and `procurement_officer` cannot read bid contents.
-- One person cannot be approved for both the technical and financial committees of one tender.
+- One person cannot be approved for more than one committee of one tender.
+- A suspended supplier cannot submit a new bid. Existing bids remain eligible for timely part replacement and evaluation.
 - Invalid tender status changes are rejected.
 - Rate limits work.
 - File uploads are validated.
