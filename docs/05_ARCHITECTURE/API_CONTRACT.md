@@ -1,6 +1,6 @@
 # Frontend API contract (V1)
 
-Status: accepted (revision 2). Section 4 lists ERD changes that still need separate approval.
+Status: accepted (revision 2). The ERD changes in section 4 are approved.
 
 For the Next.js teammate building against mocks. Every endpoint shape, header, and error code is a **proposal**, except what the accepted docs already fix: `/api/v1`, the HttpOnly JWT cookie, 404 for records a user may not see, the pagination envelope, and the response DTO names in ENGINEERING_STANDARDS §2.7.
 
@@ -10,7 +10,7 @@ For the Next.js teammate building against mocks. Every endpoint shape, header, a
 - "My bids" shows the tender status only. Each supplier learns their own result from the officer-reviewed email.
 - Newly approved committee members activate through the same account setup page, in a language the `admin` chooses. Existing accounts just receive the assignment.
 
-ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pending-approval). Mock against them, but they need separate approval.
+The ERD changes this contract depends on are listed in [section 4](#4-erd-changes-approved) and are in the [ERD](ERD.md).
 
 ## 1. Shared behaviour
 
@@ -52,7 +52,7 @@ ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pe
   - tie-break award
   - email preparation and sending
 - **Retries.** Create the key once per user action, and keep it in the mutation's state, so every retry of that action reuses it.
-- **Scope.** The server stores keys per user and per route for 24 hours. A different user using the same key is simply a new request.
+- **Scope.** The server stores keys for 24 hours per caller and target route. Signed-in callers use their account. Guest applications use the server-issued browser scope established by CSRF bootstrap, which survives CSRF token renewal. Retry from the same browser with credentials included.
 - **Replays and misuse.**
   - Same key, same payload (including file hashes): the server returns the original status and body, with `Idempotent-Replayed: true`.
   - Same key, different payload: `422 IDEMPOTENCY_KEY_REUSED`. The UI creates a new key only if the user deliberately changed the form.
@@ -799,7 +799,7 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
     "skipped": [{ "id": "m-2", "reason": "revision_changed" }] }
   ```
   - Other skip reasons: `already_sending`, `already_sent`, `not_listed` (an email missing from `revisions`).
-  - Send one and Send all both move an email out of `draft` only if it is still `draft`, so an email racing between them is delivered once.
+  - Send one and Send all claim the reviewed revision only while it is `draft` or `failed`. Concurrent requests schedule one delivery. An uncertain delivery stays `sending` during reconciliation. Retry becomes available only after confirmed failure.
 - **Polling.** While any email is `sending`, refetch the list every 3 seconds, for at most 60 seconds. After that, show "Still sending, check again later".
 - **Failure.** A failed email shows `failure: { "code": "DELIVERY_FAILED", "at": "…" }` and a Retry button. Retry is the same call as Send one.
 - **Contact Supplier.** `POST /manage/suppliers/s-12/contact-drafts` with `{ "tenderId": "t-1001" }` (`tenderId` is optional) and `Idempotency-Key` returns `201`:
@@ -811,16 +811,16 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
   - Then edit and send it through E3 and E4.
 - **Cancellation emails** (`kind=cancellation`) follow the same flow. No email exists for an applicant whose sign-up was rejected; that is outside the accepted V1 sign-up flow.
 
-## 4. ERD changes pending approval
+## 4. ERD changes (approved)
 
-The contract uses these, but they aren't in the accepted ERD.
+These were added to the [ERD](ERD.md) with this contract.
 
 1. **Email statuses.** `EMAIL_MESSAGE.status` gains `sending`, and `EMAIL_MESSAGE` gains `revision`.
 2. **Tender revision.** `TENDER` gains `revision`, the counter behind `VERSION_CONFLICT`.
-3. **Supporting tables, not drawn** (like `AUDIT_EVENT):
-   - `SESSION`: refresh-token rotation, replay detection, sign-out revocation.
+3. **Supporting tables, not drawn** (like `AUDIT_EVENT`):
+   - `SESSION` and `SESSION_REFRESH_TOKEN`: refresh-token rotation, replay detection, sign-out revocation.
    - `IDEMPOTENCY_KEY`: user, route, key, payload hash, stored response, expiry.
-4. **Committee member accounts.** Approving a nomination for someone without an account creates a `pending_setup` account in the language the `admin` chose. It reuses `ACCOUNT_SETUP_TOKEN` and the `account_setup` email kind. Once approved, the ERD and WORKFLOWS must describe this.
+4. **Committee member accounts.** Approving a nomination for someone without an account creates a `pending_setup` account in the language the `admin` chose. It reuses `ACCOUNT_SETUP_TOKEN` and the `account_setup` email kind. The ERD and [WORKFLOWS.md](../01_PROBLEM/WORKFLOWS.md#committee-assignments) describe it.
 
 ## 5. Out of scope for V1
 

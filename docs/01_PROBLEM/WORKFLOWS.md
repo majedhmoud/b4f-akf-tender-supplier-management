@@ -32,6 +32,13 @@ A `cancelled` tender is final. The `procurement_officer` may copy it into a new 
 - The deadlines and bids are not copied. The officer sets new deadlines and publishes it as usual.
 - The new tender records which tender it was copied from.
 
+## Committee assignments
+
+1. While a tender is `accepted`, `published`, or `closed`, the `procurement_officer` raises its committees and nominates members by name and email.
+2. The `admin` approves or rejects each nomination. Rejection ends the process for that nomination. On approval, follow the applicable step below.
+3. If the nominee has no account, the `admin` chooses its language. The platform creates the account and emails an **account setup link** in that language. The member sets a password and lands on their assignments.
+4. If the nominee already has an account, the approved **committee assignment** is added to it, with no new link.
+
 ## Bid submission
 
 1. An `active` `supplier` submits a bid before the application deadline, through one form with all three **bid parts**. The form includes all required fields and files.

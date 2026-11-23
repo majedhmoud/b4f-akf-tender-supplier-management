@@ -100,4 +100,4 @@ How a `guest` becomes a `supplier`. See [WORKFLOWS.md](01_PROBLEM/WORKFLOWS.md#s
 The `legal_committee`'s decision to accept or reject a `guest`'s legal information during the **supplier_signup_process**.
 
 **account setup link**:
-A single-use, expiring link through which an approved applicant sets a password and verifies their email address.
+A single-use, expiring link through which an approved applicant or a newly approved committee member sets a password and verifies their email address.
