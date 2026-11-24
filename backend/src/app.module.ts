@@ -17,6 +17,7 @@ import { CommitteesModule } from './committees/committees.module.js';
 import { BidsModule } from './bids/bids.module.js';
 import { LifecycleModule } from './lifecycle/lifecycle.module.js';
 import { EvaluationsModule } from './evaluations/evaluations.module.js';
+import { OfficerEmailsModule } from './officer-emails/officer-emails.module.js';
 import { TendersModule } from './tenders/tenders.module.js';
 
 @Module({
@@ -54,6 +55,7 @@ import { TendersModule } from './tenders/tenders.module.js';
     BidsModule,
     LifecycleModule,
     EvaluationsModule,
+    OfficerEmailsModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: CacheControlInterceptor }],
 })

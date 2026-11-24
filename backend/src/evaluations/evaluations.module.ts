@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit/audit.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { AwardsModule } from '../awards/awards.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import {
   FinancialEvaluationsController,
@@ -10,7 +11,7 @@ import {
 import { EvaluationsService } from './evaluations.service.js';
 
 @Module({
-  imports: [AuthModule, AuditModule, StorageModule],
+  imports: [AuthModule, AuditModule, StorageModule, AwardsModule],
   controllers: [
     LegalEvaluationsController,
     TechnicalEvaluationsController,

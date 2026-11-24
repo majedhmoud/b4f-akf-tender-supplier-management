@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { notFound } from '../auth/access.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { AwardsService } from '../awards/awards.service.js';
 import { ApiException } from '../common/errors/api-exception.js';
 import { validateBody } from '../common/errors/validate-body.js';
 import { pickTranslation } from '../common/language/language.js';
@@ -133,6 +134,7 @@ export class EvaluationsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly signedUrls: SignedUrlService,
+    private readonly awards: AwardsService,
   ) {}
 
   private async assignment(
@@ -445,10 +447,21 @@ export class EvaluationsService {
           technicalEvaluation: { isNot: null },
         })) === passed;
       if (!technicalDone) return;
-      noneLeft = (await count(eligible(tenderId, 'financial'))) === 0;
+      const meets = await count(eligible(tenderId, 'financial'));
+      noneLeft = meets === 0;
+      if (!noneLeft) {
+        const financialDone =
+          (await count({
+            ...eligible(tenderId, 'financial'),
+            financialEvaluation: { isNot: null },
+          })) === meets;
+        // A complete Financial Evaluation is ranked, and a unique top score is
+        // awarded, in this same transaction (ERD, Scoring and award; S6).
+        if (financialDone) await this.awards.rankAndAward(tx, tenderId);
+        return;
+      }
     }
-    if (!noneLeft) return;
-    await tx.tender.updateMany({
+    const cancelled = await tx.tender.updateMany({
       where: { id: tenderId, status: 'under_evaluation' },
       data: {
         status: 'cancelled',
@@ -456,6 +469,8 @@ export class EvaluationsService {
         cancelledAt: new Date(),
       },
     });
+    // Every bidder gets a cancellation draft for the officer to review.
+    if (cancelled.count === 1) await this.awards.prepareDrafts(tx, tenderId, null);
   }
 
   // C7 counts: bids this assignment may still evaluate.
