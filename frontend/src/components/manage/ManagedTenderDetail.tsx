@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -52,7 +52,6 @@ function TenderPanels({
     'overview',
     ...(canAccept || canEdit ? ['edit'] : []),
     'documents',
-    ...(canPublish ? ['publish'] : []),
   ];
   return (
     <article className="space-y-5">
@@ -75,14 +74,6 @@ function TenderPanels({
         <Badge variant="secondary">{t(`Statuses.${tender.status}`)}</Badge>
       </header>
       <ManagementFeedback error={action.error} reload={reload} />
-      {tender.status !== 'draft' && (
-        <Link
-          href={`/manage/tenders/${tender.id}/bid-form`}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          {t('Manage.bidForm')}
-        </Link>
-      )}
       {canCopy && (
         <div className="space-y-4 panel p-5">
           <p className="text-sm">{t('Manage.copyHint')}</p>
@@ -117,15 +108,27 @@ function TenderPanels({
       <div className="grid items-start gap-5 lg:grid-cols-[13rem_minmax(0,1fr)]">
         <nav aria-label={t('Employee.sections')} className="flex flex-col gap-2 panel p-5">
           {panels.map((item) => (
-            <Button
-              key={item}
-              variant={panel === item ? 'secondary' : 'ghost'}
-              aria-current={panel === item ? 'page' : undefined}
-              className="justify-start"
-              onClick={() => setPanel(item)}
-            >
-              {t(`Manage.panel_${item}`)}
-            </Button>
+            <Fragment key={item}>
+              <Button
+                variant={panel === item ? 'secondary' : 'ghost'}
+                aria-current={panel === item ? 'page' : undefined}
+                className="justify-start"
+                onClick={() => setPanel(item)}
+              >
+                {t(`Manage.panel_${item}`)}
+              </Button>
+              {item === 'documents' && tender.status !== 'draft' && (
+                <Link
+                  href={`/manage/tenders/${tender.id}/bid-form`}
+                  className={buttonVariants({
+                    variant: 'outline',
+                    className: 'w-full justify-start',
+                  })}
+                >
+                  {t('Manage.bidForm')}
+                </Link>
+              )}
+            </Fragment>
           ))}
         </nav>
         <div className="min-w-0">
@@ -209,12 +212,10 @@ function TenderPanels({
           {panel === 'documents' && (
             <ManagedDocuments tender={tender} done={done} reload={reload} />
           )}
-          {panel === 'publish' && canPublish && (
-            <PublishTenderForm tender={tender} done={done} reload={reload} />
-          )}
         </div>
       </div>
       <TenderCommittees tenderId={tender.id} status={tender.status} />
+      {canPublish && <PublishTenderForm tender={tender} done={done} reload={reload} />}
     </article>
   );
 }

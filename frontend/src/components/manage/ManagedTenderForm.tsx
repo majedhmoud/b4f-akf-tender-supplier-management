@@ -3,7 +3,8 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ErrorState } from '@/components/layout/States';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Link } from '@/i18n/navigation';
 import type { ManagedTender } from '@/lib/api/generated/model';
 import { useReferenceCategories } from '@/lib/api/generated/reference/reference';
 import {
@@ -293,10 +294,20 @@ export function PublishTenderForm({ tender, done, reload }: Props) {
           />
           {t('publishConfirm')}
         </label>
-        <Button type="submit" disabled={action.busy}>
+      </fieldset>
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-4">
+        <Link href="/manage/tenders" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+          {t('cancel')}
+        </Link>
+        <Button
+          type="submit"
+          size="lg"
+          className="min-w-44 shadow-sm"
+          disabled={action.busy || action.locked}
+        >
           {t(action.busy ? 'saving' : 'publish')}
         </Button>
-      </fieldset>
+      </div>
     </form>
   );
 }
