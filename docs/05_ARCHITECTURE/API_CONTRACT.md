@@ -2,7 +2,7 @@
 
 Status: accepted (revision 2). The ERD changes in section 4 are approved.
 
-For the web and mobile clients building against the API. This document includes implemented flows and proposed operations labelled below. [ADR 0007](ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md) accepts the S7 session model. The mobile routes are implemented in the local S7 work and covered by the focused backend integration suite. See the [S7 checkpoint](../06_SLICES/S7_SUPPLIER_COMPANION.md#verification-and-status) for integration and device status.
+For the web and mobile clients building against the API. This document includes implemented flows and proposed operations labelled below. [ADR 0007](ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md) accepts the S7 session model. The mobile routes are implemented and covered by backend integration tests. See the [S7 checkpoint](../06_SLICES/S7_SUPPLIER_COMPANION.md#verification-and-status) for what was verified.
 
 **Decisions applied in this revision**
 
@@ -166,6 +166,7 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | A3 | Refresh | After `SESSION_EXPIRED` | `POST /auth/refresh` |
 | A4 | Sign out | Signed in | `POST /auth/sign-out` |
 | A5 | Change interface language | Signed in | `PATCH /me` |
+| A6 | Create an AKF employee account | Admin | `POST /admin/employees` |
 | **Mobile Auth (S7)** | | | |
 | MA1 | Sign in | Active supplier account | `POST /mobile/auth/sign-in` |
 | MA2 | Rotate tokens | Mobile refresh token | `POST /mobile/auth/refresh` |
@@ -288,6 +289,8 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 `POST /auth/sign-out` returns `204`. Clear the cache and fetch a new CSRF token.
 
 `PATCH /me` with `{ "preferredLanguage": "ar" }` returns `200` with the updated `user`. Switch the route locale.
+
+A6 takes `displayName`, `email`, and `preferredLanguage` (`en` or `ar`). It requires a web session and CSRF token. The response is `201` with `id`, `email`, and `status: pending_setup`. The server assigns the `employee` role and queues a setup email. A registered email returns `409 EMAIL_ALREADY_REGISTERED`.
 
 ### Mobile Auth (S7)
 
@@ -512,7 +515,7 @@ U7 provisions at most once. Its conflicts, checked in this order:
    - This only checks the link. The token stays valid.
    - Render the page in `preferredLanguage`.
 2. `POST /account-setup/complete` with `{ "token": "…", "password": "…" }` uses up the token.
-   - It returns `200`: the session body plus `"next": "supplier_profile"`, or `"my_assignments"` for a committee member.
+   - It returns `200`: the session body plus `next`. Values are `supplier_profile` for suppliers, `my_assignments` for committee members, and `employee_tenders` for employees.
    - Clear the cache, fetch a new CSRF token, then navigate to `next`.
 3. Errors from either call:
    - `410 SETUP_LINK_EXPIRED`: "Send a new link" calls `POST /account-setup/resend` with `{ "token": "…" }`, which always returns `202`.

@@ -1,4 +1,60 @@
 {
+  "EmployeeAccounts": {
+    "nav": "Employee accounts",
+    "title": "Create an AKF employee account",
+    "intro": "Enter the employee’s work email. They’ll receive a link to set their password.",
+    "name": "Full name",
+    "email": "Work email",
+    "language": "Setup email language",
+    "creating": "Creating account…",
+    "create": "Create employee account",
+    "duplicate": "An account already uses this email address.",
+    "failure": "The account could not be created. Try again.",
+    "created": "Account created for {email}. The setup email is queued, and the account is pending setup."
+  },
+  "PublicInfo": {
+    "navigation": "Platform information",
+    "about": "About",
+    "terms": "Terms and Conditions"
+  },
+  "About": {
+    "title": "About AKF Tenders",
+    "intro": "The Aga Khan Foundation (AKF) tender platform brings tender notices, documents, and supplier submissions together.",
+    "platform": {
+      "title": "Explore public tenders",
+      "body": "Browse published opportunities and read each tender’s specifications, attachments, and submission deadline."
+    },
+    "suppliers": {
+      "title": "Participate as a supplier",
+      "body": "Apply for a supplier account. After approval and account setup, sign in to submit a bid and track it from My Bids."
+    },
+    "help": {
+      "title": "Get help with a tender",
+      "body": "For a question about requirements or attachments, use the contact details in the tender notice or its documents."
+    },
+    "action": "Browse public tenders"
+  },
+  "Terms": {
+    "title": "Terms and Conditions",
+    "intro": "These general terms explain how to use the AKF tender platform. The terms and documents published for each tender govern submissions to that tender.",
+    "accounts": {
+      "title": "Account access",
+      "body": "Use an account you are authorized to access. Keep your password and account setup link private. Suppliers must provide accurate and current registration information."
+    },
+    "submissions": {
+      "title": "Bid submissions",
+      "body": "Check your bid details and attachments before submitting. Submit all required parts through the platform before the deadline shown on the tender."
+    },
+    "requirements": {
+      "title": "Tender requirements",
+      "body": "Read the tender notice, its attachments, and any updates before preparing your bid. Follow the instructions and conditions published for that tender."
+    },
+    "communication": {
+      "title": "Status and questions",
+      "body": "Keep a copy of your submission and check your account for updates. Direct tender questions to the contact listed in its notice or documents."
+    },
+    "action": "About the platform"
+  },
   "Common": {
     "appName": "AKF Tenders",
     "appFullName": "AKF Tender and Supplier Management",

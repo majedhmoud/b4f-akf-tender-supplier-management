@@ -25,7 +25,7 @@ Required models: `SUPPLIER_APPLICATION`, `SIGNUP_REVIEW`, `SUPPLIER`, `APPLICATI
 
 ## Screens
 
-Proposed web routes below are localized under `/[locale]/`; all text supports English/Arabic and logical RTL layout.
+Web routes below are localized under `/[locale]/`; all text supports English/Arabic and logical RTL layout.
 
 | Group | Route | Behavior |
 |---|---|---|
@@ -73,6 +73,10 @@ Settled on November 24, 2026 (see the [API contract](../05_ARCHITECTURE/API_CONT
 2. A sign-up whose contact email already has an account is refused with `409 EMAIL_ALREADY_REGISTERED`, at submission and again at acceptance. The person signs in instead, and a registered supplier updates their legal information on their profile.
 3. A repeated or simultaneous U7 returns `409 ALREADY_ACCEPTED` with `details.supplierId`. A registration number another supplier already has returns `409 REGISTRATION_NUMBER_EXISTS`, and the request stays raised.
 
+## Status
+
+Implemented: guest application, sign-up review, admin acceptance, account setup, supplier profile with certificate replacement, and the admin supplier directory. Supplier technical documents are not shipped in V1 ([V1 scope](../03_SCOPE/V1_SCOPE.md#postponed)). Snapshot verification is in the [closeout checkpoint](../HACKATHON_ROADMAP.md#closeout-checkpoint--november-24-2026). The checkpoints below are dated history.
+
 ## Earlier application/review implementation checkpoint
 
 November 24, 2026: the separately accepted first back-end task implements R2 and U1–U6, including U3d. U7 is excluded until the open questions above are resolved. No front-end sign-up screens, provisioning, setup endpoints, email delivery or profile/admin actions are implemented yet.
@@ -84,11 +88,11 @@ November 24, 2026: the separately accepted first back-end task implements R2 and
 
 Verification: 18 new API tests passed. Full regression: **18 back-end unit tests, 82 API/database tests and 105 front-end tests passed**. Cases include scope isolation, reordered JSON replay, changed file hashes, forged scope replacement, private downloads, role denial, rejection without provisioning, concurrent reviews, failure rollback and expired reservation recovery. The migration was applied to the local development database without resetting existing data.
 
-Automated test files only; no browser/Postman runtime verification, lint, production build or separate typecheck was run. Implementation is ready for review, not accepted as the whole S2 slice. No existing-email linking or repeated-U7 response policy was chosen. The legal/admin Postman requests require suitable local accounts; seed updates are still a later task.
+Automated test files only; no browser/Postman runtime verification, lint, production build or separate typecheck was run. Implementation is ready for review, not accepted as the whole S2 slice. No existing-email linking or repeated-U7 response policy was chosen. The legal/admin Postman requests require suitable local accounts; seed updates followed in a later checkpoint.
 
 ## Earlier admin acceptance, account setup and email checkpoint
 
-November 24, 2026: the back end implements U7 and account setup S1–S3, with automatic email delivery through Redis/BullMQ, Nodemailer and Mailpit. Supplier profile actions (P1–P5) and the front-end screens for U7 and setup are not implemented yet.
+November 24, 2026: the back end implements U7 and account setup S1–S3, with automatic email delivery through Redis/BullMQ, Nodemailer and Mailpit. Supplier profile actions (P1–P5) and the U7 and setup screens were built after this checkpoint.
 
 - U7 commits the admin acceptance, the active supplier, its `pending_setup` account, the first setup link and its `sending` email in one transaction, and queues delivery after commit. Its conflicts follow the settled order above.
 - Setup links are stored only as hashes. The email row keeps a placeholder, and the worker puts the link in when it sends. Verify leaves the link usable; complete uses it up once, activates the account, verifies the email and signs the supplier in. Resend always answers `202`, and sends at most 5 links an hour per account.
@@ -106,7 +110,7 @@ This checkpoint supersedes the earlier statements that web screens and U7/setup 
 - Admin U7: regenerated client; Accept with pending/duplicate-click protection. Success shows the setup email's language and `sending` state. `ALREADY_ACCEPTED`, `EMAIL_ALREADY_REGISTERED` and `REGISTRATION_NUMBER_EXISTS` have en/ar messages; success and conflicts refresh the raised queue and detail. The outcome remains visible when the accepted request becomes unavailable.
 - Account setup: localized page, fragment-only token read into transient memory, masked email, password form, expired/used/invalid states, resend and rate-limit handling. Completion establishes the session and renews CSRF. Suppliers land on `/profile` and committee members land on the S3 screen at `/my-assignments`. The latest setup work was not retested at this checkpoint.
 - Shared UI: role-aware sidebar; account view for every signed-in user; stronger button borders/colors and consistent modest rounding. Employee create/edit/detail use real horizontal tabs, preserve draft inputs and reveal invalid sections when saving.
-- Current files also include supplier legal/technical editing, certificate replacement and the admin directory with suspend/reactivate actions. These latest additions have not been reviewed or retested in this checkpoint. Technical-document work remains pending; no whole-slice completion is claimed.
+- Current files also include supplier legal/technical editing, certificate replacement and the admin directory with suspend/reactivate actions. These latest additions have not been reviewed or retested in this checkpoint. Supplier technical documents are not shipped in V1.
 
 ### Verification boundary
 

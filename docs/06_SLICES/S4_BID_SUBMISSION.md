@@ -32,14 +32,14 @@ Translations (B5), the lifecycle job that closes tenders at the application dead
 
 November 24, 2026: implemented in the back end and web app. No automated tests were written or run, by Majed's decision.
 
-## Current work split
+## Work split at the S4 handoff
 
 | Workstream | Next task | State |
 |---|---|---|
 | Back end | Active Cedar Supplies demo account; preserve Wadi setup fixture; future published deadlines; safe bid/file reset cleanup | Seed/reset source reviewed; static checks pass; local reload not confirmed |
 | Back-end review | Deadline locking, uncertain-commit file cleanup, required-text validation and upload/access check order | Source corrections reviewed; static checks pass; runtime outcomes unverified |
 | Front end | Idempotency keys on deliberate edits, retry waits, required-text checks, bid-list pagination and visible loading/error states | Implemented; static checks pass; no runtime verification |
-| Documentation | Keep this checkpoint and the roadmap aligned with actual implementation and checks | In progress |
+| Documentation | Keep this checkpoint and the roadmap aligned with actual implementation and checks | Done; see the [closeout checkpoint](../HACKATHON_ROADMAP.md#closeout-checkpoint--november-24-2026) |
 
 The S4 baseline passed TypeScript, lint, formatting and production builds in both apps; the database/schema comparison reported no differences. No tests were written or run in that S4 handoff. The downstream implementation is recorded in [S5](S5_SEALED_EVALUATION.md) and [S6](S6_AWARD.md).
 

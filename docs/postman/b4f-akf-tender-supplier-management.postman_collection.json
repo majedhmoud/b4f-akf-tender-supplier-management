@@ -198,6 +198,50 @@
   ],
   "item": [
     {
+      "name": "Employee Accounts",
+      "item": [
+        {
+          "name": "A6 Create an employee account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Example Employee\",\n  \"email\": \"employee@example.test\",\n  \"preferredLanguage\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees"
+              ]
+            },
+            "description": "Sign in as an administrator and fetch a session CSRF token first. Creates a pending employee account and queues a setup email."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "System",
       "item": [
         {

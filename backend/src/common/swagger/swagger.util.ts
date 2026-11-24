@@ -89,7 +89,7 @@ export function createApiDocument(app: INestApplication): OpenAPIObject {
         add(403, 'ACCOUNT_PENDING_SETUP or ACCOUNT_DISABLED.');
       if (write && !mobileAuth)
         add(403, 'CSRF_TOKEN_INVALID; fetch a token bound to the current session and retry once.');
-      if (staff || path.includes('{tenderId}'))
+      if (staff || path.includes('{tenderId}') || operation.responses['404'])
         add(
           404,
           'NOT_FOUND; invisible records and unauthorized staff roles use the same response.',

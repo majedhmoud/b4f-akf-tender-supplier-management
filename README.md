@@ -2,14 +2,31 @@
 
 A web and mobile platform for the Aga Khan Foundation's procurement department. It publishes tenders, receives sealed bids, and keeps the legal, technical, and financial evaluations separate. Built by Team2 for the B4F hackathon.
 
+## Team members
+
+| Name | Role | GitHub |
+|---|---|---|
+| Majed Hmoud | Backend and documentation | `majedhmoud` |
+| Ali Al Hamwi | Backend | `ali2alhmwi` |
+| Yazan Shartooh | Frontend | `yazan-shartooh` |
+| Adham Al Basha | Frontend | `adhamalbasha-7` |
+| Maya Al Hamwi | Mobile | `Ma7yaa` |
+
+Each member's main contribution is in the Project Brief in [docs/HAND_IN/](docs/HAND_IN/).
+
+## Main features and tech stack
+
+- Features: the [V1 scope](docs/03_SCOPE/V1_SCOPE.md) lists what ships on the web and on mobile, and what is postponed.
+- Tech stack: NestJS, Prisma and PostgreSQL; Next.js; React Native with Expo; Redis with BullMQ; Nodemailer with Mailpit locally ([ADR 0004](docs/05_ARCHITECTURE/ADR/0004_TECHNOLOGY_STACK.md)).
+
 ## Repository map
 
 | Path | Contents |
 |---|---|
-| `docs/` | Requirements, design, and decisions |
-| `backend/` | Back end (added in P2) |
-| `frontend/` | Front end (added in P2) |
-| `mobile/` | Mobile app (added in P2) |
+| `docs/` | Requirements, design, decisions, team reviews and hand-in files |
+| `backend/` | NestJS API, Prisma schema, migrations and seed |
+| `frontend/` | Next.js web app |
+| `mobile/` | Expo supplier companion app |
 
 ## Start here
 
@@ -110,7 +127,7 @@ npm start
 
 Set `EXPO_PUBLIC_API_BASE_URL` to the backend origin without the `/api/v1` suffix. Use `http://localhost:4000` for the iOS simulator, `http://10.0.2.2:4000` for the standard Android emulator, or the development machine's reachable LAN address on a phone. Substitute the chosen backend port when it differs. These addresses should reach one NestJS API backed by one PostgreSQL database. Restart Expo after changing the setting. Use a compatible Expo Go or development build.
 
-Guests can browse and search tenders, view server-time countdowns, and open Terms of Reference. Open **My bids** to sign in as a supplier and track tender status, deadlines, and locked parts. Supplier sign-in requires the current backend with the S7 migration applied. Production mobile sessions require an HTTPS API origin. For local checks, use `npm run typecheck` and `npm run lint` in `mobile/`.
+Guests can browse and search tenders, view server-time countdowns, and open Terms of Reference. Open the menu and choose **Sign in** to sign in as a supplier; after sign-in, the same menu item opens **My bids**, which shows tender status, deadlines and locked parts. Supplier sign-in requires the current backend with the S7 migration applied. Production mobile sessions require an HTTPS API origin. For local checks, use `npm run typecheck` and `npm run lint` in `mobile/`.
 
 ## Backend API Overview
 
@@ -139,7 +156,7 @@ For web requests, enable the cookie jar and set `baseUrl`, `email`, `password`, 
 
 Use requests individually: employee sign-in → create/edit draft → sign out → officer sign-in → read/accept → upload Terms of Reference and save bid form → read current revision → set future UTC deadlines → publish → public detail/download. Select a local upload file in Postman. Removal and copying are separate, state-changing actions; do not run every request blindly. The collection description explains variables and chaining. API tests verify behavior; the collection has not been executed in Postman during this verification.
 
-S2 sign-up APIs are available through U7 and account setup S1–S3; supplier profile editing (P1–P2) and the admin supplier directory with suspend and reactivate (P4–P5) are available, and suppliers can replace their sign-up certificates on their profile; technical documents are not implemented yet. Use the `legal` and `admin` demo accounts for the review queues. After U7, open the setup email in Mailpit and copy the token after `#token=` into `setupToken`. For guest submission, sign out first, select both certificate files, and retain `applicationKey` for retries. Clear that key only for a deliberately new or changed submission.
+S2 covers sign-up through U7, account setup S1–S3, supplier profile editing (P1–P2) with certificate replacement, and the admin supplier directory with suspend and reactivate (P4–P5). Use the `legal` and `admin` demo accounts for the review queues. After U7, open the setup email in Mailpit and copy the token after `#token=` into `setupToken`. For guest submission, sign out first, select both certificate files, and retain `applicationKey` for retries. Clear that key only for a deliberately new or changed submission.
 
 ### Checks
 
@@ -152,23 +169,14 @@ S2 sign-up APIs are available through U7 and account setup S1–S3; supplier pro
 | `npm run seed` | Resets the demo accounts and tenders | — |
 | `npm run api:generate` | — | Regenerates the API client from Swagger; the back end must be running |
 
-## Current web implementation
+## Web routes to know
 
-- Role-aware navigation and account view: `/en/profile` or `/ar/profile`.
-- Guest supplier application, legal review queue, admin raised queue and admin-only acceptance are implemented. Acceptance reports the email as sending; local setup emails arrive in Mailpit.
-- Setup links open `/[locale]/account-setup#token=…`. The page reads the fragment into memory, verifies it and handles password setup, expiry, resend and used/invalid links. Do not share or record live setup tokens.
-- Suppliers go to `/profile` after setup; committee members go to `/my-assignments`. Supplier technical documents are outside V1.
-- See the [roadmap](docs/HACKATHON_ROADMAP.md#current-implementation-checkpoint--november-24-2026) and [S2 checkpoint](docs/06_SLICES/S2_SUPPLIER_SIGNUP.md#current-web-checkpoint--november-24-2026) for earlier verification. S5 and the implemented S6 flows are merged into `develop`.
+- Account view: `/en/profile` or `/ar/profile`.
+- Setup links open `/[locale]/account-setup#token=…`. The page reads the token from the fragment into memory. Do not share or record live setup tokens.
+- Suppliers go to `/profile` after setup; committee members go to `/my-assignments`.
 
 ## Known limitations and demo status
 
-- Contact Supplier is documented in the agreed scope and absent from this snapshot. Supplier technical documents are postponed after V1.
-- The mobile check record covers the backend and native bundles. It does not include a complete device walkthrough. See the [S7 verification record](docs/06_SLICES/S7_SUPPLIER_COMPANION.md#verification-and-status).
-- No hosted demo URL or distributable mobile build is recorded here. Use the local web setup and the Expo development link shown by Metro.
-
-## Snapshot verification
-
-- Web: production build, TypeScript and all 180 automated tests passed. Responsive browser observations are recorded separately in [the team report](docs/08_TEAM_REVIEWS/RESPONSIVE_VERIFICATION_REPORT.md).
-- Backend: TypeScript and build passed. The focused S7 integration run passed 25 tests against disposable PostgreSQL and Redis.
-- Mobile: TypeScript, lint and both native bundle exports passed. The test record does not include a complete device walkthrough.
-- Hand-in: all four Word packages in [docs/HAND_IN/](docs/HAND_IN/) passed the archive integrity check.
+- Agreed but not shipped in V1: Contact Supplier, supplier technical documents and translated copies of bid files. See [V1 scope](docs/03_SCOPE/V1_SCOPE.md#postponed).
+- No hosted demo URL or distributable mobile build (APK) is recorded. Use the local setup above and the Expo development link shown by Metro.
+- What was and was not verified is recorded in the [closeout checkpoint](docs/HACKATHON_ROADMAP.md#closeout-checkpoint--november-24-2026). It includes no mobile device walkthrough and no Postman runtime run.

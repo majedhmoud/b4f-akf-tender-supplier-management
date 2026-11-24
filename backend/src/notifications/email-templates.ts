@@ -78,6 +78,30 @@ export function committeeSetupEmail(language: Language, name: string): RenderedE
   };
 }
 
+export function employeeSetupEmail(language: Language, name: string): RenderedEmail {
+  return {
+    subject:
+      language === 'ar'
+        ? 'إعداد حساب الموظف في منصة مناقصات مؤسسة الآغا خان'
+        : 'Set up your AKF Tenders employee account',
+    body: [
+      language === 'ar' ? 'مرحبًا ' + name + '،' : 'Hello ' + name + ',',
+      '',
+      language === 'ar'
+        ? 'أنشأ مسؤول المنصة حسابك كموظف. عيّن كلمة المرور خلال 48 ساعة باستخدام هذا الرابط:'
+        : 'An administrator created your employee account. Set your password within 48 hours using this link:',
+      '',
+      SETUP_LINK_PLACEHOLDER,
+      '',
+      language === 'ar'
+        ? 'إذا انتهت صلاحية الرابط، افتحه واطلب رابطًا جديدًا.'
+        : 'If the link has expired, open it and ask for a new one.',
+      '',
+      language === 'ar' ? 'مؤسسة الآغا خان' : 'Aga Khan Foundation',
+    ].join('\n'),
+  };
+}
+
 // Award and cancellation drafts (WORKFLOWS.md, After the award). The officer
 // reviews and edits them before sending. Bidders who did not win receive no
 // scores and no details about the winning bid.

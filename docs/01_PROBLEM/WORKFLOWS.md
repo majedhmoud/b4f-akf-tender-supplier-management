@@ -77,10 +77,18 @@ When a tender is cancelled with `no_qualified_bid`, the platform prepares a canc
 
 At any **tender status**, the `procurement_officer` can use **Contact Supplier** on a supplier's profile or bid entry to email the supplier's verified address.
 
-Contact Supplier remains in the agreed workflow. Its endpoint and screen are not implemented in [S6](../06_SLICES/S6_AWARD.md).
+Contact Supplier is part of the agreed workflow but is not shipped in V1 ([V1 scope](../03_SCOPE/V1_SCOPE.md#postponed)).
 
 ## Follow tenders and bids on mobile
 
 1. A `guest` or `supplier` browses and searches published tenders, opens a tender, and can download its Terms of Reference.
 2. A `supplier` signs in with the same account used on the web and opens **My bids** to see tender status, deadlines and which parts are locked.
 3. The supplier uses the web app to sign up, submit or replace a bid, or access bid documents. The outcome of their bid is communicated through the officer-reviewed email.
+
+## Employee account setup
+
+An admin opens **Employee accounts** and enters the employee’s full name, work email, and setup email language. The platform creates a pending account with the employee role and queues an email with a 48-hour setup link. The employee opens the link and sets their password. Once activated and signed in, they land on **My tenders**.
+
+## Public platform information
+
+The website footer links to static About and Terms and Conditions pages in English and Arabic. These pages describe the platform and general usage. The published tender notice and documents govern each submission.

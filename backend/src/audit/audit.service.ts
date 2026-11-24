@@ -18,6 +18,7 @@ export type AuditAction =
   | 'signup_review.decided'
   | 'signup_request.accepted'
   | 'supplier_account.created'
+  | 'employee_account.created'
   | 'account_setup_link.sent'
   | 'account.password_set'
   | 'supplier.legal_information_changed'

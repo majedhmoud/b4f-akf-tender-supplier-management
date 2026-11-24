@@ -20,12 +20,13 @@ flowchart LR
       direction LR
       M_ACC[Accounts]
       M_SIGN[Supplier sign-up]
+      M_SUP[Suppliers]
       M_TEN[Tenders]
       M_COM[Committees]
       M_BID[Bids]
       M_EVA[Evaluations]
       M_AWD[Award]
-      M_NOT[Notifications]
+      M_NOT[Notifications and officer emails]
       M_AUD[Audit]
     end
     JOBS["BullMQ processors<br/>deadline status changes, email delivery"]

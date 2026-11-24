@@ -21,7 +21,7 @@ export class CompleteSetupDto extends SetupTokenDto {
   password: string;
 }
 
-export const ACCOUNT_TYPES = ['supplier', 'committee_member'] as const;
+export const ACCOUNT_TYPES = ['supplier', 'committee_member', 'employee'] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 export class SetupLinkView {
@@ -35,7 +35,7 @@ export class SetupLinkView {
   accountType: AccountType;
 }
 
-export const SETUP_NEXT = ['supplier_profile', 'my_assignments'] as const;
+export const SETUP_NEXT = ['supplier_profile', 'my_assignments', 'employee_tenders'] as const;
 
 export class CompletedSetupView extends SessionView {
   @ApiProperty({ enum: SETUP_NEXT, enumName: 'SetupNext' })

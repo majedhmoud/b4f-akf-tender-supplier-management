@@ -19,7 +19,7 @@ We use tools the team already knows from `b4f-board-final`, plus background jobs
 | Screen state | React state and context; no Redux |
 | Local services | PostgreSQL, Redis, and Mailpit, installed natively by each member |
 | Code quality and tests | ESLint and Prettier for backend and web; `class-validator` and `@nestjs/config` in the backend; Vitest for backend and web with Testing Library on web; the mobile project has TypeScript, Expo lint and native bundle checks |
-| Translations | next-intl in the web app: `/[locale]/` routing, `messages/en.json` and `messages/ar.json`, Arabic plural rules, and date and number formatting |
+| Translations | next-intl in the web app: `/[locale]/` routing, `messages/en.json` and `messages/ar.json`, Arabic plural rules, and date and number formatting. The mobile app keeps its English and Arabic strings in `mobile/src/locale/messages.ts`. |
 
 ## Sealed-bid acceptance check
 

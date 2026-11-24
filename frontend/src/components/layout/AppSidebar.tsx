@@ -29,6 +29,7 @@ export function AppSidebar() {
     ...(roles.includes('admin')
       ? [
           { href: '/signup-requests', label: t('Signup.adminQueue') },
+          { href: '/admin/employees', label: t('EmployeeAccounts.nav') },
           { href: '/admin/suppliers', label: t('Suppliers.navDirectory') },
           { href: '/admin/committee-nominations', label: t('Committees.navQueue') },
         ]

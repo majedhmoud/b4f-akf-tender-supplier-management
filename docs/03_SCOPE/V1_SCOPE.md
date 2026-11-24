@@ -8,12 +8,12 @@ V1 is the path the slices S1–S7 in the [roadmap](../HACKATHON_ROADMAP.md) cove
 
 | Area | V1 includes |
 |---|---|
-| Tenders (S1) | Draft tender → accept with scoring → Terms of Reference → publish. Custom fields on the supplier bid form, added before publishing. Public browsing in English and Arabic, with fallback. Copying a cancelled tender. |
-| Sign-up (S2) | Guest application → sign-up review → admin acceptance → account setup link. Supplier profile with technical and legal information. Suspending and reactivating suppliers. |
+| Tenders (S1) | Draft tender → accept with scoring → Terms of Reference, with optional translated copies → publish. Custom fields on the supplier bid form, added before publishing. Public browsing in English and Arabic, with fallback. Copying a cancelled tender. |
+| Sign-up (S2) | Guest application → sign-up review → admin acceptance → account setup link. Supplier profile with legal information, certificates and a technical information text. Suspending and reactivating suppliers. |
 | Committees (S3) | Raising committees, nominating members, admin approval, account setup links for new members, My assignments. |
-| Bids (S4) | Submitting all three bid parts together, including answers to the tender's custom fields, replacing each part until its deadline, translated copies of files. |
+| Bids (S4) | Submitting all three bid parts together, including answers to the tender's custom fields, and replacing each part until its deadline. |
 | Evaluation (S5) | Sealed Legal → Technical → Financial Evaluations, blind review by bidder code. |
-| Award (S6) | Automatic ranking and award, procurement officer tie-break, award and cancellation emails, Contact Supplier. |
+| Award (S6) | Automatic ranking and award, procurement officer tie-break, award and cancellation emails reviewed and sent by the officer. |
 | Cross-cutting | English and Arabic with right-to-left layout, email in the recipient's language, audit events, Swagger, Postman collection, seed data with demo accounts. |
 
 ## Mobile app (React Native, S7): supplier companion
@@ -37,6 +37,9 @@ The web and mobile apps use one NestJS API and one PostgreSQL database. Mobile s
 |---|---|---|
 | Supplier ratings on work quality and compliance with terms | [PRODUCT_REQUIREMENTS_V1.md](../01_PROBLEM/PRODUCT_REQUIREMENTS_V1.md) | Postponed by team decision. A later rating can reference a supplier's bid without changing historical bids (see the [ERD](../05_ARCHITECTURE/ERD.md#extension)). |
 | Contracts and delivery | [WORKFLOWS.md](../01_PROBLEM/WORKFLOWS.md#after-the-award) | V1 ends at `awarded`; these are handled outside the platform. |
+| Contact Supplier | [WORKFLOWS.md](../01_PROBLEM/WORKFLOWS.md#after-the-award), [API contract](../05_ARCHITECTURE/API_CONTRACT.md) E6 | Agreed in the workflow, but not shipped in V1. |
+| Supplier technical documents | [S2](../06_SLICES/S2_SUPPLIER_SIGNUP.md) | Suppliers keep a technical information text; technical files are not shipped. |
+| Translated copies of bid files | [API contract](../05_ARCHITECTURE/API_CONTRACT.md) B5 | Bid files keep their original language. Terms of Reference support translated copies. |
 | Manual cancellation | [Tender lifecycle](../01_PROBLEM/WORKFLOWS.md#tender-lifecycle) | V1 supports automatic cancellation only. |
 | Password reset | [Engineering standards §2.1](../04_RULES/ENGINEERING_STANDARDS.md#21-authentication) | No password reset flow in V1. |
 | Rejection email to applicants | [API contract](../05_ARCHITECTURE/API_CONTRACT.md#5-out-of-scope-for-v1) | Outside the accepted sign-up flow. |

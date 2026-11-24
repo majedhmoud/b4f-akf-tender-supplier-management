@@ -23,7 +23,7 @@ The managed tender page (`/manage/tenders/[tenderId]`) gains an Evaluation and a
 ## Decisions (November 24, 2026)
 
 - Plain award and cancellation templates in English and Arabic, with the tender title and supplier name only; the officer edits them before sending.
-- Contact Supplier (E6) and the officer's supplier views (P6, P7) are later.
+- Contact Supplier (E6) and the officer's supplier views (P6, P7) are not shipped in V1 ([V1 scope](../03_SCOPE/V1_SCOPE.md#postponed)).
 - Send one and Send all accept an `Idempotency-Key` but do not require it: a send is idempotent by the reviewed revision.
 
 ## Demo fixtures

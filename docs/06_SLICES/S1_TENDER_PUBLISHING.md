@@ -139,7 +139,7 @@ Swagger now documents the shared error envelope, session/CSRF errors, invisible 
 - Review the implementation against this specification and the agreed visual design.
 - The collection has not been executed in the Postman runtime; its structure, examples and scripts have automated checks. Its cookie-jar behavior still needs runtime confirmation.
 - No browser verification, production build, lint or separate typecheck was run during this closeout; verification followed the current automated-test-files-only rule.
-- Human slice acceptance and the repository review process remain pending. S2 is now in progress; see its [current checkpoint](S2_SUPPLIER_SIGNUP.md#current-web-checkpoint--november-24-2026).
+- Human slice acceptance is not recorded.
 
 ## Web follow-up — November 24, 2026
 
@@ -147,4 +147,4 @@ Swagger now documents the shared error envelope, session/CSRF errors, invisible 
 - Replaced employee tender section links with real horizontal tabs. Draft inputs survive tab changes; Save validates the whole form and opens/focuses the first invalid section. Detail tabs separate basic information, translations and Terms of Reference.
 - Shared buttons have stronger borders, clearer primary/secondary states and consistent modest rounding; navigation/profile spacing and focus states were refined.
 - A later front-end run recorded 180 passing tests, a passing production build and TypeScript check. Full lint still reported the existing sign-up-form ref error. This later count includes S2 coverage and does not replace the earlier S1-only snapshot.
-- The latest setup/profile changes have not been retested. Further test creation/runs are paused by human direction. Visual and whole-slice acceptance remain pending.
+- Later checks of the whole snapshot are in the [closeout checkpoint](../HACKATHON_ROADMAP.md#closeout-checkpoint--november-24-2026).
