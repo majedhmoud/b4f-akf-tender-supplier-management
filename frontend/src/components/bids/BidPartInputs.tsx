@@ -75,16 +75,16 @@ export function BidPartInputs({
 }) {
   const t = useTranslations('Bids');
   const id = (key: string) => `${part.partType}-${key}`;
-  const error = (key: string) =>
+  const error = (key: string, className?: string) =>
     errors[key] ? (
-      <p role="alert" className="text-sm text-destructive">
+      <p role="alert" className={`text-sm text-destructive ${className ?? ''}`}>
         {t.has(`errors.${errors[key]}`) ? t(`errors.${errors[key]}`) : t('errors.INVALID')}
       </p>
     ) : null;
   const fileInput = (key: string, label: string, required: boolean) => (
-    <div key={key} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
-      <div className="space-y-1">
-        <label htmlFor={id(`file-${key}`)} className="field-label">
+    <div key={key} className="grid gap-y-3 sm:grid-cols-[minmax(0,1fr)_7rem] sm:gap-x-3 sm:gap-y-1">
+      <div className="grid gap-1 sm:contents">
+        <label htmlFor={id(`file-${key}`)} className="field-label sm:col-start-1 sm:row-start-1">
           <FieldLabel optional={!required}>{label}</FieldLabel>
         </label>
         <input
@@ -97,12 +97,15 @@ export function BidPartInputs({
           onChange={(e) =>
             onChange({ ...draft, files: { ...draft.files, [key]: e.target.files?.[0] } })
           }
-          className="field-control"
+          className="field-control sm:col-start-1 sm:row-start-2"
         />
-        {error(`file:${key}`)}
+        {error(`file:${key}`, 'sm:col-start-1 sm:row-start-3')}
       </div>
-      <div className="space-y-1">
-        <label htmlFor={id(`language-${key}`)} className="field-label">
+      <div className="grid gap-1 sm:contents">
+        <label
+          htmlFor={id(`language-${key}`)}
+          className="field-label sm:col-start-2 sm:row-start-1"
+        >
           <FieldLabel optional>{t('fileLanguage')}</FieldLabel>
         </label>
         <input
@@ -118,9 +121,9 @@ export function BidPartInputs({
               languages: { ...draft.languages, [key]: e.target.value.toLowerCase() },
             })
           }
-          className="field-control"
+          className="field-control sm:col-start-2 sm:row-start-2"
         />
-        {error(`language:${key}`)}
+        {error(`language:${key}`, 'sm:col-start-2 sm:row-start-3')}
       </div>
     </div>
   );
