@@ -519,7 +519,8 @@
       "read_only": "Closed"
     },
     "navQueue": "Committee nominations",
-    "navAssignments": "My assignments"
+    "navAssignments": "My assignments",
+    "pendingCount": "{count, plural, one {# bid to evaluate} other {# bids to evaluate}}"
   },
   "Bids": {
     "bidTitle": "Bid",
@@ -601,6 +602,73 @@
       "cancelled": "Cancelled"
     },
     "pagination": "Bid pages",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}"
+  },
+  "Evaluations": {
+    "titles": {
+      "legal": "Legal evaluation",
+      "technical": "Technical evaluation",
+      "financial": "Financial evaluation"
+    },
+    "hints": {
+      "legal": "Pass or fail each bid on its legal information. A failed bid goes no further.",
+      "technical": "Score each bid that passed the legal evaluation. Bidders are shown by code only.",
+      "financial": "Score each bid that met the minimum technical score, and confirm its total price. Bidders are shown by code only."
+    },
+    "forms": {
+      "legal": "Your legal decision",
+      "technical": "Your technical score",
+      "financial": "Your financial evaluation"
+    },
+    "bidder": "Bidder {code}",
+    "backToAssignments": "Back to my assignments",
+    "backToQueue": "Back to the bids",
+    "evaluated": "Evaluated",
+    "toEvaluate": "To evaluate",
+    "empty": "No bids are waiting at this stage.",
+    "notFound": "This evaluation is not available to you.",
+    "notStarted": "Evaluation has not started yet. It opens after the financial deadline.",
+    "loadFailed": "The information could not be loaded.",
+    "retry": "Try again",
+    "registration": "Registration number: {number}",
+    "legalInformation": "Legal information",
+    "signatory": "Authorized signatory",
+    "answers": "Answers",
+    "documents": "Documents",
+    "yes": "Yes",
+    "no": "No",
+    "download": "Download",
+    "downloadFailed": "The file could not be downloaded. Try again.",
+    "readOnly": "This bid can no longer be evaluated.",
+    "savedTitle": "Saved evaluation",
+    "submittedAt": "Submitted {when}",
+    "outcome": "Outcome",
+    "outcomes": {
+      "pass": "Pass",
+      "fail": "Fail"
+    },
+    "reason": "Reason",
+    "technicalScore": "Technical score",
+    "financialScore": "Financial score",
+    "confirmedTotalPrice": "Confirmed total price",
+    "comments": "Comments",
+    "scoreHint": "A whole number from 0 to 100.",
+    "finalHint": "An evaluation cannot be changed after it is submitted.",
+    "submit": "Submit evaluation",
+    "submitting": "Submitting…",
+    "errors": {
+      "REQUIRED": "This is required.",
+      "INVALID": "Check this value.",
+      "SCORE": "Enter a whole number from 0 to 100.",
+      "PRICE": "Enter an amount such as 58500.00."
+    },
+    "failures": {
+      "TENDER_STATUS_CHANGED": "The tender is no longer under evaluation. Refresh the page."
+    },
+    "failed": "The evaluation could not be saved. Try again.",
+    "pagination": "Pages",
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {page} of {total}"
