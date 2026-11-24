@@ -672,5 +672,94 @@
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {page} of {total}"
+  },
+  "Award": {
+    "title": "Evaluation and award",
+    "statuses": {
+      "in_progress": "In progress",
+      "tie_break_required": "Tie to break",
+      "awarded": "Awarded",
+      "cancelled": "Cancelled"
+    },
+    "stages": {
+      "legal": "Legal evaluation",
+      "technical": "Technical evaluation",
+      "financial": "Financial evaluation"
+    },
+    "progress": "{done} of {total} evaluated",
+    "awardedTo": "Awarded to {name}.",
+    "selection": {
+      "top_rank": "top score",
+      "tie_break": "chosen in a tie break"
+    },
+    "cancelled": {
+      "no_bids": "Cancelled: no bids were received.",
+      "no_qualified_bid": "Cancelled: no bid met the requirements."
+    },
+    "tieHint": "Several bids share the top combined score. Choose the winner among them.",
+    "columns": {
+      "rank": "Rank",
+      "supplier": "Supplier",
+      "technical": "Technical",
+      "financial": "Financial",
+      "combined": "Combined",
+      "balance": "Price",
+      "action": "Action"
+    },
+    "aboveBalance": "Above estimated balance",
+    "chooseWinner": "Choose winner",
+    "confirm": "Confirm winner",
+    "cancel": "Cancel",
+    "noRanking": "The ranking appears when the financial evaluation is complete.",
+    "loadFailed": "The award information could not be loaded.",
+    "retry": "Try again",
+    "failures": {
+      "ALREADY_AWARDED": "The tender has already been awarded.",
+      "TIE_BREAK_NOT_REQUIRED": "There is no tie to break.",
+      "BID_NOT_TIE_CANDIDATE": "Only a bid tied at the top can be chosen."
+    },
+    "failed": "The action could not be completed. Try again."
+  },
+  "OfficerEmails": {
+    "titles": {
+      "award": "Award emails",
+      "cancellation": "Cancellation emails"
+    },
+    "hint": "Review and edit each email, then send it. Bidders who did not win receive no scores.",
+    "sendAll": "Send all reviewed",
+    "sentSummary": "{sending} sending, {skipped} skipped.",
+    "stillSending": "Still sending, check again later.",
+    "empty": "There are no emails for this tender.",
+    "loadFailed": "The emails could not be loaded.",
+    "retry": "Try again",
+    "failed": "The action could not be completed. Try again.",
+    "kinds": {
+      "award_winner": "Winner",
+      "award_other": "Other bidder",
+      "cancellation": "Cancellation",
+      "account_setup": "Account setup",
+      "contact_supplier": "Contact"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Failed"
+    },
+    "revision": "Revision {revision}",
+    "sentAt": "sent {when}",
+    "subject": "Subject",
+    "body": "Message",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "send": "Send",
+    "retrySend": "Retry",
+    "failure": "Delivery failed at {when}. You can retry.",
+    "errors": {
+      "REQUIRED": "The subject and message are required.",
+      "VERSION_CONFLICT": "The email was changed. The latest version is shown.",
+      "EMAIL_NOT_EDITABLE": "This email is already sending or sent."
+    }
   }
 }
