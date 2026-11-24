@@ -18,7 +18,7 @@ Each cell is about one role. A person may hold several roles, but the tender's r
 | Create the supplier account and send the account setup link (done by the system, no user) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Complete sign-up as the approved applicant holding the valid setup link | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Suspend or reactivate a supplier | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
-| Fill in technical information | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Edit own technical and legal information | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Create a draft tender | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Edit their own draft tender, while it is a draft | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Accept a draft tender | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
@@ -39,3 +39,5 @@ Each cell is about one role. A person may hold several roles, but the tender's r
 | Review and send award and cancellation emails | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Contact Supplier | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Copy a cancelled tender into a new tender | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
+
+The `legal_committee`, `technical_committee` and `financial_committee` columns of the evaluation rows mean an approved assignment of that type on the tender. The standing `legal_committee` role, used for sign-up review, gives no tender access (ERD, Sealed, blind evaluation).

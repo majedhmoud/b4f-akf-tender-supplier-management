@@ -8,7 +8,9 @@ Step-by-step processes, written in the terms of the [glossary](../GLOSSARY.md).
 2. The `legal_committee` conducts the **sign-up review**. If it accepts the legal information, it raises the sign-up request to the `admin`. If it rejects it, the sign-up ends.
 3. The `admin` accepts the request without changing the details. The platform then creates the supplier account and emails an **account setup link**, in the language the `guest` used.
 4. The supplier opens the link and sets a password. This verifies their email address, and the supplier is registered.
-5. The supplier can continue filling in their technical information.
+5. The supplier can view their profile and update their technical and legal information. The reviewed sign-up keeps its original values.
+
+If the email in a sign-up already belongs to an account, the sign-up is refused, and the person signs in instead.
 
 The `admin` may suspend or reactivate a supplier at their discretion. A `suspended` supplier cannot submit new bids; its existing bids continue.
 

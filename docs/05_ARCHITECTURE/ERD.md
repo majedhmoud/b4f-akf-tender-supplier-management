@@ -13,6 +13,7 @@ erDiagram
   USER_ACCOUNT {
     uuid id PK
     text email UK
+    text display_name "how the account is shown to staff"
     text password_hash "null until account setup"
     enum preferred_language "en | ar"
     enum status "pending_setup | active | disabled"
@@ -79,7 +80,7 @@ erDiagram
     uuid document_id PK, FK
     enum owner_type FK "always supplier"
     uuid supplier_id FK
-    enum kind
+    enum kind "registration_certificate | tax_certificate"
   }
   TENDER_DOCUMENT {
     uuid document_id PK, FK
@@ -91,6 +92,7 @@ erDiagram
     uuid document_id PK, FK
     enum owner_type FK "always bid_part"
     uuid bid_part_id FK
+    text kind "standard kind; null for a custom file field"
   }
   TENDER_CATEGORY {
     text code PK "labels live in app translations"
@@ -111,6 +113,7 @@ erDiagram
     timestamp cancelled_at
     enum cancellation_reason "no_bids | no_qualified_bid"
     uuid copied_from_tender_id FK, UK "null = original"
+    timestamp created_at "when the draft was created"
   }
   TENDER_TRANSLATION {
     uuid tender_id PK, FK
@@ -138,7 +141,8 @@ erDiagram
     text nominee_email
     uuid user_id FK "set on approval"
     enum status "nominated | approved | rejected"
-    uuid approved_by_user_id FK "admin"
+    uuid approved_by_user_id FK "admin who decided"
+    timestamp nominated_at
     timestamp decided_at
   }
   BID {
@@ -174,13 +178,14 @@ erDiagram
     uuid id PK
     uuid bid_id FK
     enum part_type "legal_information | technical_offer | financial_offer"
+    json standard_answers "standard field values, such as authorizedSignatoryName"
     timestamp last_submitted_at
   }
   LEGAL_EVALUATION {
     uuid bid_id PK, FK
     uuid assignment_id FK
     enum outcome "pass | fail"
-    text reason
+    text reason "required when fail"
     timestamp submitted_at
   }
   TECHNICAL_EVALUATION {
@@ -345,15 +350,19 @@ erDiagram
 - Unique (`tender_id`, `user_id`) on `COMMITTEE_ASSIGNMENT`: one committee per person per tender.
 - The tender's requesting `employee`, and any `procurement_officer` or `admin`, are never assigned to that tender's committees. The approval checks this.
 - The `procurement_officer` nominates members by name and email. The `admin` approves them and creates or links their accounts.
-- When the nominee has no account, approval creates a `USER_ACCOUNT` (`pending_setup`, no password, no `USER_ROLE`) in the `preferred_language` the `admin` chooses, its first `ACCOUNT_SETUP_TOKEN`, and an `account_setup` email, in one transaction with the approval. Setting a password activates the account.
+- When the nominee has no account, approval creates a `USER_ACCOUNT` (`pending_setup`, no password, no `USER_ROLE`, `display_name` = `nominee_name`) in the `preferred_language` the `admin` chooses, its first `ACCOUNT_SETUP_TOKEN`, and an `account_setup` email, in one transaction with the approval. Setting a password activates the account.
 - When the nominee already has an account, approval links it to the assignment. No token or email is created.
 
 ### Sign-up
 
 - `SIGNUP_REVIEW.reviewer_user_id` holds the `legal_committee` role.
 - `raised_to_admin_at` is set only when `decision = accepted`. `admin_accepted_at` is set only after `raised_to_admin_at`.
-- `SUPPLIER`, its `USER_ACCOUNT`, the first `ACCOUNT_SETUP_TOKEN`, and the `account_setup` email are created in one transaction with the admin's acceptance.
-- `ACCOUNT_SETUP_TOKEN` is stored hashed, expires, and is single-use. A new token can be issued if one expires.
+- `SUPPLIER`, its `USER_ACCOUNT` (`display_name` = `legal_name`), the first `ACCOUNT_SETUP_TOKEN`, and the `account_setup` email are created in one transaction with the admin's acceptance.
+- `ACCOUNT_SETUP_TOKEN` is stored hashed, expires 48 hours after it is issued, and is single-use. A new token can be issued if one expires.
+- A sign-up whose contact email already belongs to a `USER_ACCOUNT` is refused at submission and again at the admin's acceptance.
+- The admin's acceptance provisions at most once. A registration number that another `SUPPLIER` already has refuses the acceptance, and the request stays raised.
+- The supplier may change the legal fields of `SUPPLIER` (`legal_name`, `registration_number`). `SUPPLIER_APPLICATION` keeps the values the `legal_committee` reviewed. A new `legal_name` also becomes the account's `display_name`.
+- The supplier may replace a sign-up certificate. The new file is a `SUPPLIER_DOCUMENT` of the same kind, and a supplier has at most one per certificate kind; a replacement removes the previous one. The `APPLICATION_DOCUMENT` the `legal_committee` reviewed is never changed. Until replaced, the profile shows the reviewed file.
 
 ### Bids
 
@@ -361,12 +370,15 @@ erDiagram
 - A bid is created with all three `BID_PART`s, each with its required files, in one transaction, before the application deadline. `BID_PART` is unique on (`bid_id`, `part_type`).
 - A part can be replaced only before its own deadline, by server time. Replacing overwrites the row and deletes its documents. Earlier versions are not kept.
 - Only an `active` supplier can submit a bid.
+- `BID_PART.standard_answers` holds the values of the standard bid form fields of that part; custom fields use `BID_FIELD_ANSWER`. `BID_PART_DOCUMENT.kind` names the standard document a file supplies; a custom file field's file has no kind and is linked through `BID_FIELD_ANSWER.document_id`.
 
 ### Lifecycle jobs
 
 - Each status change updates only from the expected current status, so a retried job does nothing.
 - Bid creation and the application-deadline job both lock the tender row, so a last-second bid cannot be missed when deciding between `closed` and `cancelled`.
-- An evaluation stage is complete when every bid eligible for it has an evaluation row. The check runs inside each evaluation transaction. If a complete stage leaves no eligible bid, the tender becomes `cancelled` with `no_qualified_bid`.
+- Lock order: the tender row first, then the supplier, bid part or committee assignment row. Bids and committee staffing take a share lock on the tender; the deadline job and evaluations take an exclusive one, so a status change never interleaves with them.
+- An evaluation stage is complete when the stage before it is complete and every bid eligible for it has an evaluation row (Legal: every bid). The check runs inside each evaluation transaction, which locks the tender row. If a complete stage leaves no eligible bid, the tender becomes `cancelled` with `no_qualified_bid`.
+- The deadline job runs every minute: `published` → `closed` (or `cancelled` with `no_bids`) at the application deadline, and `closed` → `under_evaluation` at the financial deadline.
 
 ### Scoring and award
 
@@ -434,6 +446,7 @@ Primary and unique keys already cover: `USER_ACCOUNT.email`, `SUPPLIER.registrat
 Add:
 
 - `TENDER(status)`, `TENDER(published_at)`, and `TENDER(status, application_deadline)`, `(status, financial_deadline)` for the deadline jobs.
+- `TENDER(requested_by_user_id, created_at)` for an employee's "My tenders".
 - `SUPPLIER(status)`, `BID(supplier_id)`, `COMMITTEE_ASSIGNMENT(user_id)`, `SIGNUP_REVIEW(reviewer_user_id)`.
 - Each evaluation's `assignment_id`, `BID_RANKING(tender_id, combined_score)`.
 - Every link-table owner foreign key, and `EMAIL_MESSAGE(tender_id)`.
@@ -486,6 +499,7 @@ A future `SUPPLIER_RATING` references `BID(id)`, the supplier's actual participa
 - **A12:** the `admin` can accept a raised request but not reject it.
 - **A13:** the `legal_committee` fails a bid only on its legal information. It never sees the technical or financial offer, so an unqualified technical or financial file lowers that committee's score instead.
 - **A14:** suspension blocks new bids only. A suspended supplier keeps signing in, and its existing bids continue through evaluation.
+- **A15:** `display_name` is set when the account is created: from the seed for staff, from `nominee_name` for committee members, and from `legal_name` for suppliers. It is never empty.
 
 ## Open items
 

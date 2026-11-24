@@ -72,6 +72,8 @@ Security is a critical requirement because the platform handles confidential sup
 - Account setup links use expiring, single-use tokens, stored hashed. Using one sets the password and verifies the email address.
 - Password reset tokens are single-use and expire after a limited period.
 - Never send passwords by email.
+- Passwords have at least 12 characters, with no other complexity rules.
+- Account setup links expire 48 hours after they are issued.
 
 ### 2.2 Authorization
 
@@ -425,6 +427,8 @@ Auditability is a core business requirement. Record only the actions defined in 
 - Legal information submitted for sign-up, sign-up accepted, and supplier information raised to the `admin`.
 - Sign-up request accepted by the `admin`, supplier account created, account setup link sent, and password set.
 - Supplier suspended and reactivated.
+- Supplier legal information changed by the supplier, with the values before and after.
+- Supplier certificate replaced by the supplier, with the files before and after.
 - Committees raised, and committee members approved.
 - Bid part submitted and bid part replaced (who and when, without content).
 - Evaluation submitted.

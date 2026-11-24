@@ -15,7 +15,7 @@ Policies (security, access, response DTOs per audience, performance, audit, test
 | TypeScript | `strict: true` | `strict: true` |
 | Lint | ESLint with `@typescript-eslint/recommended` and `prettier/recommended` | ESLint with `next/core-web-vitals` and `prettier` |
 | Format | Prettier: `singleQuote`, `trailingComma: "all"`, `printWidth: 100` | Same |
-| Tests | Jest with `ts-jest` | Vitest with Testing Library and jsdom |
+| Tests | Vitest, with Supertest for API tests | Vitest with Testing Library and jsdom |
 
 - `npm run lint` and the tests pass before every commit. Reviews do not repeat what the linter or Prettier already enforce.
 - `@typescript-eslint/no-explicit-any` is a warning; a new `any` needs a comment saying why. Unused parameters start with `_`.
@@ -73,7 +73,7 @@ backend/
 │           ├── create-draft-tender.dto.ts
 │           └── public-tender.dto.ts
 └── test/
-    └── jest-setup.ts
+    └── app.e2e-spec.ts   API tests against the local database
 ```
 
 - One folder per module in [standards §1.1](ENGINEERING_STANDARDS.md#11-modular-monolith), named in plural kebab case: `tenders`, `supplier-sign-up`, `committees`, `bids`, `evaluations`.
@@ -146,7 +146,7 @@ export class EmployeeTendersController {
 ### 2.7 Tests
 
 - Unit tests are `<file>.spec.ts` next to the file. They build the class directly with a mocked `PrismaService`.
-- Integration tests are `<name>.integration.spec.ts`. They use the local database, give every fixture a run-unique suffix, and delete what they create in `afterAll`.
+- Tests against the local database are `test/<name>.e2e-spec.ts`, run with `npm run test:e2e`, so `npm test` stays fast. They give every fixture a run-unique suffix, and delete what they create in `afterAll`.
 - `describe` names the class or behaviour. `it` states the expected result as a sentence: `it('returns 404, not 403, to a committee member of another tender')`.
 - A short comment at the top of each suite names the rule it protects.
 - What must be tested is in [standards §9](ENGINEERING_STANDARDS.md#9-testing).
@@ -191,7 +191,7 @@ frontend/src/
 
 - Use shadcn/ui components and Tailwind classes. Do not add custom `@apply` classes for buttons or inputs.
 - Every data view handles loading, empty, and error states.
-- No user-facing text is hard-coded; it comes from `messages/en.json` and `messages/ar.json`.
+- No user-facing text is hard-coded; it comes from `messages/en.json` and `messages/ar.json` through next-intl.
 - Use logical Tailwind classes for direction (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`), so Arabic right-to-left layout works without separate styles.
 
 ### 3.5 Tests
