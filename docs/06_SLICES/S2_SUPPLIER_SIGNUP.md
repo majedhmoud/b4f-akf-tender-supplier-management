@@ -34,7 +34,7 @@ Proposed web routes below are localized under `/[locale]/`; all text supports En
 | `(staff)` | `/signup-reviews`, `/signup-reviews/[applicationId]` | Standing legal role only; documents and accept/reject |
 | `(staff)` | `/signup-requests`, `/signup-requests/[applicationId]` | Admin only; reviewed details and accept |
 | `(auth)` | `/profile` | Account view for signed-in users; suppliers also edit their legal/technical information and replace sign-up certificates; technical documents postponed after V1 |
-| `(auth)` | `/my-assignments` | Signed-in account-ready placeholder; tender assignment screens belong to S3 |
+| `(auth)` | `/my-assignments` | Destination for committee members after setup. The assignment screen belongs to S3. |
 | `(staff)` | `/admin/suppliers` | Admin search/status filter and suspend/reactivate actions |
 
 Extend page-level guards, role start pages and navigation without granting tender access to the standing legal role. The API remains the access authority. See [front-end standards](../04_RULES/ENGINEERING_STANDARDS.md#12-front-end-nextjs).
@@ -104,7 +104,7 @@ This checkpoint supersedes the earlier statements that web screens and U7/setup 
 - Guest application: required legal fields and certificates, stable idempotency keys across retries, field errors, existing-email sign-in link and rate-limit handling.
 - Legal review: role-specific queue, detail, private downloads and one final accept/reject decision. Admin detail has no document downloads, edits or Reject action.
 - Admin U7: regenerated client; Accept with pending/duplicate-click protection. Success shows the setup email's language and `sending` state. `ALREADY_ACCEPTED`, `EMAIL_ALREADY_REGISTERED` and `REGISTRATION_NUMBER_EXISTS` have en/ar messages; success and conflicts refresh the raised queue and detail. The outcome remains visible when the accepted request becomes unavailable.
-- Account setup: localized page, fragment-only token read into transient memory, masked email, password form, expired/used/invalid states, resend and rate-limit handling. Completion establishes the session and renews CSRF. Current supplier destination is `/profile`; `/my-assignments` is a placeholder, not an implemented assignment queue. Latest setup work was reported complete and has not been retested.
+- Account setup: localized page, fragment-only token read into transient memory, masked email, password form, expired/used/invalid states, resend and rate-limit handling. Completion establishes the session and renews CSRF. Suppliers land on `/profile` and committee members land on the S3 screen at `/my-assignments`. The latest setup work was not retested at this checkpoint.
 - Shared UI: role-aware sidebar; account view for every signed-in user; stronger button borders/colors and consistent modest rounding. Employee create/edit/detail use real horizontal tabs, preserve draft inputs and reveal invalid sections when saving.
 - Current files also include supplier legal/technical editing, certificate replacement and the admin directory with suspend/reactivate actions. These latest additions have not been reviewed or retested in this checkpoint. Technical-document work remains pending; no whole-slice completion is claimed.
 

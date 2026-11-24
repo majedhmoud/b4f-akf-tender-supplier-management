@@ -68,6 +68,7 @@ Security is a critical requirement because the platform handles confidential sup
 - Never return password hashes or authentication secrets in API responses.
 - Use short-lived access tokens and a secure refresh-token strategy where applicable.
 - Protect refresh tokens against theft and replay.
+- Keep web cookie sessions and mobile supplier sessions separate. Apply CSRF to web writes. Mobile auth accepts explicit JSON credentials and uses channel-bound bearer tokens only for the bid reads in [ADR 0007](../05_ARCHITECTURE/ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md).
 - Check account status during authentication.
 - Account setup links use expiring, single-use tokens, stored hashed. Using one sets the password and verifies the email address.
 - Password reset tokens are single-use and expire after a limited period.
@@ -179,6 +180,7 @@ These are starting values, not universal limits. Adjust them based on load testi
 |---|---|---|
 | `PublicTender` (anyone, signed in or not) | The published tender's details and deadlines | Estimated financial requirements, the project's balance, committees |
 | `SupplierBid` | The supplier's own full bid | Other suppliers' bids, evaluations |
+| `MobileSupplierBid` | The supplier's own tender status, part deadlines and locks | Bid answers, document references, edit actions, rankings and individual bid outcomes |
 | `LegalBidView` | Legal information | Technical offer, financial offer |
 | `TechnicalBidView` | Technical offer, **bidder code** | Financial offer, supplier identity |
 | `FinancialBidView` | Financial offer, **bidder code** | Technical offer, supplier identity |
@@ -464,6 +466,7 @@ Every feature includes appropriate tests.
 - Deadline enforcement for each bid part.
 - Independent Legal, Technical, and Financial Evaluations.
 - Award.
+- Mobile supplier sessions and read-only bid tracking. Verify ownership, revocation and denial on web-only routes. Record device checks separately from bundle exports.
 
 **Security tests** verify at least that:
 
@@ -535,7 +538,7 @@ A task is not complete until:
 
 - Hiding buttons, pages, or routes is not security. Next.js middleware handles redirects only. The API makes every access decision.
 - The JWT cookie is httpOnly and set by the API. The front end never reads it, and requests send it with `credentials: 'include'`.
-- Only `NEXT_PUBLIC_API_URL` (front end) and `EXPO_PUBLIC_API_URL` (mobile) may be public. Never put secrets in `NEXT_PUBLIC_*` or `EXPO_PUBLIC_*` variables.
+- Only `NEXT_PUBLIC_API_URL` (web) and `EXPO_PUBLIC_API_BASE_URL` (mobile) may be public. Never put secrets in `NEXT_PUBLIC_*` or `EXPO_PUBLIC_*` variables.
 - Never render user content with `dangerouslySetInnerHTML`.
 
 **Data**
@@ -557,6 +560,7 @@ A task is not complete until:
 
 - Use `next/image` and `next/font`.
 - Load heavy components with dynamic imports, and keep client bundles small.
+- Apply the responsive layout and interaction rules in [ADR 0008](../05_ARCHITECTURE/ADR/0008_RESPONSIVE_ACCESSIBLE_WEB_PATTERNS.md). Treat type checks, browser observations and accessibility conformance as distinct evidence.
 
 ## 13. Non-negotiable rules
 

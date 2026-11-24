@@ -13,6 +13,7 @@ import { ApiError } from '@/lib/api/mutator';
 import { publicKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
 import { SignupField, signupControl } from './SignupFields';
+import { BackLink } from '@/components/ui/back-link';
 
 const kinds = ['registration_certificate', 'tax_certificate'] as const;
 const names = ['legalName', 'registrationNumber', 'contactEmail', 'preferredLanguage'] as const;
@@ -133,9 +134,9 @@ export function SupplierApplicationForm() {
     return (
       <div role="status">
         <EmptyState title={t('submitted')} hint={t('submittedHint')} />
-        <Link href="/tenders" className="mt-4 inline-block text-primary hover:underline">
+        <BackLink href="/tenders" className="mt-4">
           {t('backTenders')}
-        </Link>
+        </BackLink>
       </div>
     );
   if (spec.isError)

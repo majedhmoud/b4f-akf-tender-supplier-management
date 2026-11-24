@@ -8,7 +8,6 @@ import { ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@/i18n/navigation';
 import type {
   DownloadLink,
   EvaluationDocument,
@@ -23,6 +22,7 @@ import { useSession } from '@/lib/useSession';
 import { QueueError } from './EvaluationQueue';
 import { SignInRequired } from './SignInRequired';
 import { isStage, STAGE_URLS, type Stage } from './stages';
+import { BackLink } from '@/components/ui/back-link';
 
 type BidView = LegalBidView | TechnicalBidView | FinancialBidView;
 
@@ -57,12 +57,7 @@ export function EvaluationBid() {
   return (
     <article className="max-w-3xl space-y-5">
       <header className="space-y-2">
-        <Link
-          href={`/evaluations/${s}/tenders/${tenderId}`}
-          className="text-sm text-primary underline underline-offset-4"
-        >
-          {t('backToQueue')}
-        </Link>
+        <BackLink href={`/evaluations/${s}/tenders/${tenderId}`}>{t('backToQueue')}</BackLink>
         <h1 className="text-2xl font-bold" dir="auto">
           {title}
         </h1>

@@ -105,3 +105,9 @@ The `legal_committee`'s decision to accept or reject a `guest`'s legal informati
 
 **account setup link**:
 A single-use, expiring link through which an approved applicant or a newly approved committee member sets a password and verifies their email address.
+
+**My bids**:
+A supplier's view of their own bids. On mobile, it shows tender status, deadlines and bid-part locks.
+
+**mobile supplier session**:
+A device session that lets an authenticated supplier read their own bid tracking data in the mobile app.

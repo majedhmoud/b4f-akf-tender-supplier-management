@@ -1,5 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { PageSkeleton } from '@/components/ui/loading';
 
 export default function Loading() {
-  return <Skeleton className="mx-auto h-80 max-w-md" />;
+  return <PageSkeleton className="mx-auto h-80 max-w-md" />;
 }

@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "AKF Tender and Supplier Management — S1–S6",
+    "name": "AKF Tender and Supplier Management — S1–S7 API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "S1 implemented operations, derived from Swagger and API_CONTRACT.md. Cookie authentication; leave the Postman cookie jar enabled. Set baseUrl, language (en/ar), email, and password locally. Never export live credentials, tokens, cookies, or signed paths. Request folders match the README Backend API Overview.\n\nUse requests individually; do not run every folder blindly: writes change state. Recommended path: A1 as employee → Q1/Q3/Q4 → A4 → change email/password to officer → A1 → M2/M3 → M5 (select a file)/M10/M11 → M2 → set future ISO UTC deadlines → M8 → T1/T2/T2d. Set tenderId explicitly when choosing an existing or cancelled seeded tender. M6 deletes files and M9 copies only a cancelled tender. Fetch M2 or M10 before changes; revision updates are chained from successful responses. Standard bid inputs are fixed. Auth refresh/sign-out rotate or revoke cookies. All examples are illustrative, not captured production data.\n\nCollection generation: current NestJS Swagger is the endpoint/DTO source; examples and scripts implement the accepted contract. Extend this collection in later slices.\n\nS2 sign-up: R2, U1–U7 including U3d, and account setup S1–S3. Supplier profile P1–P2 and the admin directory P4–P5 are included; certificate replacement and download (P3, P3d) are included; technical documents are not implemented yet. Start signed out for U1, then use the legal and admin demo accounts. U7 emails a setup link; read it in Mailpit (http://localhost:8025) and copy the token after #token= into setupToken locally. Never save a live setupToken or newPassword in the collection. Retain applicationKey for a retry; clear it only for a deliberately new/changed action. The guest cookie scope survives CSRF renewal."
   },
@@ -157,6 +157,26 @@
       "key": "actionKey",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "mobileEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobilePassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobileAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobileRefreshToken",
+      "value": "",
+      "type": "string"
     }
   ],
   "event": [
@@ -165,8 +185,9 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Every write uses the CSRF token bound to the current cookie-jar session.",
-          "if ([\"POST\", \"PUT\", \"PATCH\", \"DELETE\"].includes(pm.request.method)) {",
+          "// Web writes use CSRF. Mobile auth uses explicit credentials only.",
+          "const isMobileAuth = pm.request.url?.getPath().startsWith(\"/api/v1/mobile/auth/\");",
+          "if (!isMobileAuth && [\"POST\", \"PUT\", \"PATCH\", \"DELETE\"].includes(pm.request.method)) {",
           "  const response = await pm.sendRequest({ url: pm.variables.get(\"baseUrl\") + \"/api/v1/auth/csrf\", method: \"GET\", header: { \"Accept-Language\": pm.variables.get(\"language\") } });",
           "  if (response.code !== 200) throw new Error(\"Cannot obtain CSRF token\");",
           "  pm.variables.set(\"csrfToken\", response.json().csrfToken);",
@@ -2174,6 +2195,176 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Mobile Auth (S7)",
+      "description": "Run MA1 as a supplier, use the access token for the read requests, and use the latest refresh token for MA2 or MA3. Set token variables only in your local environment.",
+      "item": [
+        {
+          "name": "MA1 Mobile supplier sign-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{mobileEmail}}\",\n  \"password\": \"{{mobilePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/sign-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "sign-in"
+              ]
+            },
+            "description": "Use an active supplier. Set credentials locally. The response contains a device token pair; never save live values in the collection."
+          }
+        },
+        {
+          "name": "MA2 Rotate mobile session tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{mobileRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Paste the current device refresh token into a local environment. Replace it with the returned token after each successful refresh."
+          }
+        },
+        {
+          "name": "MA3 Sign out of the mobile session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{mobileRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/sign-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "sign-out"
+              ]
+            },
+            "description": "Revokes the mobile device session. Clear local token variables after use."
+          }
+        },
+        {
+          "name": "B3 Mobile my bids",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mobileAccessToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids"
+              ]
+            },
+            "description": "Returns the signed-in supplier’s paginated bid summaries."
+          }
+        },
+        {
+          "name": "B3d Mobile bid tracking detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mobileAccessToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids/{{bidId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids",
+                "{{bidId}}"
+              ]
+            },
+            "description": "Returns only the tender status, part deadlines, and locked state for a bid owned by the supplier."
+          }
         }
       ]
     },

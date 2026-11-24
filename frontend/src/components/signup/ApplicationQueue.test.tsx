@@ -39,10 +39,9 @@ describe('Sign-up queues', () => {
         },
       },
     );
-    expect(screen.getByRole('link', { name: 'View application' })).toHaveAttribute(
-      'href',
-      '/signup-reviews/a-1',
-    );
+    const links = screen.getAllByRole('link', { name: 'View application' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute('href', '/signup-reviews/a-1');
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(mocks.replace).toHaveBeenCalledWith({ pathname: '/signup-reviews', query: { page: 2 } });
   });
@@ -59,10 +58,9 @@ describe('Sign-up queues', () => {
         },
       },
     );
-    expect(screen.getByRole('link', { name: 'View application' })).toHaveAttribute(
-      'href',
-      '/signup-requests/a-1',
-    );
+    const links = screen.getAllByRole('link', { name: 'View application' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute('href', '/signup-requests/a-1');
   });
   it('renders an empty queue and retryable error state', () => {
     vi.mocked(useSignupReviewsList).mockReturnValue({

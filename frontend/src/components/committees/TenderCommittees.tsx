@@ -74,7 +74,6 @@ export function TenderCommittees({ tenderId, status }: { tenderId: string; statu
                   {!committee && open && (
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={raise.isPending}
                       onClick={() => void raiseCommittee(type)}
                     >
@@ -169,7 +168,6 @@ function CommitteeMembers({
                 </Badge>
                 {n.status === 'nominated' && (
                   <Button
-                    size="sm"
                     variant="outline"
                     disabled={withdraw.isPending}
                     onClick={() => void remove(n.id)}

@@ -38,7 +38,14 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
         <Suspense
-          fallback={<div className="min-h-screen animate-pulse bg-muted" aria-busy="true" />}
+          // Outside the translations provider, so the status text is chosen here.
+          fallback={
+            <div className="min-h-screen animate-pulse bg-muted" aria-busy="true">
+              <span role="status" className="sr-only">
+                {locale === 'ar' ? 'جارٍ التحميل…' : 'Loading…'}
+              </span>
+            </div>
+          }
         >
           <NextIntlClientProvider>
             <Providers>

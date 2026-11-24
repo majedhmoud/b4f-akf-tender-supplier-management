@@ -25,10 +25,11 @@ A web and mobile platform for the Aga Khan Foundation's procurement department. 
 - [API contract](docs/05_ARCHITECTURE/API_CONTRACT.md): endpoints for the web and mobile apps
 - [Architecture decisions](docs/05_ARCHITECTURE/ADR/)
 - [Git workflow](docs/04_RULES/GIT_WORKFLOW.md)
+- [Supplier companion (S7)](docs/06_SLICES/S7_SUPPLIER_COMPANION.md)
+- [Responsive web design](docs/05_ARCHITECTURE/ADR/0008_RESPONSIVE_ACCESSIBLE_WEB_PATTERNS.md)
+- [Hand-in documents in English and Arabic](docs/HAND_IN/)
 
 ## How to run
-
-The README is completed with every required section in P3 (see [Submission requirements](docs/01_PROBLEM/SUBMISSION_REQUIREMENTS.md#readme)).
 
 ### Requirements
 
@@ -46,7 +47,7 @@ createdb akf_tender
 
 ```bash
 cd backend
-cp .env.example .env    # set DATABASE_URL and the three secrets, as its comments explain
+cp .env.example .env    # set DATABASE_URL and the four secrets described in the example
 npm install             # also generates the Prisma client
 npx prisma migrate dev  # creates the tables
 npm run seed            # loads the demo accounts and tenders below
@@ -57,7 +58,7 @@ Check it at http://localhost:4000/api/v1/health. Swagger is at http://localhost:
 
 ### Demo accounts
 
-`npm run seed` creates these accounts, five sample tenders (a draft, an accepted one, two published ones with one in Arabic only, and a cancelled one), and five supplier sign-up applications (one waiting for legal review, one raised to the admin, one rejected, Wadi Supplies accepted with setup pending, and Cedar Supplies accepted with an active demo account). With the back end running, that supplier's setup email arrives in Mailpit within a minute. Every name is fictional. Run it again at any time to reset the demo data; it refuses to run against a database that is not on your machine.
+`npm run seed` creates the fictional accounts below and seven tender fixtures: a draft, an accepted tender, two published tenders (one Arabic only), a cancelled tender, a tender ready for sealed evaluation, and an evaluated tender awaiting a tie break. Wadi Supplies is the pending-setup fixture. Open Mailpit to inspect its setup email. Rerunning the seed resets demo data and is limited to a local database.
 
 | Role | Email | Password |
 |---|---|---|
@@ -66,7 +67,10 @@ Check it at http://localhost:4000/api/v1/health. Swagger is at http://localhost:
 | `legal_committee` (sign-up review only) | `legal@akf-demo.test` | `AKF-demo-2026` |
 | `admin` | `admin@akf-demo.test` | `AKF-demo-2026` |
 | Committee member (no account role; approved technical assignment) | `member@akf-demo.test` | `AKF-demo-2026` |
-| `supplier` (Cedar Supplies, after loading the updated seed) | `supplier@cedar.demo.test` | `AKF-demo-2026` |
+| Committee member (approved legal assignment) | `legal-member@akf-demo.test` | `AKF-demo-2026` |
+| Committee member (approved financial assignment) | `finance-member@akf-demo.test` | `AKF-demo-2026` |
+| `supplier` (Cedar Supplies) | `supplier@cedar.demo.test` | `AKF-demo-2026` |
+| `supplier` (Rafid Works) | `bids@rafid.demo.test` | `AKF-demo-2026` |
 
 The password is for this demo only. Never reuse it anywhere real.
 
@@ -91,16 +95,32 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. It redirects to `/en`; Arabic is at `/ar`. The page shows whether the API and the database are up.
+Open the tender list at http://localhost:3000/en/tenders. Arabic is at `/ar/tenders`. Set `NEXT_PUBLIC_API_URL` in the web app to the same backend instance the mobile app uses. If you change the web port, set the backend's `WEB_ORIGIN` to match and restart it.
+
+### Mobile (Expo)
+
+Start the existing backend first. From the repository root:
+
+```bash
+cd mobile
+npm ci
+cp .env.example .env
+npm start
+```
+
+Set `EXPO_PUBLIC_API_BASE_URL` to the backend origin without the `/api/v1` suffix. Use `http://localhost:4000` for the iOS simulator, `http://10.0.2.2:4000` for the standard Android emulator, or the development machine's reachable LAN address on a phone. Substitute the chosen backend port when it differs. These addresses should reach one NestJS API backed by one PostgreSQL database. Restart Expo after changing the setting. Use a compatible Expo Go or development build.
+
+Guests can browse and search tenders, view server-time countdowns, and open Terms of Reference. Open **My bids** to sign in as a supplier and track tender status, deadlines, and locked parts. Supplier sign-in requires the current backend with the S7 migration applied. Production mobile sessions require an HTTPS API origin. For local checks, use `npm run typecheck` and `npm run lint` in `mobile/`.
 
 ## Backend API Overview
 
-Implemented endpoints use `/api/v1`. [Swagger](http://localhost:4000/api/docs) describes DTOs and errors; the [Postman v2.1 collection](docs/postman/b4f-akf-tender-supplier-management.postman_collection.json) includes the implemented S1 and S2 sign-up and account setup operations with runnable request examples.
+Implemented endpoints use `/api/v1`. [Swagger](http://localhost:4000/api/docs) describes DTOs and errors. The [Postman v2.1 collection](docs/postman/b4f-akf-tender-supplier-management.postman_collection.json) includes runnable requests for S1–S7 API operations.
 
 | Area (Postman folder) | Main endpoints |
 |---|---|
 | System | `GET /health` |
 | Auth | `GET /auth/csrf`, `POST /auth/sign-in`, `GET /auth/session`, `POST /auth/refresh`, `POST /auth/sign-out`, `PATCH /me` |
+| Mobile Auth | `POST /mobile/auth/sign-in`, `POST /mobile/auth/refresh`, `POST /mobile/auth/sign-out` |
 | Employee Tenders | `POST/GET /employee/tenders`, `GET/PATCH /employee/tenders/:tenderId`, `GET …/documents/:docId/download` |
 | Tender Management | `GET /manage/tenders`, `GET/PATCH /manage/tenders/:tenderId`, `POST …/accept`, `POST …/documents`, `DELETE …/documents/:docId`, `GET …/documents/:docId/download`, `POST …/publish`, `POST …/copy`, `GET/PUT …/bid-form` |
 | Public Tenders | `GET /tenders`, `GET /tenders/:tenderId`, `GET …/documents/:docId/download` |
@@ -110,9 +130,12 @@ Implemented endpoints use `/api/v1`. [Swagger](http://localhost:4000/api/docs) d
 | Suppliers | `GET/PUT /me/supplier-profile`, `POST …/documents`, `GET …/documents/:docId/download`, `GET /admin/suppliers`, `POST /admin/suppliers/:supplierId/suspend`, `POST …/reactivate` |
 | Committees | `GET/POST /manage/tenders/:tenderId/committees`, `POST …/committees/:type/nominations`, `DELETE /manage/nominations/:nominationId`, `GET /admin/committee-nominations`, `POST …/:nominationId/approve`, `POST …/reject`, `GET /me/assignments` |
 | Bids | `GET /tenders/:tenderId/bid-form`, `POST /tenders/:tenderId/bids`, `GET /me/bids`, `GET /me/bids/:bidId`, `PUT …/parts/:partType`, `GET …/documents/:docId/download` |
+| Evaluation | Legal, technical and financial queue, detail, download and submit operations ([L, X and F](docs/05_ARCHITECTURE/API_CONTRACT.md#evaluation-separate-dtos-absent-fields-are-never-sent)) |
+| Award | `GET /manage/tenders/:tenderId/award-status`, `GET …/ranking`, `POST …/award` |
+| Emails | `GET /manage/tenders/:tenderId/emails`, `POST …/emails/send`, `GET/PATCH /manage/emails/:emailId`, `POST …/send` |
 | Files | Follow the signed URL returned by a document-download operation; never construct it. |
 
-Import the collection with the cookie jar enabled. Set `baseUrl`, `email`, and `password` locally using the demo accounts above; set `language` to `en` or `ar`. No bearer token is needed. A pre-request script obtains CSRF before each write. Do not export live credentials, cookies, tokens, or signed URLs.
+For web requests, enable the cookie jar and set `baseUrl`, `email`, `password`, and `language` locally. A pre-request script obtains CSRF before web writes. For mobile requests, use the Mobile Auth folder and a supplier account. Use its bearer access token only on the two mobile bid reads. Do not export live credentials, cookies, tokens, or signed URLs.
 
 Use requests individually: employee sign-in → create/edit draft → sign out → officer sign-in → read/accept → upload Terms of Reference and save bid form → read current revision → set future UTC deadlines → publish → public detail/download. Select a local upload file in Postman. Removal and copying are separate, state-changing actions; do not run every request blindly. The collection description explains variables and chaining. API tests verify behavior; the collection has not been executed in Postman during this verification.
 
@@ -134,5 +157,18 @@ S2 sign-up APIs are available through U7 and account setup S1–S3; supplier pro
 - Role-aware navigation and account view: `/en/profile` or `/ar/profile`.
 - Guest supplier application, legal review queue, admin raised queue and admin-only acceptance are implemented. Acceptance reports the email as sending; local setup emails arrive in Mailpit.
 - Setup links open `/[locale]/account-setup#token=…`. The page reads the fragment into memory, verifies it and handles password setup, expiry, resend and used/invalid links. Do not share or record live setup tokens.
-- Current setup destinations: suppliers go to `/profile`; committee members go to the `/my-assignments` placeholder. Supplier technical documents remain pending.
-- See the [roadmap](docs/HACKATHON_ROADMAP.md#current-implementation-checkpoint--november-24-2026) and [S2 checkpoint](docs/06_SLICES/S2_SUPPLIER_SIGNUP.md#current-web-checkpoint--november-24-2026) for implementation and verification limits. Earlier test/build results predate the latest setup/profile changes. Further test creation and execution are paused; these changes are not marked verified or accepted as a complete slice.
+- Suppliers go to `/profile` after setup; committee members go to `/my-assignments`. Supplier technical documents are outside V1.
+- See the [roadmap](docs/HACKATHON_ROADMAP.md#current-implementation-checkpoint--november-24-2026) and [S2 checkpoint](docs/06_SLICES/S2_SUPPLIER_SIGNUP.md#current-web-checkpoint--november-24-2026) for earlier verification. S5 and the implemented S6 flows are merged into `develop`.
+
+## Known limitations and demo status
+
+- Contact Supplier is documented in the agreed scope and absent from this snapshot. Supplier technical documents are postponed after V1.
+- The mobile check record covers the backend and native bundles. It does not include a complete device walkthrough. See the [S7 verification record](docs/06_SLICES/S7_SUPPLIER_COMPANION.md#verification-and-status).
+- No hosted demo URL or distributable mobile build is recorded here. Use the local web setup and the Expo development link shown by Metro.
+
+## Snapshot verification
+
+- Web: production build, TypeScript and all 180 automated tests passed. Responsive browser observations are recorded separately in [the team report](docs/08_TEAM_REVIEWS/RESPONSIVE_VERIFICATION_REPORT.md).
+- Backend: TypeScript and build passed. The focused S7 integration run passed 25 tests against disposable PostgreSQL and Redis.
+- Mobile: TypeScript, lint and both native bundle exports passed. The test record does not include a complete device walkthrough.
+- Hand-in: all four Word packages in [docs/HAND_IN/](docs/HAND_IN/) passed the archive integrity check.

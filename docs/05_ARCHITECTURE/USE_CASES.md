@@ -151,4 +151,5 @@ In UC1, the `guest` only sees the published tender. In UC5, the system moves the
   3. A `supplier` signs in and opens My bids: each bid's tender status, part deadlines, and which parts are locked.
 - **Alternatives and failures:**
   - The supplier wants to submit or replace a bid: they do it on the web.
+  - The supplier's device session is no longer valid: the app removes the private bid view and asks the supplier to sign in again.
 - **Result:** the supplier can keep track of deadlines without the web app. No sealed bid document reaches the phone.

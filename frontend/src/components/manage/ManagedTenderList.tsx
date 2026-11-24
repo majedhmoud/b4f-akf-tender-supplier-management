@@ -13,6 +13,7 @@ import { privateKey } from '@/lib/api/query-keys';
 import { directionOf, formatDateTime } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { managementControl, ManagementField } from './ManagementFeedback';
+import { listCardActionClass, listCardClass } from '@/components/ui/list-card';
 
 export function ManagedTenderList() {
   const t = useTranslations();
@@ -77,52 +78,81 @@ export function ManagedTenderList() {
       )}
       {query.data &&
         (query.data.data.length ? (
-          <div className="overflow-x-auto panel">
-            <table className="w-full text-start text-sm">
-              <thead className="bg-secondary/50">
-                <tr>
-                  {[
-                    'Employee.tenderTitle',
-                    'Manage.employee',
-                    'Employee.createdAt',
-                    'Employee.status',
-                  ].map((key) => (
-                    <th key={key} scope="col" className="px-5 py-3 text-start">
-                      {t(key)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {query.data.data.map((row) => (
-                  <tr key={row.id}>
-                    <td className="min-w-48 px-5 py-5">
-                      <Link
-                        href={`/manage/tenders/${row.id}`}
-                        lang={row.content.language}
-                        dir={directionOf(row.content.language)}
-                        className="block font-semibold text-primary hover:underline"
-                      >
-                        {row.content.title}
-                      </Link>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {t(`Categories.${row.categoryCode}`)}
-                      </p>
-                    </td>
-                    <td className="px-5 py-5" dir="auto">
-                      {row.requestedBy.name}
-                    </td>
-                    <td className="px-5 py-5">
-                      <time dateTime={row.createdAt}>{formatDateTime(locale, row.createdAt)}</time>
-                    </td>
-                    <td className="px-5 py-5">
-                      <Badge variant="secondary">{t(`Statuses.${row.status}`)}</Badge>
-                    </td>
+          <>
+            <ul className="space-y-3 lg:hidden">
+              {query.data.data.map((row) => (
+                <li key={row.id} className={listCardClass}>
+                  <Link
+                    href={`/manage/tenders/${row.id}`}
+                    lang={row.content.language}
+                    dir={directionOf(row.content.language)}
+                    className="block font-semibold text-primary hover:underline"
+                  >
+                    {row.content.title}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    {t(`Categories.${row.categoryCode}`)} ·{' '}
+                    <span dir="auto">{row.requestedBy.name}</span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="secondary">{t(`Statuses.${row.status}`)}</Badge>
+                    <time dateTime={row.createdAt}>{formatDateTime(locale, row.createdAt)}</time>
+                  </div>
+                  <Link href={`/manage/tenders/${row.id}`} className={listCardActionClass}>
+                    {t('Employee.view')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto panel lg:block">
+              <table className="w-full text-start text-sm">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    {[
+                      'Employee.tenderTitle',
+                      'Manage.employee',
+                      'Employee.createdAt',
+                      'Employee.status',
+                    ].map((key) => (
+                      <th key={key} scope="col" className="px-5 py-3 text-start">
+                        {t(key)}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y">
+                  {query.data.data.map((row) => (
+                    <tr key={row.id}>
+                      <td className="min-w-48 px-5 py-5">
+                        <Link
+                          href={`/manage/tenders/${row.id}`}
+                          lang={row.content.language}
+                          dir={directionOf(row.content.language)}
+                          className="block font-semibold text-primary hover:underline"
+                        >
+                          {row.content.title}
+                        </Link>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {t(`Categories.${row.categoryCode}`)}
+                        </p>
+                      </td>
+                      <td className="px-5 py-5" dir="auto">
+                        {row.requestedBy.name}
+                      </td>
+                      <td className="px-5 py-5">
+                        <time dateTime={row.createdAt}>
+                          {formatDateTime(locale, row.createdAt)}
+                        </time>
+                      </td>
+                      <td className="px-5 py-5">
+                        <Badge variant="secondary">{t(`Statuses.${row.status}`)}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState title={t('Manage.empty')} />
         ))}

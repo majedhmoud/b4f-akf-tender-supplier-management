@@ -14,6 +14,7 @@ import { privateKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
 import { SignInRequired } from './SignInRequired';
 import { isStage, STAGE_URLS } from './stages';
+import { BackLink } from '@/components/ui/back-link';
 
 // L1, X1, F1: the bids this assignment may evaluate.
 export function EvaluationQueue() {
@@ -41,9 +42,7 @@ export function EvaluationQueue() {
   return (
     <section className="space-y-5">
       <header>
-        <Link href="/my-assignments" className="text-sm text-primary underline underline-offset-4">
-          {t('backToAssignments')}
-        </Link>
+        <BackLink href="/my-assignments">{t('backToAssignments')}</BackLink>
         <h1 className="mt-2 text-2xl font-bold">{t(`titles.${stage}`)}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t(`hints.${stage}`)}</p>
       </header>

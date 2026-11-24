@@ -26,7 +26,7 @@ Each evaluation locks the tender row and checks completion. A stage completes wh
 
 ## Boundary with S6
 
-S5 stops when the financial evaluations are saved. Ranking, combined score, the above-balance flag, award, tie break and the officer's progress view (W1–W3) belong to S6. Until S6 exists, a tender stays `under_evaluation` after its financial stage completes. No document covers a tender that reaches `under_evaluation` with an unstaffed committee; evaluation waits.
+S5 supplies the saved evaluations. When the financial stage completes, [S6](S6_AWARD.md) ranks the eligible bids and either awards a unique winner or waits for a tie break. No document covers a tender that reaches `under_evaluation` with an unstaffed committee; evaluation waits.
 
 ## Demo fixtures
 
@@ -34,4 +34,4 @@ The seed adds a tender already `under_evaluation` ("Solar panels for health clin
 
 ## Status
 
-November 24, 2026: back end implemented. No automated tests were written or run, by Majed's decision. The web screens are pending.
+November 24, 2026: the backend and web screens are integrated in `develop` (frontend PR #17). Majed validated the web screens locally. No S5 automated tests were written or run in that handoff. The latest integrated S5-to-S6 flow still needs a recorded check.

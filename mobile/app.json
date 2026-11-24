@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "AKF Tenders",
+    "slug": "akf-tenders",
+    "scheme": "akftenders",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}

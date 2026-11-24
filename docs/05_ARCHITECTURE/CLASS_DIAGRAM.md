@@ -267,6 +267,10 @@ classDiagram
     <<view>>
     the supplier's own bid
   }
+  class MobileSupplierBid {
+    <<view>>
+    own tender status, deadlines and part locks
+  }
   class LegalBidView {
     <<view>>
     legal information, supplier identity
@@ -287,6 +291,7 @@ classDiagram
   AccessService ..> EmployeeTender
   AccessService ..> ManagedTender
   AccessService ..> SupplierBid
+  AccessService ..> MobileSupplierBid
   AccessService ..> LegalBidView
   AccessService ..> TechnicalBidView
   AccessService ..> FinancialBidView

@@ -29,7 +29,7 @@ Suppliers often work from their phones. The mobile app helps them notice tenders
 
 On the web only: sign-up, bid submission and replacement, and every staff and committee screen. Sealed bid documents are never downloaded to phones.
 
-The mobile app uses the same API ([API contract](../05_ARCHITECTURE/API_CONTRACT.md)). How it signs in is decided in an ADR before S7 starts, because the web's cookie and CSRF flow is designed for browsers.
+The web and mobile apps use one NestJS API and one PostgreSQL database. Mobile supplier sessions follow [ADR 0007](../05_ARCHITECTURE/ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md) and the [API contract](../05_ARCHITECTURE/API_CONTRACT.md#19-mobile-supplier-sessions-s7). See the [S7 slice](../06_SLICES/S7_SUPPLIER_COMPANION.md) for implementation and verification status.
 
 ## Postponed
 

@@ -46,6 +46,13 @@ enum AccountStatus {
   @@map("account_status")
 }
 
+enum SessionChannel {
+  web
+  mobile
+
+  @@map("session_channel")
+}
+
 enum TenderStatus {
   draft
   accepted
@@ -145,12 +152,13 @@ model UserRole {
 
 // One row per sign-in. Sign-out sets revokedAt, and every request checks it.
 model Session {
-  id        String      @id @default(uuid()) @db.Uuid
-  userId    String      @map("user_id") @db.Uuid
-  user      UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime    @map("expires_at") @db.Timestamptz
-  revokedAt DateTime?   @map("revoked_at") @db.Timestamptz
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  user      UserAccount    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   SessionChannel @default(web)
+  expiresAt DateTime       @map("expires_at") @db.Timestamptz
+  revokedAt DateTime?      @map("revoked_at") @db.Timestamptz
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
 
   refreshTokens SessionRefreshToken[]
 

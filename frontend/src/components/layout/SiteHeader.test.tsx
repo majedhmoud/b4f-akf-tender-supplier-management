@@ -47,7 +47,9 @@ describe('SiteHeader', () => {
         <SiteHeader />
       </NextIntlClientProvider>,
     );
-    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/profile');
+    expect(
+      screen.getByRole('link', { name: 'My profile: employee@akf-demo.test' }),
+    ).toHaveAttribute('href', '/profile');
   });
   it.each([
     { role: 'legal_committee', label: 'Legal review queue', href: '/signup-reviews' },
@@ -60,7 +62,10 @@ describe('SiteHeader', () => {
       </NextIntlClientProvider>,
     );
     expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: 'My profile: staff@example.test' })).toHaveAttribute(
+      'href',
+      '/profile',
+    );
     expect(screen.queryByRole('link', { name: 'Manage tenders' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My tenders' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Supplier sign-up' })).not.toBeInTheDocument();

@@ -32,4 +32,4 @@ The managed tender page (`/manage/tenders/[tenderId]`) gains an Evaluation and a
 
 ## Status
 
-November 24, 2026: implemented in the back end and web app. No automated tests were written or run, by Majed's decision.
+November 24, 2026: backend PR #15 and frontend PR #18 are merged into `develop`. Majed accepted the local implementation, and an officer API call confirmed the seeded tie and its candidates. No S6 automated tests were written or run in that handoff. The integrated tie-break and email delivery flow still needs a recorded check.

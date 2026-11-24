@@ -10,13 +10,14 @@ export function createApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('AKF Tender and Supplier Management API')
     .setDescription(
       'See docs/05_ARCHITECTURE/API_CONTRACT.md for the accepted contract. ' +
-        'Every POST, PUT, PATCH, and DELETE needs the X-CSRF-Token header from GET /auth/csrf. ' +
+        'Web writes need X-CSRF-Token from GET /auth/csrf. Mobile auth uses explicit JSON credentials. ' +
         'Session cookies are HttpOnly. Invisible records and unauthorized staff roles return 404. ' +
         'Errors use { error: { code, message, fields?, details, requestId } }; clients translate codes, not messages. ' +
         'Errors are private, no-store. Check status before revision, then validate fields.',
     )
     .setVersion('0.1.0')
     .addCookieAuth(ACCESS_COOKIE)
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config, {
     operationIdFactory: (controller, method) =>
@@ -53,6 +54,7 @@ export function createApiDocument(app: INestApplication): OpenAPIObject {
       if (!['get', 'post', 'patch', 'put', 'delete'].includes(method)) continue;
       const operation = value as OperationObject;
       const write = method !== 'get';
+      const mobileAuth = path.includes('/mobile/auth/');
       const staff =
         path.includes('/employee/') ||
         path.includes('/manage/') ||
@@ -80,10 +82,12 @@ export function createApiDocument(app: INestApplication): OpenAPIObject {
         add(
           401,
           path.endsWith('/auth/sign-in')
-            ? 'INVALID_CREDENTIALS, ACCOUNT_PENDING_SETUP, or ACCOUNT_DISABLED.'
+            ? 'INVALID_CREDENTIALS.'
             : 'UNAUTHENTICATED, SESSION_EXPIRED, or SESSION_REVOKED.',
         );
-      if (write)
+      if (mobileAuth && path.endsWith('/auth/sign-in'))
+        add(403, 'ACCOUNT_PENDING_SETUP or ACCOUNT_DISABLED.');
+      if (write && !mobileAuth)
         add(403, 'CSRF_TOKEN_INVALID; fetch a token bound to the current session and retry once.');
       if (staff || path.includes('{tenderId}'))
         add(

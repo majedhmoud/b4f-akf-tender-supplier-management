@@ -41,7 +41,7 @@ November 24, 2026: implemented in the back end and web app. No automated tests w
 | Front end | Idempotency keys on deliberate edits, retry waits, required-text checks, bid-list pagination and visible loading/error states | Implemented; static checks pass; no runtime verification |
 | Documentation | Keep this checkpoint and the roadmap aligned with actual implementation and checks | In progress |
 
-The S4 baseline passes TypeScript, lint, formatting and production builds in both apps; the database/schema comparison reports no differences. These static checks do not demonstrate runtime correctness. No test files are created or run. Demo accounts are added to the README only when their seed definition is implemented. Whole-slice acceptance remains pending; S5 is a separate proposal.
+The S4 baseline passed TypeScript, lint, formatting and production builds in both apps; the database/schema comparison reported no differences. No tests were written or run in that S4 handoff. The downstream implementation is recorded in [S5](S5_SEALED_EVALUATION.md) and [S6](S6_AWARD.md).
 
 ### Front-end correction checkpoint
 
@@ -51,7 +51,7 @@ Front-end TypeScript, ESLint, Prettier and production build pass. No test files 
 
 ### Latest source reconciliation
 
-Current seed code includes an active Cedar Supplies fixture (`supplier@cedar.demo.test`, shared demo password) while retaining Wadi's pending setup. Reset now gathers bid-document storage keys and deletes bids before suppliers. Bid writes also use an unreferenced-file cleanup helper after errors/replays. These source changes have been observed, not accepted as verified fixes. The latest backend handoff, focused review and static checks are still required; the local database has not been reloaded during this reconciliation. S5 remains a separate proposal, and no tests are created or run.
+This reconciliation found an active Cedar Supplies fixture, Wadi's pending setup, cleanup of bid-document storage keys on reset, and unreferenced-file cleanup after errors or replays. The database was not reloaded at that checkpoint. Later S7 setup loaded the seed into a separate demo database. That run did not exercise S4 submission or replacement.
 
 ### Backend source/static review checkpoint
 

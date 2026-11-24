@@ -10,6 +10,7 @@ import { CsrfGuard } from './csrf.guard.js';
 import { CsrfService } from './csrf.service.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { JwtStrategy } from './jwt.strategy.js';
+import { MobileAuthController } from './mobile-auth.controller.js';
 
 // Authentication and authorization module (ENGINEERING_STANDARDS.md §1.1).
 // The two global guards run in this order: session first, then CSRF, so an
@@ -23,7 +24,7 @@ import { JwtStrategy } from './jwt.strategy.js';
       useFactory: (settings: AuthSettings) => ({ secret: settings.jwtSecret }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, MobileAuthController],
   providers: [
     AuthSettings,
     AuthService,

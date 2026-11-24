@@ -14,7 +14,14 @@ import { SignedUrlService } from '../storage/signed-url.service.js';
 import { discardUnreferenced } from '../storage/discard-unreferenced.js';
 import { checkUpload, safeFileName, type UploadedFileInput } from '../storage/upload-rules.js';
 import { PART_TYPES, STANDARD_BID_FORM } from '../tenders/standard-bid-form.js';
-import type { BidForm, BidPage, BidPartView, CustomFieldSpec, SupplierBid } from './dto/bid.dto.js';
+import type {
+  BidForm,
+  BidPage,
+  BidPartView,
+  CustomFieldSpec,
+  MobileSupplierBid,
+  SupplierBid,
+} from './dto/bid.dto.js';
 
 const MAX_TEXT_ANSWER = 2000;
 // Uploads keep their multipart name, such as files[technical_offer][technical_proposal].
@@ -635,6 +642,30 @@ export class BidsService {
   async detail(userId: string, bidId: string, language: Language): Promise<SupplierBid> {
     const { bid, tender } = await this.ownBid(userId, bidId);
     return this.view(this.prisma, bid.id, tender, language);
+  }
+
+  async mobileDetail(
+    userId: string,
+    bidId: string,
+    language: Language,
+  ): Promise<MobileSupplierBid> {
+    const { bid, tender } = await this.ownBid(userId, bidId);
+    const now = new Date();
+    const { content } = pickTranslation(tender.translations, language);
+    return {
+      id: bid.id,
+      tender: {
+        id: tender.id,
+        status: tender.status,
+        content: { language: content.language, title: content.title },
+      },
+      parts: PART_TYPES.map((partType) => ({
+        partType,
+        deadline: deadlineOf(tender, partType)?.toISOString() ?? null,
+        locked: isLocked(tender, partType, now),
+      })),
+      serverTime: now.toISOString(),
+    };
   }
 
   // B3: tender status only, never "won" or "not won".

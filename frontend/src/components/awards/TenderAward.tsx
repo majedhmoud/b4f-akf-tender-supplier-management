@@ -16,6 +16,7 @@ import type { TenderStatus, TieBreakResult } from '@/lib/api/generated/model';
 import { ApiError, apiFetch } from '@/lib/api/mutator';
 import { privateKey } from '@/lib/api/query-keys';
 import { formatDateTime } from '@/lib/format';
+import { useReturnFocus } from '@/lib/useReturnFocus';
 import { useSession } from '@/lib/useSession';
 
 // Award state appears once bidding has closed.
@@ -39,6 +40,7 @@ export function TenderAward({ tenderId, status }: { tenderId: string; status: Te
     { query: { queryKey: [...base, 'ranking'], enabled, retry: false } },
   );
   const [choosing, setChoosing] = useState<string | null>(null);
+  const { register, returnTo } = useReturnFocus();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const key = useRef<string | null>(null);
@@ -161,25 +163,23 @@ export function TenderAward({ tenderId, status }: { tenderId: string; status: Te
                       {candidates.has(row.bidId) &&
                         (choosing === row.bidId ? (
                           <span className="flex flex-wrap items-center gap-2">
-                            <Button
-                              size="sm"
-                              disabled={busy}
-                              onClick={() => void choose(row.bidId)}
-                            >
+                            <Button disabled={busy} onClick={() => void choose(row.bidId)}>
                               {t('confirm')}
                             </Button>
                             <Button
-                              size="sm"
                               variant="outline"
                               disabled={busy}
-                              onClick={() => setChoosing(null)}
+                              onClick={() => {
+                                setChoosing(null);
+                                returnTo(row.bidId);
+                              }}
                             >
                               {t('cancel')}
                             </Button>
                           </span>
                         ) : (
                           <Button
-                            size="sm"
+                            ref={register('table', row.bidId)}
                             variant="outline"
                             onClick={() => setChoosing(row.bidId)}
                           >
