@@ -95,7 +95,9 @@ The UI translates `code`. It never displays `message`.
 | 409 | `ALREADY_SUBMITTED` | Show `details.evaluation` read-only. |
 | 409 | `BID_EXISTS` | Open `details.bidId`. |
 | 409 | `IDEMPOTENCY_IN_PROGRESS` | Retry after one second with the same key. |
-| 409 | `EMAIL_NOT_EDITABLE`, `TIE_BREAK_NOT_REQUIRED`, `ALREADY_AWARDED`, `TENDER_NOT_CANCELLED`, `TENDER_ALREADY_COPIED`, `ASSIGNMENT_*` | Refetch and show the reason. |
+| 409 | `EMAIL_ALREADY_REGISTERED` | An account already uses this email. Show "Sign in instead" with a link to sign-in. |
+| 409 | `REGISTRATION_NUMBER_EXISTS` | Field error on `registrationNumber`. |
+| 409 | `EMAIL_NOT_EDITABLE`, `TIE_BREAK_NOT_REQUIRED`, `ALREADY_AWARDED`, `ALREADY_ACCEPTED`, `TENDER_NOT_CANCELLED`, `TENDER_ALREADY_COPIED`, `ASSIGNMENT_*` | Refetch and show the reason. |
 | 410 | `SETUP_LINK_EXPIRED` | Offer "Send a new link". |
 | 410 | `SETUP_LINK_USED` | Offer "Sign in". |
 | 413, 415 | `FILE_TOO_LARGE`, `FILE_TYPE_NOT_ALLOWED` | Error on that file input. |
@@ -143,6 +145,8 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 
 | # | Screen / action | Who, when | Endpoint |
 |---|---|---|---|
+| **System** | | | |
+| H1 | API and database status | Anyone | `GET /health` |
 | **Auth** | | | |
 | A0 | CSRF token | Anyone | `GET /auth/csrf` |
 | A1 | Sign in | An `active` account | `POST /auth/sign-in` |
@@ -190,8 +194,9 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | S3 | Request a new link | The holder of an expired link | `POST /account-setup/resend` |
 | **Suppliers** | | | |
 | P1 | My profile | `supplier` | `GET /me/supplier-profile` |
-| P2 | Edit technical information | `supplier` | `PUT /me/supplier-profile` |
-| P3 | Add or remove a technical document | `supplier` | `POST /me/supplier-profile/documents`, `DELETE /me/supplier-profile/documents/:docId` |
+| P2 | Edit technical and legal information | `supplier` | `PUT /me/supplier-profile` |
+| P3 | Replace a certificate | `supplier` | `POST /me/supplier-profile/documents` |
+| P3d | Download one of my documents | `supplier` | `GET /me/supplier-profile/documents/:docId/download` |
 | P4 | Supplier directory | `admin` | `GET /admin/suppliers?status=&search=` |
 | P5 | Suspend or reactivate | `admin` | `POST /admin/suppliers/:supplierId/suspend`, `POST /admin/suppliers/:supplierId/reactivate` |
 | P6 | Find a supplier to contact | `procurement_officer` | `GET /manage/suppliers?search=` |
@@ -210,7 +215,7 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | B3 | My bids | `supplier`, own | `GET /me/bids` |
 | B3d | Bid detail (`SupplierBid`) | `supplier`, own | `GET /me/bids/:bidId` |
 | B4 | Replace a bid part | `supplier`, own; before that part's deadline; allowed while suspended | `PUT /me/bids/:bidId/parts/:partType` |
-| B5 | Add, replace or remove a translation | Same as B4 | `PUT /me/bids/:bidId/parts/:partType/documents/:docId/translations/:language`, `DELETE` on the same path |
+| B5 | Add, replace or remove a translation (postponed after V1) | Same as B4 | `PUT /me/bids/:bidId/parts/:partType/documents/:docId/translations/:language`, `DELETE` on the same path |
 | B6 | Bid document download | `supplier`, own | `GET /me/bids/:bidId/documents/:docId/download` |
 | **Legal Evaluation** | | | |
 | L1 | Queue | Approved `legal_committee` assignment on this tender | `GET /evaluations/legal/tenders/:tenderId/bids` |
@@ -311,6 +316,16 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 - Deadline, committee, supplier, and scoring fields return `400` with field code `FIELD_NOT_EDITABLE`.
 - Each translation must have both a title and a description.
 
+`GET /employee/tenders?page=1&limit=20` lists the employee's own tenders, newest first:
+
+```json
+{ "data": [{ "id": "t-1001", "status": "draft", "categoryCode": "construction",
+    "content": { "language": "en", "title": "School maintenance" },
+    "requestedLanguage": "ar", "isFallback": true,
+    "createdAt": "2026-11-23T08:30:00Z" }],
+  "meta": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 } }
+```
+
 `GET /employee/tenders/t-1001` (`EmployeeTender`):
 
 ```json
@@ -410,8 +425,8 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 
 ```json
 { "fields": [{ "name": "legalName", "type": "text", "required": true, "maxLength": 200 },
-             { "name": "registrationNumber", "type": "text", "required": true },
-             { "name": "contactEmail", "type": "email", "required": true },
+             { "name": "registrationNumber", "type": "text", "required": true, "maxLength": 100 },
+             { "name": "contactEmail", "type": "email", "required": true, "maxLength": 254 },
              { "name": "preferredLanguage", "type": "enum", "values": ["en", "ar"], "required": true }],
   "documents": [{ "kind": "registration_certificate", "required": true },
                 { "kind": "tax_certificate", "required": true }] }
@@ -429,11 +444,19 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 
 - Returns `201 { "applicationId": "a-55", "submittedAt": "2026-11-23T09:10:00Z" }`. Show "Submitted for legal review".
 - `409 REGISTRATION_NUMBER_EXISTS` is shown as a field error.
+- `409 EMAIL_ALREADY_REGISTERED`: an account already uses this contact email. Show "Sign in instead". A registered supplier updates their legal information on their profile (P2), not through a new application.
+- At most 5 applications a minute per IP; then `429 RATE_LIMITED` with `Retry-After`.
 - V1 has no status page and no rejection email for the applicant.
 
 `GET /supplier-applications/a-55` shows the legal reviewer the application fields and documents with their original names. Documents download through `GET /supplier-applications/a-55/documents/:docId/download`.
 
 `POST /supplier-applications/a-55/review` with `{ "decision": "accepted", "reason": null }` returns `201 { "decision": "accepted", "raisedToAdminAt": "2026-11-23T11:00:00Z" }`. Submitting again returns `409 ALREADY_SUBMITTED`, with the saved decision in `details`.
+
+**Application/review response shapes (approved clarification).** U2 (`status=pending`) and U5 (`status=raised`) use the §1.6 pagination envelope. Each item is `{ applicationId, legalName, registrationNumber, submittedAt }`; queues show oldest first. Pending means no legal review yet; the raised queue excludes requests already accepted by the admin.
+
+U3 returns `{ applicationId, legalName, registrationNumber, contactEmail, preferredLanguage, submittedAt, documents }`. Each document is `{ id, kind, name, language }`; `name` is its original display name. U3d returns the standard signed download link only after checking application/document ownership and the standing legal role.
+
+U6 returns the same application fields **without documents**, plus `review: { reviewerUserId, decision, reason, decidedAt, raisedToAdminAt }` for a legally accepted/raised request. Admin acceptance does not grant application-document download permission. Legal and admin responses never expose storage keys, setup tokens, password data or signed URLs embedded in metadata.
 
 `POST /signup-requests/a-55/accept` (no body) returns `200`:
 
@@ -442,7 +465,13 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
   "setupEmail": { "language": "ar", "status": "sending" } }
 ```
 
-**The setup link.** The email links to `/{lang}/account-setup#token=…`. The token sits in the URL fragment, so it never appears in a request URL or server log.
+U7 provisions at most once. Its conflicts, checked in this order:
+
+- `409 ALREADY_ACCEPTED`, with `details.supplierId`: the request was already accepted, including by a simultaneous request.
+- `409 EMAIL_ALREADY_REGISTERED`: an account was created for this contact email meanwhile.
+- `409 REGISTRATION_NUMBER_EXISTS`: another supplier already has this registration number. The application stays raised.
+
+**The setup link.** The email links to `/{lang}/account-setup#token=…`. The token sits in the URL fragment, so it never appears in a request URL or server log. A link expires 48 hours after it is issued.
 
 1. `POST /account-setup/verify` with `{ "token": "…" }` returns `200 { "email": "i***@alnoor.example", "preferredLanguage": "ar", "accountType": "supplier" }`.
    - This only checks the link. The token stays valid.
@@ -454,7 +483,7 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
    - `410 SETUP_LINK_EXPIRED`: "Send a new link" calls `POST /account-setup/resend` with `{ "token": "…" }`, which always returns `202`.
    - `410 SETUP_LINK_USED`: show "Sign in".
    - `404`: the link is invalid.
-   - `400 PASSWORD_TOO_WEAK`: field error.
+   - `400 PASSWORD_TOO_WEAK`: field error. A password needs at least 12 characters, with no other complexity rules.
 
 ### Suppliers
 
@@ -463,13 +492,20 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 ```json
 { "id": "s-12", "legalName": "Al-Noor Engineering", "registrationNumber": "CR-88231",
   "status": "active", "technicalInformation": "…",
+  "certificates": [{ "id": "d-31", "kind": "registration_certificate", "name": "register.pdf",
+    "language": "ar", "uploadedAt": "2026-11-23T09:10:00Z", "source": "sign_up" }],
   "technicalDocuments": [{ "id": "d-40", "kind": "company_profile", "name": "Profile.pdf",
     "language": "fr", "translations": [] }],
-  "editableFields": ["technicalInformation"] }
+  "editableFields": ["legalName", "registrationNumber", "technicalInformation"] }
 ```
 
-- `PUT /me/supplier-profile` with `{ "technicalInformation": "…" }` returns `200`. Any other field returns `400 FIELD_NOT_EDITABLE`.
-- `POST /me/supplier-profile/documents` is multipart (`kind`, `file`, `language`, optional `translationOf`). Only technical kinds are accepted.
+- `PUT /me/supplier-profile` takes any of `legalName`, `registrationNumber`, and `technicalInformation`, and returns `200` with the updated profile. Any other field returns `400 FIELD_NOT_EDITABLE`; the account email is not editable.
+- A registration number another supplier already has returns `409 REGISTRATION_NUMBER_EXISTS`.
+- Legal changes are recorded as audit events with the values before and after. The reviewed sign-up application keeps its original values.
+- `certificates` always lists the registration and tax certificates. `source` is `sign_up` for the file the `legal_committee` reviewed, or `updated` for one the supplier uploaded since.
+- `POST /me/supplier-profile/documents` is multipart (`kind`, `file`, `language`). It accepts the two certificate kinds. A certificate replaces the current one of its kind and returns `201` with the updated profile; the reviewed sign-up file stays on the application. File errors follow §1.8. The replacement is audited.
+- `GET /me/supplier-profile/documents/:docId/download` returns the standard signed download link for any file in `certificates` or `technicalDocuments`; any other ID returns `404`.
+- **Postponed after V1:** technical documents (kinds such as `company_profile`, translations through `translationOf`, and `DELETE /me/supplier-profile/documents/:docId`). In V1, `technicalDocuments` is always `[]`.
 
 `GET /admin/suppliers?status=active&search=noor` returns a paginated list of `{ id, legalName, registrationNumber, status, allowedActions: ["suspend"] }`. `POST /admin/suppliers/s-12/suspend` returns `200 { "status": "suspended" }`. Repeating it returns the same result.
 
@@ -510,6 +546,10 @@ Neither supplier endpoint returns bids, tender participation, or evaluations.
   - `ASSIGNMENT_REQUESTING_EMPLOYEE_CONFLICT`
   - `ASSIGNMENT_STAFF_CONFLICT`
 - If the tender is already `under_evaluation`, approval returns `409 TENDER_STATUS_CHANGED`.
+- **Check order (an exception to §1.4):** `404`, then `409 ASSIGNMENT_ALREADY_DECIDED`, then the three conflicts above in their order, then `409 TENDER_STATUS_CHANGED`, then `400` for a missing `preferredLanguage`. With an existing account the body is not validated.
+- A nomination already approved or rejected returns `409 ASSIGNMENT_ALREADY_DECIDED`, for approve, reject and withdraw.
+
+`POST /admin/committee-nominations/n-9/reject` (no body) returns `200 { "status": "rejected" }`. `DELETE /manage/nominations/n-9` returns `204`. C2 and C3 return `409 TENDER_STATUS_CHANGED` unless the tender is `accepted`, `published` or `closed`.
 
 `GET /me/assignments`. Counts include only bids this assignment may see:
 
@@ -576,7 +616,9 @@ When `canSubmit` is false, `reasonCode` is one of:
 | `files[financial_offer][financial_proposal]` | `price-schedule.xlsx` |
 | `languages[financial_offer][financial_proposal]` | `en` |
 
-At submission, each original can carry at most one translation. Add more later with B5. The form tells suppliers not to identify themselves in technical or financial files.
+The form tells suppliers not to identify themselves in technical or financial files.
+
+**Postponed after V1:** bid document translations: the `translations[…]` and `translationLanguages[…]` fields of B2 and B4, and B5. In V1, `translations` is always `[]` and `allowedActions` never contains `manage_translations`.
 
 Returns `201` (`SupplierBid`, the same shape as B3d):
 
@@ -674,7 +716,9 @@ All three committees follow the same rules:
 ```
 
 - Never included: the technical and financial offers, other committees' evaluations, scoring settings, estimated balance.
-- Submit with `POST /evaluations/legal/tenders/t-1001/bids/bid-3/evaluation` and `{ "outcome": "pass", "reason": null }`. It returns `201`.
+- Submit with `POST /evaluations/legal/tenders/t-1001/bids/bid-3/evaluation` and `{ "outcome": "pass", "reason": null }`. It returns `201`. A `fail` needs a `reason` of up to 2,000 characters: `400 VALIDATION_FAILED` with `REQUIRED` otherwise.
+- The legal queue (L1) is a paginated list of `{ bidId, supplier: { legalName }, evaluated }`.
+- Each view also carries `answers`: that part's custom field answers, keyed by field ID. Bid translations are postponed, so `translations` is `[]`.
 
 **Technical** (`TechnicalBidView`). The queue is `GET /evaluations/technical/tenders/t-1001/bids?page=1`:
 

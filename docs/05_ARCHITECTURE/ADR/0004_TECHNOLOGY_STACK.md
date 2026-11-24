@@ -9,15 +9,16 @@ We use tools the team already knows from `b4f-board-final`, plus background jobs
 | Area | Choice |
 |---|---|
 | Back end | NestJS, TypeScript, Prisma, PostgreSQL, Swagger |
-| Login | Passport JWT in an httpOnly cookie; bcrypt for passwords |
+| Login | Passport JWT in an httpOnly cookie, read with `cookie-parser`; bcrypt for passwords; `@nestjs/throttler` for sign-in rate limits; `csrf-csrf` for CSRF tokens |
 | Permissions | Manual guards: one access service decides who sees which tender and bid; each committee's queries select only its allowed fields; 404 for anything a user may not see |
-| Background jobs | BullMQ + Redis |
+| Background jobs | BullMQ + Redis, through the ioredis client that BullMQ needs |
 | Email | Nodemailer; Mailpit in development |
 | Front end | Next.js App Router, Tailwind with some native CSS, shadcn/ui |
 | Data fetching | TanStack Query with an Orval-generated client from Swagger; the browser calls the API, protected by CORS and CSRF |
 | Screen state | React state and context; no Redux |
 | Local services | PostgreSQL, Redis, and Mailpit, installed natively by each member |
-| Code quality and tests | ESLint and Prettier in both apps; `class-validator` and `@nestjs/config` in the back end; Jest (back end); Vitest with Testing Library (front end) |
+| Code quality and tests | ESLint and Prettier in both apps; `class-validator` and `@nestjs/config` in the back end; Vitest in both apps, with Testing Library in the front end |
+| Translations | next-intl in the web app: `/[locale]/` routing, `messages/en.json` and `messages/ar.json`, Arabic plural rules, and date and number formatting |
 
 ## Sealed-bid acceptance check
 
@@ -29,3 +30,4 @@ A technical reviewer opens a technical offer and signs out. A financial reviewer
 - **Server Actions with a server-only client:** the `b4f-board-final` pattern, rejected in favour of TanStack Query caching. As a result, the API must handle CORS and CSRF.
 - **Redux:** rejected. TanStack Query manages API data, and React state and context cover the current screen-state needs.
 - **argon2:** bcrypt kept, because the team already uses it.
+- **Next.js dictionary pattern without a library:** rejected; Arabic plurals and passing text to browser components would be hand-written.
