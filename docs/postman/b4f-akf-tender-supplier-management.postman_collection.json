@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "AKF Tender and Supplier Management — S1–S5",
+    "name": "AKF Tender and Supplier Management — S1–S7 API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "S1 implemented operations, derived from Swagger and API_CONTRACT.md. Cookie authentication; leave the Postman cookie jar enabled. Set baseUrl, language (en/ar), email, and password locally. Never export live credentials, tokens, cookies, or signed paths. Request folders match the README Backend API Overview.\n\nUse requests individually; do not run every folder blindly: writes change state. Recommended path: A1 as employee → Q1/Q3/Q4 → A4 → change email/password to officer → A1 → M2/M3 → M5 (select a file)/M10/M11 → M2 → set future ISO UTC deadlines → M8 → T1/T2/T2d. Set tenderId explicitly when choosing an existing or cancelled seeded tender. M6 deletes files and M9 copies only a cancelled tender. Fetch M2 or M10 before changes; revision updates are chained from successful responses. Standard bid inputs are fixed. Auth refresh/sign-out rotate or revoke cookies. All examples are illustrative, not captured production data.\n\nCollection generation: current NestJS Swagger is the endpoint/DTO source; examples and scripts implement the accepted contract. Extend this collection in later slices.\n\nS2 sign-up: R2, U1–U7 including U3d, and account setup S1–S3. Supplier profile P1–P2 and the admin directory P4–P5 are included; certificate replacement and download (P3, P3d) are included; technical documents are not implemented yet. Start signed out for U1, then use the legal and admin demo accounts. U7 emails a setup link; read it in Mailpit (http://localhost:8025) and copy the token after #token= into setupToken locally. Never save a live setupToken or newPassword in the collection. Retain applicationKey for a retry; clear it only for a deliberately new/changed action. The guest cookie scope survives CSRF renewal."
   },
@@ -147,6 +147,36 @@
       "key": "bidderCode",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "emailId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "actionKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobileEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobilePassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobileAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mobileRefreshToken",
+      "value": "",
+      "type": "string"
     }
   ],
   "event": [
@@ -155,8 +185,9 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Every write uses the CSRF token bound to the current cookie-jar session.",
-          "if ([\"POST\", \"PUT\", \"PATCH\", \"DELETE\"].includes(pm.request.method)) {",
+          "// Web writes use CSRF. Mobile auth uses explicit credentials only.",
+          "const isMobileAuth = pm.request.url?.getPath().startsWith(\"/api/v1/mobile/auth/\");",
+          "if (!isMobileAuth && [\"POST\", \"PUT\", \"PATCH\", \"DELETE\"].includes(pm.request.method)) {",
           "  const response = await pm.sendRequest({ url: pm.variables.get(\"baseUrl\") + \"/api/v1/auth/csrf\", method: \"GET\", header: { \"Accept-Language\": pm.variables.get(\"language\") } });",
           "  if (response.code !== 200) throw new Error(\"Cannot obtain CSRF token\");",
           "  pm.variables.set(\"csrfToken\", response.json().csrfToken);",
@@ -166,6 +197,50 @@
     }
   ],
   "item": [
+    {
+      "name": "Employee Accounts",
+      "item": [
+        {
+          "name": "A6 Create an employee account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Example Employee\",\n  \"email\": \"employee@example.test\",\n  \"preferredLanguage\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees"
+              ]
+            },
+            "description": "Sign in as an administrator and fetch a session CSRF token first. Creates a pending employee account and queues a setup email."
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "System",
       "item": [
@@ -2164,6 +2239,176 @@
               "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Mobile Auth (S7)",
+      "description": "Run MA1 as a supplier, use the access token for the read requests, and use the latest refresh token for MA2 or MA3. Set token variables only in your local environment.",
+      "item": [
+        {
+          "name": "MA1 Mobile supplier sign-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{mobileEmail}}\",\n  \"password\": \"{{mobilePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/sign-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "sign-in"
+              ]
+            },
+            "description": "Use an active supplier. Set credentials locally. The response contains a device token pair; never save live values in the collection."
+          }
+        },
+        {
+          "name": "MA2 Rotate mobile session tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{mobileRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Paste the current device refresh token into a local environment. Replace it with the returned token after each successful refresh."
+          }
+        },
+        {
+          "name": "MA3 Sign out of the mobile session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{mobileRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mobile/auth/sign-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mobile",
+                "auth",
+                "sign-out"
+              ]
+            },
+            "description": "Revokes the mobile device session. Clear local token variables after use."
+          }
+        },
+        {
+          "name": "B3 Mobile my bids",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mobileAccessToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids"
+              ]
+            },
+            "description": "Returns the signed-in supplier’s paginated bid summaries."
+          }
+        },
+        {
+          "name": "B3d Mobile bid tracking detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{mobileAccessToken}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids/{{bidId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids",
+                "{{bidId}}"
+              ]
+            },
+            "description": "Returns only the tender status, part deadlines, and locked state for a bid owned by the supplier."
+          }
         }
       ]
     },
@@ -5036,6 +5281,458 @@
                   "if (pm.response.code < 300) {",
                   " const data = pm.response.json();",
                   " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Award",
+      "item": [
+        {
+          "name": "W1 Award status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/award-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "award-status"
+              ]
+            },
+            "description": "procurement_officer. Always answers: progress, award and tie candidates."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.tieBreakCandidates[0]) pm.variables.set(\"bidId\", data.tieBreakCandidates[0].bidId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "W2 Ranking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/ranking?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "ranking"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Names and scores only; ties share a rank."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "W3 Break a tie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{actionKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/award",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "award"
+              ]
+            },
+            "description": "While tie_break_required. Set actionKey to a new UUID.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bidId\": \"{{bidId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Emails",
+      "item": [
+        {
+          "name": "E1 Award emails",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/emails?kind=award&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "emails"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "award"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "kind=award covers the winner's and the other bidders' emails."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) { pm.variables.set(\"emailId\", data.data[0].id); pm.variables.set(\"revision\", data.data[0].revision); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "E2 Email detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/emails/{{emailId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "emails",
+                "{{emailId}}"
+              ]
+            },
+            "description": "Preview with lang and dir."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "E3 Edit email",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/emails/{{emailId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "emails",
+                "{{emailId}}"
+              ]
+            },
+            "description": "While draft or failed, at the reviewed revision.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Tender awarded\",\n  \"body\": \"Dear supplier, …\",\n  \"revision\": {{revision}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "E4 Send or retry one",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/emails/{{emailId}}/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "emails",
+                "{{emailId}}",
+                "send"
+              ]
+            },
+            "description": "202 when this call starts the delivery; 200 when already sending or sent.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 202\", () => pm.response.to.have.status(202));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "E5 Send all reviewed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/emails/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "emails",
+                "send"
+              ]
+            },
+            "description": "List each email at its reviewed revision.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"award\",\n  \"revisions\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 202\", () => pm.response.to.have.status(202));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
                   "}"
                 ]
               }

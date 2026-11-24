@@ -29,6 +29,7 @@ export function AppSidebar() {
     ...(roles.includes('admin')
       ? [
           { href: '/signup-requests', label: t('Signup.adminQueue') },
+          { href: '/admin/employees', label: t('EmployeeAccounts.nav') },
           { href: '/admin/suppliers', label: t('Suppliers.navDirectory') },
           { href: '/admin/committee-nominations', label: t('Committees.navQueue') },
         ]
@@ -41,7 +42,7 @@ export function AppSidebar() {
     { href: '/profile', label: t('Nav.profile') },
   ];
   return (
-    <aside className="border-b border-border bg-card px-4 py-4 sm:px-6 lg:min-h-[calc(100dvh-4.5rem)] lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
+    <aside className="border-b border-border bg-card px-4 py-2 sm:px-6 lg:min-h-[calc(100dvh-4.5rem)] lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
       <Button
         variant="outline"
         className="w-full justify-between lg:hidden"

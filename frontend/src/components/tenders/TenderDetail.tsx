@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@/i18n/navigation';
 import {
   getPublicTendersFindOneQueryKey,
   usePublicTendersFindOne,
@@ -19,6 +18,7 @@ import { publicKey } from '@/lib/api/query-keys';
 import { directionOf, formatDateTime, formatRelative, isPast, languageName } from '@/lib/format';
 import { useServerNow } from '@/lib/useServerNow';
 import { TenderDocuments } from './TenderDocuments';
+import { BackLink } from '@/components/ui/back-link';
 
 const DEADLINES = ['application', 'technical', 'financial'] as const;
 
@@ -34,14 +34,7 @@ export function TenderDetail({ tenderId }: { tenderId: string }) {
     },
   });
 
-  const back = (
-    <Link
-      href="/tenders"
-      className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline"
-    >
-      {t('Tender.back')}
-    </Link>
-  );
+  const back = <BackLink href="/tenders">{t('Tender.back')}</BackLink>;
 
   if (tender.isPending) {
     return (

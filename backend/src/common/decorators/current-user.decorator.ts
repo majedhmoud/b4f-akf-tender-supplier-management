@@ -9,6 +9,7 @@ export interface AuthenticatedUser {
   id: string;
   sessionId: string;
   roles: Role[];
+  sessionChannel?: 'mobile';
 }
 
 export const CurrentUser = createParamDecorator(

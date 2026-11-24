@@ -11,7 +11,7 @@ export function staffRoleForPath(path: string): Role | null {
 }
 
 export function isPrivatePath(path: string): boolean {
-  return !!staffRoleForPath(path) || /^\/(profile|my-assignments)(\/|$)/.test(path);
+  return !!staffRoleForPath(path) || /^\/(profile|my-assignments|evaluations)(\/|$)/.test(path);
 }
 
 // Restrict returnTo to app-relative URLs, then apply the new session's locale.

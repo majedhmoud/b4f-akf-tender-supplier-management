@@ -3,7 +3,8 @@ import { Suspense } from 'react';
 import { Geist, Geist_Mono, Noto_Sans_Arabic } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { routing } from '@/i18n/routing';
 import { Providers } from './providers';
@@ -29,6 +30,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 
   // Arabic pages run right to left. See V1_SCOPE.md.
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  const footer = await getTranslations({ locale, namespace: 'PublicInfo' });
 
   return (
     <html
@@ -36,9 +38,16 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
       dir={dir}
       className={`${geist.variable} ${geistMono.variable} ${notoArabic.variable}`}
     >
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
         <Suspense
-          fallback={<div className="min-h-screen animate-pulse bg-muted" aria-busy="true" />}
+          // Outside the translations provider, so the status text is chosen here.
+          fallback={
+            <div className="min-h-screen animate-pulse bg-muted" aria-busy="true">
+              <span role="status" className="sr-only">
+                {locale === 'ar' ? 'جارٍ التحميل…' : 'Loading…'}
+              </span>
+            </div>
+          }
         >
           <NextIntlClientProvider>
             <Providers>
@@ -46,6 +55,19 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
             </Providers>
           </NextIntlClientProvider>
         </Suspense>
+        <footer className="mt-auto border-t border-border">
+          <nav
+            aria-label={footer('navigation')}
+            className="mx-auto flex max-w-portal flex-wrap gap-x-5 gap-y-2 px-4 py-4 text-sm sm:px-6"
+          >
+            <Link href={`/${locale}/about`} className="text-muted-foreground hover:underline">
+              {footer('about')}
+            </Link>
+            <Link href={`/${locale}/terms`} className="text-muted-foreground hover:underline">
+              {footer('terms')}
+            </Link>
+          </nav>
+        </footer>
       </body>
     </html>
   );

@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@/i18n/navigation';
 import type {
   BidFormEditorView,
   CustomFieldDto,
@@ -27,6 +26,7 @@ import {
   managementControl,
   useManagementAction,
 } from './ManagementFeedback';
+import { BackLink } from '@/components/ui/back-link';
 
 type EditableField = {
   key: string;
@@ -389,9 +389,7 @@ export function BidFormEditor({ tenderId }: { tenderId: string }) {
           {t('saved')}
         </p>
       )}
-      <Link href={`/manage/tenders/${tenderId}`} className="text-sm text-primary hover:underline">
-        {t('backDetail')}
-      </Link>
+      <BackLink href={`/manage/tenders/${tenderId}`}>{t('backDetail')}</BackLink>
       <h1 className="text-2xl font-bold">{t('bidForm')}</h1>
       {query.isPending ? (
         <Skeleton className="h-64" />

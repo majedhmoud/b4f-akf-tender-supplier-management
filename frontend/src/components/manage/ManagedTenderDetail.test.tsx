@@ -44,7 +44,7 @@ describe('Officer tender details', () => {
     mocks.copy.mockResolvedValue({ id: 'copy-1' });
     response();
   });
-  it('shows permitted preparation panels while hiding S3 committee actions', () => {
+  it('shows permitted preparation panels without rendering a committee action before data loads', () => {
     mount();
     expect(screen.getByRole('link', { name: 'Supplier bid form' })).toHaveAttribute(
       'href',
@@ -52,7 +52,7 @@ describe('Officer tender details', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Accept / edit' }));
     expect(screen.getByText('Editing panel')).toBeInTheDocument();
-    expect(screen.queryByText(/raise.*committee/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /raise.*committee/i })).not.toBeInTheDocument();
     expect(useManageTendersFindOne).toHaveBeenCalledWith('t-1', {
       query: {
         queryKey: ['me', 'officer', 'manage-tenders', 'en', 'detail', 't-1'],

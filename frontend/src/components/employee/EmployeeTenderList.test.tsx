@@ -51,12 +51,13 @@ describe('EmployeeTenderList', () => {
       isError: false,
     } as unknown as ReturnType<typeof useEmployeeTendersList>);
     mount();
-    expect(screen.getByRole('link', { name: 'ترميم مدرسة' })).toHaveAttribute(
-      'href',
-      '/employee/tenders/t-1',
-    );
-    expect(screen.getByRole('link', { name: 'ترميم مدرسة' })).toHaveAttribute('dir', 'rtl');
-    expect(screen.getByText('Draft')).toBeInTheDocument();
+    const titles = screen.getAllByRole('link', { name: 'ترميم مدرسة' });
+    expect(titles).toHaveLength(2);
+    for (const title of titles) {
+      expect(title).toHaveAttribute('href', '/employee/tenders/t-1');
+      expect(title).toHaveAttribute('dir', 'rtl');
+    }
+    expect(screen.getAllByText('Draft')).toHaveLength(2);
     expect(useEmployeeTendersList).toHaveBeenCalledWith(
       { page: 2, limit: 20 },
       {

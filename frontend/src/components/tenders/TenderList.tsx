@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CardListSkeleton } from '@/components/ui/loading';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import {
   getPublicTendersListQueryKey,
@@ -79,13 +79,7 @@ export function TenderList() {
         </label>
       </div>
 
-      {tenders.isPending && (
-        <div className="grid gap-3" aria-busy="true">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-32 rounded-md" />
-          ))}
-        </div>
-      )}
+      {tenders.isPending && <CardListSkeleton count={6} />}
 
       {tenders.isError && (
         <ErrorState

@@ -1,0 +1,191 @@
+export type Locale = 'en' | 'ar';
+
+export const messages = {
+  en: {
+    appName: 'AKF Tenders',
+    browse: 'Browse tenders',
+    intro: 'Find published opportunities and check their deadlines.',
+    search: 'Search tenders',
+    availableTenders: 'Available tenders',
+    tenderDetails: 'View details',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    supplierMenu: 'Supplier menu',
+    supplierAccount: 'Supplier account',
+    guest: 'Browsing as a guest',
+    categories: {
+      construction: 'Construction',
+      goods_and_supplies: 'Goods and supplies',
+      information_technology: 'Information technology',
+      consulting_services: 'Consulting services',
+      maintenance_services: 'Maintenance services',
+      transport_and_logistics: 'Transport and logistics',
+    },
+    language: 'Switch to Arabic',
+    loading: 'Loading tenders…',
+    loadingDetail: 'Loading tender…',
+    loadError: 'Could not load tenders. Check your connection and try again.',
+    retry: 'Try again',
+    empty: 'There are no published tenders right now.',
+    noMatches: 'No tenders match your search.',
+    dateLabel: 'Applications close',
+    fallback: 'This content is shown in its available language.',
+    detail: 'Tender details',
+    notFound: 'This tender is no longer available.',
+    deadlines: 'Deadlines',
+    application: 'Application',
+    technical: 'Technical offer',
+    financial: 'Financial offer',
+    closed: 'Closed',
+    unknownTime: 'Countdown unavailable',
+    remaining: ({ days, hours, minutes, seconds }: Countdown) =>
+      `${days}d ${hours}h ${minutes}m ${seconds}s left`,
+    terms: 'Terms of Reference',
+    noTerms: 'No Terms of Reference are available.',
+    downloadError: 'Could not open the document. Try again to get a new link.',
+    openDocument: (name: string) => `Open ${name}`,
+    myBids: 'My bids',
+    bidDetail: 'Bid status',
+    signIn: 'Supplier sign-in',
+    email: 'Email',
+    password: 'Password',
+    signOut: 'Sign out',
+    restoring: 'Restoring your session…',
+    signingOut: 'Signing out…',
+    signingIn: 'Signing in…',
+    signInError: 'Could not sign in. Try again.',
+    badCredentials: 'Use the email and password for your supplier account.',
+    pendingSetup: 'Complete account setup using the link in your email.',
+    accountDisabled: 'This account is disabled.',
+    rateLimited: 'Too many attempts. Wait and try again.',
+    signOutWarning:
+      'You were signed out in this app, but we could not confirm full session cleanup.',
+    loadingBids: 'Loading your bids…',
+    bidsError: 'Could not load your bids. Try again.',
+    noBids: 'You haven’t submitted a bid yet.',
+    bidMissing: 'This bid is unavailable.',
+    nextDeadline: 'Next deadline',
+    noDeadline: 'No upcoming deadline',
+    locked: 'Locked',
+    unlocked: 'Open',
+    tenderStatuses: {
+      draft: 'Draft',
+      accepted: 'Accepted',
+      published: 'Open for bids',
+      closed: 'Closed',
+      under_evaluation: 'Under evaluation',
+      awarded: 'Awarded',
+      cancelled: 'Cancelled',
+    },
+    bidParts: {
+      legal_information: 'Legal information',
+      technical_offer: 'Technical offer',
+      financial_offer: 'Financial offer',
+    },
+  },
+  ar: {
+    appName: 'مناقصات آغا خان',
+    browse: 'تصفح المناقصات',
+    intro: 'اطّلع على الفرص المنشورة ومواعيدها النهائية.',
+    search: 'ابحث عن مناقصة',
+    availableTenders: 'المناقصات المتاحة',
+    tenderDetails: 'عرض التفاصيل',
+    openMenu: 'فتح القائمة',
+    closeMenu: 'إغلاق القائمة',
+    supplierMenu: 'قائمة المورّد',
+    supplierAccount: 'حساب المورّد',
+    guest: 'تتصفح بصفتك زائرًا',
+    categories: {
+      construction: 'الإنشاءات',
+      goods_and_supplies: 'السلع والمستلزمات',
+      information_technology: 'تقنية المعلومات',
+      consulting_services: 'الخدمات الاستشارية',
+      maintenance_services: 'خدمات الصيانة',
+      transport_and_logistics: 'النقل والخدمات اللوجستية',
+    },
+    language: 'التبديل إلى الإنجليزية',
+    loading: 'جارٍ تحميل المناقصات…',
+    loadingDetail: 'جارٍ تحميل المناقصة…',
+    loadError: 'تعذّر التحميل. تحقّق من اتصالك ثم حاول مجددًا.',
+    retry: 'حاول مجددًا',
+    empty: 'لا توجد مناقصات منشورة حاليًا.',
+    noMatches: 'لا توجد مناقصات تطابق بحثك.',
+    dateLabel: 'الموعد النهائي للتقديم',
+    fallback: 'يُعرض المحتوى باللغة المتوفرة.',
+    detail: 'تفاصيل المناقصة',
+    notFound: 'هذه المناقصة لم تعد متاحة.',
+    deadlines: 'المواعيد النهائية',
+    application: 'التقديم',
+    technical: 'العرض الفني',
+    financial: 'العرض المالي',
+    closed: 'مغلق',
+    unknownTime: 'العدّ التنازلي غير متاح',
+    remaining: ({ days, hours, minutes, seconds }: Countdown) =>
+      `متبقي ${days} يوم، ${hours} ساعة، ${minutes} دقيقة، ${seconds} ثانية`,
+    terms: 'الشروط المرجعية',
+    noTerms: 'لا توجد وثائق شروط مرجعية.',
+    downloadError: 'تعذّر فتح المستند. حاول مجددًا للحصول على رابط جديد.',
+    openDocument: (name: string) => `فتح ${name}`,
+    myBids: 'عروضي',
+    bidDetail: 'حالة العرض',
+    signIn: 'دخول المورّد',
+    email: 'البريد الإلكتروني',
+    password: 'كلمة المرور',
+    signOut: 'تسجيل الخروج',
+    restoring: 'جارٍ استعادة جلستك…',
+    signingOut: 'جارٍ تسجيل الخروج…',
+    signingIn: 'جارٍ تسجيل الدخول…',
+    signInError: 'تعذّر تسجيل الدخول. حاول مجددًا.',
+    badCredentials: 'استخدم البريد الإلكتروني وكلمة المرور لحساب المورّد.',
+    pendingSetup: 'أكمل إعداد حسابك عبر الرابط المرسل إلى بريدك الإلكتروني.',
+    accountDisabled: 'هذا الحساب معطّل.',
+    rateLimited: 'محاولات كثيرة. انتظر ثم حاول مجددًا.',
+    signOutWarning:
+      'تم تسجيل خروجك من التطبيق، لكن تعذّر تأكيد إنهاء الجلسة بالكامل.',
+    loadingBids: 'جارٍ تحميل عروضك…',
+    bidsError: 'تعذّر تحميل عروضك. حاول مجددًا.',
+    noBids: 'لم تقدّم أي عرض بعد.',
+    bidMissing: 'هذا العرض غير متاح.',
+    nextDeadline: 'الموعد النهائي التالي',
+    noDeadline: 'لا يوجد موعد نهائي قادم',
+    locked: 'مغلق',
+    unlocked: 'مفتوح',
+    tenderStatuses: {
+      draft: 'مسودة',
+      accepted: 'مقبولة',
+      published: 'مفتوحة لتقديم العروض',
+      closed: 'مغلقة',
+      under_evaluation: 'قيد التقييم',
+      awarded: 'تمت الترسية',
+      cancelled: 'ملغاة',
+    },
+    bidParts: {
+      legal_information: 'المعلومات القانونية',
+      technical_offer: 'العرض الفني',
+      financial_offer: 'العرض المالي',
+    },
+  },
+};
+
+type Countdown = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+export function textDirection(locale: Locale) {
+  return locale === 'ar'
+    ? ({ textAlign: 'right', writingDirection: 'rtl' } as const)
+    : ({ textAlign: 'left', writingDirection: 'ltr' } as const);
+}
+
+export function formatDeadline(timestamp: string, locale: Locale) {
+  const date = new Date(timestamp);
+  return Number.isFinite(date.valueOf())
+    ? new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(date)
+    : '—';
+}

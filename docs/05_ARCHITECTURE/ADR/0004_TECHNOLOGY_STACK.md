@@ -9,16 +9,17 @@ We use tools the team already knows from `b4f-board-final`, plus background jobs
 | Area | Choice |
 |---|---|
 | Back end | NestJS, TypeScript, Prisma, PostgreSQL, Swagger |
-| Login | Passport JWT in an httpOnly cookie, read with `cookie-parser`; bcrypt for passwords; `@nestjs/throttler` for sign-in rate limits; `csrf-csrf` for CSRF tokens |
+| Login | Shared bcrypt password verification and rate limiting. Web: Passport JWT in an HttpOnly cookie with CSRF. Mobile: supplier-only bearer sessions with device storage ([ADR 0007](0007_SUPPLIER_MOBILE_SIGN_IN.md)). |
 | Permissions | Manual guards: one access service decides who sees which tender and bid; each committee's queries select only its allowed fields; 404 for anything a user may not see |
 | Background jobs | BullMQ + Redis, through the ioredis client that BullMQ needs |
 | Email | Nodemailer; Mailpit in development |
 | Front end | Next.js App Router, Tailwind with some native CSS, shadcn/ui |
+| Mobile | React Native, Expo Router, typed API requests, Expo SecureStore for the refresh token |
 | Data fetching | TanStack Query with an Orval-generated client from Swagger; the browser calls the API, protected by CORS and CSRF |
 | Screen state | React state and context; no Redux |
 | Local services | PostgreSQL, Redis, and Mailpit, installed natively by each member |
-| Code quality and tests | ESLint and Prettier in both apps; `class-validator` and `@nestjs/config` in the back end; Vitest in both apps, with Testing Library in the front end |
-| Translations | next-intl in the web app: `/[locale]/` routing, `messages/en.json` and `messages/ar.json`, Arabic plural rules, and date and number formatting |
+| Code quality and tests | ESLint and Prettier for backend and web; `class-validator` and `@nestjs/config` in the backend; Vitest for backend and web with Testing Library on web; the mobile project has TypeScript, Expo lint and native bundle checks |
+| Translations | next-intl in the web app: `/[locale]/` routing, `messages/en.json` and `messages/ar.json`, Arabic plural rules, and date and number formatting. The mobile app keeps its English and Arabic strings in `mobile/src/locale/messages.ts`. |
 
 ## Sealed-bid acceptance check
 

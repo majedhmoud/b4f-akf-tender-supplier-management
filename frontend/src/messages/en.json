@@ -1,4 +1,60 @@
 {
+  "EmployeeAccounts": {
+    "nav": "Employee accounts",
+    "title": "Create an AKF employee account",
+    "intro": "Enter the employee’s work email. They’ll receive a link to set their password.",
+    "name": "Full name",
+    "email": "Work email",
+    "language": "Setup email language",
+    "creating": "Creating account…",
+    "create": "Create employee account",
+    "duplicate": "An account already uses this email address.",
+    "failure": "The account could not be created. Try again.",
+    "created": "Account created for {email}. The setup email is queued, and the account is pending setup."
+  },
+  "PublicInfo": {
+    "navigation": "Platform information",
+    "about": "About",
+    "terms": "Terms and Conditions"
+  },
+  "About": {
+    "title": "About AKF Tenders",
+    "intro": "The Aga Khan Foundation (AKF) tender platform brings tender notices, documents, and supplier submissions together.",
+    "platform": {
+      "title": "Explore public tenders",
+      "body": "Browse published opportunities and read each tender’s specifications, attachments, and submission deadline."
+    },
+    "suppliers": {
+      "title": "Participate as a supplier",
+      "body": "Apply for a supplier account. After approval and account setup, sign in to submit a bid and track it from My Bids."
+    },
+    "help": {
+      "title": "Get help with a tender",
+      "body": "For a question about requirements or attachments, use the contact details in the tender notice or its documents."
+    },
+    "action": "Browse public tenders"
+  },
+  "Terms": {
+    "title": "Terms and Conditions",
+    "intro": "These general terms explain how to use the AKF tender platform. The terms and documents published for each tender govern submissions to that tender.",
+    "accounts": {
+      "title": "Account access",
+      "body": "Use an account you are authorized to access. Keep your password and account setup link private. Suppliers must provide accurate and current registration information."
+    },
+    "submissions": {
+      "title": "Bid submissions",
+      "body": "Check your bid details and attachments before submitting. Submit all required parts through the platform before the deadline shown on the tender."
+    },
+    "requirements": {
+      "title": "Tender requirements",
+      "body": "Read the tender notice, its attachments, and any updates before preparing your bid. Follow the instructions and conditions published for that tender."
+    },
+    "communication": {
+      "title": "Status and questions",
+      "body": "Keep a copy of your submission and check your account for updates. Direct tender questions to the contact listed in its notice or documents."
+    },
+    "action": "About the platform"
+  },
   "Common": {
     "appName": "AKF Tenders",
     "appFullName": "AKF Tender and Supplier Management",
@@ -519,7 +575,8 @@
       "read_only": "Closed"
     },
     "navQueue": "Committee nominations",
-    "navAssignments": "My assignments"
+    "navAssignments": "My assignments",
+    "pendingCount": "{count, plural, one {# bid to evaluate} other {# bids to evaluate}}"
   },
   "Bids": {
     "bidTitle": "Bid",
@@ -604,5 +661,161 @@
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {page} of {total}"
+  },
+  "Evaluations": {
+    "titles": {
+      "legal": "Legal evaluation",
+      "technical": "Technical evaluation",
+      "financial": "Financial evaluation"
+    },
+    "hints": {
+      "legal": "Pass or fail each bid on its legal information. A failed bid goes no further.",
+      "technical": "Score each bid that passed the legal evaluation. Bidders are shown by code only.",
+      "financial": "Score each bid that met the minimum technical score, and confirm its total price. Bidders are shown by code only."
+    },
+    "forms": {
+      "legal": "Your legal decision",
+      "technical": "Your technical score",
+      "financial": "Your financial evaluation"
+    },
+    "bidder": "Bidder {code}",
+    "backToAssignments": "Back to my assignments",
+    "backToQueue": "Back to the bids",
+    "evaluated": "Evaluated",
+    "toEvaluate": "To evaluate",
+    "empty": "No bids are waiting at this stage.",
+    "notFound": "This evaluation is not available to you.",
+    "notStarted": "Evaluation has not started yet. It opens after the financial deadline.",
+    "loadFailed": "The information could not be loaded.",
+    "retry": "Try again",
+    "registration": "Registration number: {number}",
+    "legalInformation": "Legal information",
+    "signatory": "Authorized signatory",
+    "answers": "Answers",
+    "documents": "Documents",
+    "yes": "Yes",
+    "no": "No",
+    "download": "Download",
+    "downloadFailed": "The file could not be downloaded. Try again.",
+    "readOnly": "This bid can no longer be evaluated.",
+    "savedTitle": "Saved evaluation",
+    "submittedAt": "Submitted {when}",
+    "outcome": "Outcome",
+    "outcomes": {
+      "pass": "Pass",
+      "fail": "Fail"
+    },
+    "reason": "Reason",
+    "technicalScore": "Technical score",
+    "financialScore": "Financial score",
+    "confirmedTotalPrice": "Confirmed total price",
+    "comments": "Comments",
+    "scoreHint": "A whole number from 0 to 100.",
+    "finalHint": "An evaluation cannot be changed after it is submitted.",
+    "submit": "Submit evaluation",
+    "submitting": "Submitting…",
+    "errors": {
+      "REQUIRED": "This is required.",
+      "INVALID": "Check this value.",
+      "SCORE": "Enter a whole number from 0 to 100.",
+      "PRICE": "Enter an amount such as 58500.00."
+    },
+    "failures": {
+      "TENDER_STATUS_CHANGED": "The tender is no longer under evaluation. Refresh the page."
+    },
+    "failed": "The evaluation could not be saved. Try again.",
+    "pagination": "Pages",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}"
+  },
+  "Award": {
+    "title": "Evaluation and award",
+    "statuses": {
+      "in_progress": "In progress",
+      "tie_break_required": "Tie to break",
+      "awarded": "Awarded",
+      "cancelled": "Cancelled"
+    },
+    "stages": {
+      "legal": "Legal evaluation",
+      "technical": "Technical evaluation",
+      "financial": "Financial evaluation"
+    },
+    "progress": "{done} of {total} evaluated",
+    "awardedTo": "Awarded to {name}.",
+    "selection": {
+      "top_rank": "top score",
+      "tie_break": "chosen in a tie break"
+    },
+    "cancelled": {
+      "no_bids": "Cancelled: no bids were received.",
+      "no_qualified_bid": "Cancelled: no bid met the requirements."
+    },
+    "tieHint": "Several bids share the top combined score. Choose the winner among them.",
+    "columns": {
+      "rank": "Rank",
+      "supplier": "Supplier",
+      "technical": "Technical",
+      "financial": "Financial",
+      "combined": "Combined",
+      "balance": "Price",
+      "action": "Action"
+    },
+    "aboveBalance": "Above estimated balance",
+    "chooseWinner": "Choose winner",
+    "confirm": "Confirm winner",
+    "cancel": "Cancel",
+    "noRanking": "The ranking appears when the financial evaluation is complete.",
+    "loadFailed": "The award information could not be loaded.",
+    "retry": "Try again",
+    "failures": {
+      "ALREADY_AWARDED": "The tender has already been awarded.",
+      "TIE_BREAK_NOT_REQUIRED": "There is no tie to break.",
+      "BID_NOT_TIE_CANDIDATE": "Only a bid tied at the top can be chosen."
+    },
+    "failed": "The action could not be completed. Try again."
+  },
+  "OfficerEmails": {
+    "titles": {
+      "award": "Award emails",
+      "cancellation": "Cancellation emails"
+    },
+    "hint": "Review and edit each email, then send it. Bidders who did not win receive no scores.",
+    "sendAll": "Send all reviewed",
+    "sentSummary": "{sending} sending, {skipped} skipped.",
+    "stillSending": "Still sending, check again later.",
+    "empty": "There are no emails for this tender.",
+    "loadFailed": "The emails could not be loaded.",
+    "retry": "Try again",
+    "failed": "The action could not be completed. Try again.",
+    "kinds": {
+      "award_winner": "Winner",
+      "award_other": "Other bidder",
+      "cancellation": "Cancellation",
+      "account_setup": "Account setup",
+      "contact_supplier": "Contact"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Failed"
+    },
+    "revision": "Revision {revision}",
+    "sentAt": "sent {when}",
+    "subject": "Subject",
+    "body": "Message",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "send": "Send",
+    "retrySend": "Retry",
+    "failure": "Delivery failed at {when}. You can retry.",
+    "errors": {
+      "REQUIRED": "The subject and message are required.",
+      "VERSION_CONFLICT": "The email was changed. The latest version is shown.",
+      "EMAIL_NOT_EDITABLE": "This email is already sending or sent."
+    }
   }
 }

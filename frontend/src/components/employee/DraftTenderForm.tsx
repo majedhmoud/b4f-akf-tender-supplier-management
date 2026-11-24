@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import {
   useEmployeeTendersCreate,
   useEmployeeTendersUpdate,
@@ -16,6 +16,7 @@ import { useReferenceCategories } from '@/lib/api/generated/reference/reference'
 import { ApiError } from '@/lib/api/mutator';
 import { privateKey, publicKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
+import { BackLink } from '@/components/ui/back-link';
 
 const languages = ['en', 'ar'] as const;
 const controlClassName = 'field-control';
@@ -306,12 +307,9 @@ export function DraftTenderForm({
           </TabsContent>
         </fieldset>
       </Tabs>
-      <Link
-        href={base ? `/employee/tenders/${base.id}` : '/employee/tenders'}
-        className="self-start text-sm text-primary hover:underline"
-      >
+      <BackLink href={base ? `/employee/tenders/${base.id}` : '/employee/tenders'}>
         {t('back')}
-      </Link>
+      </BackLink>
     </form>
   );
 }

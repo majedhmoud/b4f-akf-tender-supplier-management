@@ -18,6 +18,8 @@ import {
 import { privateKey } from '@/lib/api/query-keys';
 import { ApiError } from '@/lib/api/mutator';
 import { useSession } from '@/lib/useSession';
+import { listCardClass } from '@/components/ui/list-card';
+import { useReturnFocus } from '@/lib/useReturnFocus';
 
 const PATH = '/admin/suppliers';
 const STATUSES: SupplierStatus[] = ['active', 'suspended'];
@@ -43,6 +45,7 @@ export function AdminSupplierDirectory() {
     setPreviousTerm(term);
     setDraft(term);
   }
+  const { register, returnTo } = useReturnFocus();
   const [confirming, setConfirming] = useState<{
     id: string;
     action: 'suspend' | 'reactivate';
@@ -84,9 +87,56 @@ export function AdminSupplierDirectory() {
       else await reactivate.mutateAsync({ supplierId: row.id });
       setConfirming(null);
       await queryClient.invalidateQueries({ queryKey: base });
+      // The row stays, with its next action: focus it (ADR 0008, rule 5).
+      returnTo(row.id);
     } catch {
       setActionFailed(true);
     }
+  }
+
+  // One action control for the table and the cards. Suspend and Reactivate
+  // are consequential, so they use the default button size (ADR 0008, rule 3).
+  function renderAction(row: SupplierListItem, layout: 'table' | 'card') {
+    const action = row.allowedActions.includes('suspend')
+      ? 'suspend'
+      : row.allowedActions.includes('reactivate')
+        ? 'reactivate'
+        : null;
+    if (!action) return null;
+    if (confirming?.id === row.id && confirming.action === action)
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          <span>{t(`confirm.${action}`, { name: row.legalName })}</span>
+          <Button
+            variant={action === 'suspend' ? 'destructive' : 'default'}
+            disabled={busy}
+            onClick={() => void act(row, action)}
+          >
+            {t(`actions.${action}`)}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              setConfirming(null);
+              returnTo(row.id);
+            }}
+          >
+            {t('cancel')}
+          </Button>
+        </div>
+      );
+    return (
+      <Button
+        ref={register(layout, row.id)}
+        variant="outline"
+        className={layout === 'card' ? 'w-full' : undefined}
+        disabled={busy}
+        onClick={() => setConfirming({ id: row.id, action })}
+      >
+        {t(`actions.${action}`)}
+      </Button>
+    );
   }
 
   return (
@@ -149,76 +199,57 @@ export function AdminSupplierDirectory() {
       {!query.isError &&
         query.data &&
         (query.data.data.length ? (
-          <div className="overflow-x-auto panel">
-            <table className="w-full text-start text-sm">
-              <thead className="bg-secondary/50">
-                <tr>
-                  {['legalName', 'registrationNumber', 'status', 'action'].map((key) => (
-                    <th key={key} scope="col" className="px-5 py-3 text-start">
-                      {t(`columns.${key}`)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {query.data.data.map((row) => {
-                  const action = row.allowedActions.includes('suspend')
-                    ? 'suspend'
-                    : row.allowedActions.includes('reactivate')
-                      ? 'reactivate'
-                      : null;
-                  return (
-                    <tr key={row.id}>
-                      <td className="min-w-44 px-5 py-4" dir="auto">
-                        {row.legalName}
-                      </td>
-                      <td className="px-5 py-4" dir="auto">
-                        {row.registrationNumber}
-                      </td>
-                      <td className="px-5 py-4">
-                        <Badge variant={row.status === 'active' ? 'secondary' : 'destructive'}>
-                          {t(`status.${row.status}`)}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4">
-                        {action &&
-                          (confirming?.id === row.id && confirming.action === action ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span>{t(`confirm.${action}`, { name: row.legalName })}</span>
-                              <Button
-                                size="sm"
-                                variant={action === 'suspend' ? 'destructive' : 'default'}
-                                disabled={busy}
-                                onClick={() => void act(row, action)}
-                              >
-                                {t(`actions.${action}`)}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={busy}
-                                onClick={() => setConfirming(null)}
-                              >
-                                {t('cancel')}
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={busy}
-                              onClick={() => setConfirming({ id: row.id, action })}
-                            >
-                              {t(`actions.${action}`)}
-                            </Button>
-                          ))}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <ul className="space-y-3 lg:hidden">
+              {query.data.data.map((row) => (
+                <li key={row.id} className={listCardClass}>
+                  <p className="font-semibold" dir="auto">
+                    {row.legalName}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant={row.status === 'active' ? 'secondary' : 'destructive'}>
+                      {t(`status.${row.status}`)}
+                    </Badge>
+                    <span dir="auto">{row.registrationNumber}</span>
+                  </div>
+                  {renderAction(row, 'card')}
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto panel lg:block">
+              <table className="w-full text-start text-sm">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    {['legalName', 'registrationNumber', 'status', 'action'].map((key) => (
+                      <th key={key} scope="col" className="px-5 py-3 text-start">
+                        {t(`columns.${key}`)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {query.data.data.map((row) => {
+                    return (
+                      <tr key={row.id}>
+                        <td className="min-w-44 px-5 py-4" dir="auto">
+                          {row.legalName}
+                        </td>
+                        <td className="px-5 py-4" dir="auto">
+                          {row.registrationNumber}
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge variant={row.status === 'active' ? 'secondary' : 'destructive'}>
+                            {t(`status.${row.status}`)}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-4">{renderAction(row, 'table')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState title={t('empty')} />
         ))}

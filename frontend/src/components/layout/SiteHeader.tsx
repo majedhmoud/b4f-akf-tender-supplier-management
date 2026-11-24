@@ -30,7 +30,7 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex min-h-18 max-w-portal flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6 md:py-0">
+      <div className="mx-auto flex min-h-14 max-w-portal flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 sm:px-6 md:min-h-18 md:gap-x-6 md:py-0">
         <Link
           href={legalOnly ? '/signup-reviews' : '/tenders'}
           className="min-w-0 rounded-md text-lg font-bold tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
@@ -60,7 +60,7 @@ export function SiteHeader() {
             )}
           </nav>
         )}
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 text-sm">
+        <div className="flex min-w-0 items-center justify-end gap-2 text-sm sm:gap-3">
           <Suspense fallback={null}>
             <LanguageSwitch />
           </Suspense>
@@ -69,12 +69,15 @@ export function SiteHeader() {
               <>
                 <Link
                   href="/profile"
-                  aria-label={t('Nav.profile')}
+                  // The email is truncated on phones; its accessible name keeps
+                  // it in full (ADR 0008, rule 4).
+                  aria-label={`${t('Nav.profile')}: ${session.user.email}`}
+                  title={session.user.email}
                   aria-current={pathname === '/profile' ? 'page' : undefined}
                   dir="ltr"
-                  className="inline-flex min-h-10 max-w-full items-center rounded-md border border-input bg-card px-3 py-2 text-sm font-medium break-all text-primary transition-colors hover:border-primary hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:border-primary aria-[current=page]:bg-secondary"
+                  className="inline-flex min-h-10 max-w-36 min-w-0 items-center rounded-md border border-input bg-card px-3 py-2 text-sm font-medium text-primary sm:max-w-72 transition-colors hover:border-primary hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:border-primary aria-[current=page]:bg-secondary"
                 >
-                  {session.user.email}
+                  <span className="truncate">{session.user.email}</span>
                 </Link>
                 <Button
                   variant="outline"

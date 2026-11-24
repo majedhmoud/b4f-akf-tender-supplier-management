@@ -20,6 +20,7 @@ import { privateKey } from '@/lib/api/query-keys';
 import { directionOf, languageName } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { DraftTenderForm } from './DraftTenderForm';
+import { BackLink } from '@/components/ui/back-link';
 
 function EmployeeDocument({
   tenderId,
@@ -145,9 +146,7 @@ export function EmployeeTenderDetail({
   const documents = data.documents.flatMap((document) => [document, ...document.translations]);
   return (
     <article className="flex flex-col gap-5">
-      <Link href="/employee/tenders" className="self-start text-sm text-primary hover:underline">
-        {t('Employee.back')}
-      </Link>
+      <BackLink href="/employee/tenders">{t('Employee.back')}</BackLink>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1

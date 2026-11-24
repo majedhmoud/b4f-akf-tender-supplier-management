@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
 }));
 vi.mock('@/lib/useSession', () => ({ useSession: () => mocks }));
+vi.mock('@/components/suppliers/SupplierProfileForm', () => ({
+  SupplierProfileForm: () => <section aria-label="Supplier profile editor" />,
+}));
 vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams('tab=account') }));
 vi.mock('@/i18n/navigation', () => ({
   usePathname: () => '/profile',
@@ -51,6 +54,9 @@ describe('UserProfile', () => {
       expect(screen.getByText(en.Profile.role[role])).toBeInTheDocument();
       expect(screen.getByText('Arabic')).toBeInTheDocument();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      const supplierEditor = screen.queryByRole('region', { name: 'Supplier profile editor' });
+      if (role === 'supplier') expect(supplierEditor).toBeInTheDocument();
+      else expect(supplierEditor).not.toBeInTheDocument();
       expect(mocks.replace).not.toHaveBeenCalled();
     },
   );

@@ -2,7 +2,7 @@
 
 Status: accepted (revision 2). The ERD changes in section 4 are approved.
 
-For the Next.js teammate building against mocks. Every endpoint shape, header, and error code is a **proposal**, except what the accepted docs already fix: `/api/v1`, the HttpOnly JWT cookie, 404 for records a user may not see, the pagination envelope, and the response DTO names in ENGINEERING_STANDARDS §2.7.
+For the web and mobile clients building against the API. This document includes implemented flows and proposed operations labelled below. [ADR 0007](ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md) accepts the S7 session model. The mobile routes are implemented and covered by backend integration tests. See the [S7 checkpoint](../06_SLICES/S7_SUPPLIER_COMPANION.md#verification-and-status) for what was verified.
 
 **Decisions applied in this revision**
 
@@ -15,6 +15,8 @@ The ERD changes this contract depends on are listed in [section 4](#4-erd-change
 ## 1. Shared behaviour
 
 ### 1.1 Session, CSRF, refresh
+
+These rules apply to the web client. The mobile supplier session uses [§1.9](#19-mobile-supplier-sessions-s7).
 
 - **Cookies.** The API sets two HttpOnly, Secure, `SameSite=Lax` cookies: `access_token` (10 minutes) and `refresh_token`. The web app and the API run on the same site. The frontend never reads either cookie.
 - **Credentials.** Every request uses `credentials: 'include'`, set once in the Orval mutator. CORS allows credentials only from the web app's exact origin.
@@ -51,7 +53,8 @@ The ERD changes this contract depends on are listed in [section 4](#4-erd-change
   - translation upload
   - every evaluation submission
   - tie-break award
-  - email preparation and sending
+  - Contact Supplier draft preparation (E6, planned)
+- **Officer email sends.** E4 and E5 accept an optional `Idempotency-Key`. Their repeat protection comes from claiming the reviewed revision once, independently of that header.
 - **Retries.** Create the key once per user action, and keep it in the mutation's state, so every retry of that action reuses it.
 - **Scope.** The server stores keys for 24 hours per caller and target route. Signed-in callers use their account. Guest applications use the server-issued browser scope established by CSRF bootstrap, which survives CSRF token renewal. Retry from the same browser with credentials included.
 - **Replays and misuse.**
@@ -139,6 +142,15 @@ The UI translates `code`. It never displays `message`.
   - The URL path holds only a random storage key. The downloaded file name is set by the server: original names for the legal committee, the supplier, and staff; neutral names for blind reviewers.
 - **Forms.** Required document kinds and fields come from the form-spec endpoints, so the frontend never hard-codes them.
 
+### 1.9 Mobile supplier sessions (S7)
+
+- **Same API.** Public tender browsing and Terms of Reference downloads use T1, T2, and T2d without a session. Mobile and web share supplier accounts and the database.
+- **Separate session channel.** Mobile auth endpoints accept JSON over HTTPS, ignore web cookies, and never set cookies. Their credentials are sent explicitly in the body. They do not require a browser CSRF token. Web routes keep their existing cookie and CSRF requirements.
+- **Eligibility.** An `active` user account with the `supplier` role and a supplier record can sign in. Recheck account eligibility on refresh and each protected read. A suspended supplier with an active user account retains the existing ability to track their own bids.
+- **Token storage and refresh.** Keep the 10-minute access token in memory and the rotating refresh token in secure device storage. Use one refresh request at a time. On `401 SESSION_EXPIRED` from a protected read, refresh and retry that read once. If refresh is rejected or its response is lost, require sign-in again instead of replaying the previous token. Reuse of a rotated refresh token revokes its device session.
+- **Access scope.** Accept a mobile bearer token only for B3 and B3d. Bind tokens and refresh credentials to their mobile session so they cannot authenticate web-only routes. Check bid ownership before returning a record. Return `404 NOT_FOUND` for another supplier's bid. B3 keeps the existing paginated summary. B3d returns `MobileSupplierBid`: `id`, `tender` (`BidTenderRef`), `parts` containing only `partType`, `deadline` (UTC or null), and `locked`, and `serverTime`. Omit bid answers, documents, signatory information, edit actions, rankings, and decisions about individual bids.
+- **Session end.** Sign-out revokes the device session when the API is reachable. Clear local tokens and private query data on sign-out even if offline, and when the server confirms the session is invalid. If offline, server revocation remains unconfirmed. Mobile auth and bid responses use `Cache-Control: private, no-store`.
+
 ## 2. Endpoint inventory
 
 Each group below is one Swagger tag, and the README and Postman folder use the same name. "Who and when" is enforced by the server.
@@ -154,6 +166,11 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | A3 | Refresh | After `SESSION_EXPIRED` | `POST /auth/refresh` |
 | A4 | Sign out | Signed in | `POST /auth/sign-out` |
 | A5 | Change interface language | Signed in | `PATCH /me` |
+| A6 | Create an AKF employee account | Admin | `POST /admin/employees` |
+| **Mobile Auth (S7)** | | | |
+| MA1 | Sign in | Active supplier account | `POST /mobile/auth/sign-in` |
+| MA2 | Rotate tokens | Mobile refresh token | `POST /mobile/auth/refresh` |
+| MA3 | Sign out | Mobile refresh token | `POST /mobile/auth/sign-out` |
 | **Reference** | | | |
 | R1 | Categories | Anyone | `GET /reference/tender-categories` |
 | R2 | Sign-up form spec | Anyone | `GET /reference/forms/supplier-application` |
@@ -212,8 +229,8 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | **Bids** | | | |
 | B1 | Bid form spec and eligibility | `supplier` | `GET /tenders/:tenderId/bid-form` |
 | B2 | Submit a bid (all three parts) | `active` supplier; `published` tender; before the application deadline | `POST /tenders/:tenderId/bids` |
-| B3 | My bids | `supplier`, own | `GET /me/bids` |
-| B3d | Bid detail (`SupplierBid`) | `supplier`, own | `GET /me/bids/:bidId` |
+| B3 | My bids | `supplier`, own; web cookie or mobile bearer | `GET /me/bids` |
+| B3d | Bid detail (`SupplierBid` on web, `MobileSupplierBid` on mobile) | `supplier`, own; web cookie or mobile bearer | `GET /me/bids/:bidId` |
 | B4 | Replace a bid part | `supplier`, own; before that part's deadline; allowed while suspended | `PUT /me/bids/:bidId/parts/:partType` |
 | B5 | Add, replace or remove a translation (postponed after V1) | Same as B4 | `PUT /me/bids/:bidId/parts/:partType/documents/:docId/translations/:language`, `DELETE` on the same path |
 | B6 | Bid document download | `supplier`, own | `GET /me/bids/:bidId/documents/:docId/download` |
@@ -242,7 +259,7 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | E3 | Edit | `procurement_officer`, while `draft` or `failed` | `PATCH /manage/emails/:emailId` |
 | E4 | Send or retry one | `procurement_officer`, while `draft` or `failed` | `POST /manage/emails/:emailId/send` |
 | E5 | Send all reviewed | `procurement_officer` | `POST /manage/tenders/:tenderId/emails/send` |
-| E6 | Prepare a Contact Supplier email | `procurement_officer`, any tender status | `POST /manage/suppliers/:supplierId/contact-drafts` |
+| E6 | Prepare a Contact Supplier email (planned) | `procurement_officer`, any tender status | `POST /manage/suppliers/:supplierId/contact-drafts` |
 
 ## 3. Payload examples
 
@@ -272,6 +289,27 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 `POST /auth/sign-out` returns `204`. Clear the cache and fetch a new CSRF token.
 
 `PATCH /me` with `{ "preferredLanguage": "ar" }` returns `200` with the updated `user`. Switch the route locale.
+
+A6 takes `displayName`, `email`, and `preferredLanguage` (`en` or `ar`). It requires a web session and CSRF token. The response is `201` with `id`, `email`, and `status: pending_setup`. The server assigns the `employee` role and queues a setup email. A registered email returns `409 EMAIL_ALREADY_REGISTERED`.
+
+### Mobile Auth (S7)
+
+**MA1.** `POST /mobile/auth/sign-in` requires `email` and `password`, both strings. Apply the existing sign-in rate limit. A bad credential or non-supplier account returns `401 INVALID_CREDENTIALS`. Pending setup and disabled accounts use `403 ACCOUNT_PENDING_SETUP` and `403 ACCOUNT_DISABLED`. Throttled requests return `429 RATE_LIMITED` with `Retry-After`.
+
+**MA2.** `POST /mobile/auth/refresh` requires `{ "refreshToken": "<refresh-token>" }`. It rotates the refresh token and returns a new token pair. Unknown, expired, or revoked credentials return `401 SESSION_REVOKED`.
+
+MA1 and MA2 return `200`:
+
+```json
+{
+  "accessToken": "<access-token>",
+  "refreshToken": "<refresh-token>",
+  "expiresIn": 600,
+  "user": { "id": "u-12", "preferredLanguage": "ar" }
+}
+```
+
+**MA3.** `POST /mobile/auth/sign-out` requires `{ "refreshToken": "<refresh-token>" }`. It revokes the associated mobile session and returns `204` without a body, including when that session is already gone. All three routes return `400 VALIDATION_FAILED` for invalid request bodies.
 
 ### Public Tenders
 
@@ -477,7 +515,7 @@ U7 provisions at most once. Its conflicts, checked in this order:
    - This only checks the link. The token stays valid.
    - Render the page in `preferredLanguage`.
 2. `POST /account-setup/complete` with `{ "token": "…", "password": "…" }` uses up the token.
-   - It returns `200`: the session body plus `"next": "supplier_profile"`, or `"my_assignments"` for a committee member.
+   - It returns `200`: the session body plus `next`. Values are `supplier_profile` for suppliers, `my_assignments` for committee members, and `employee_tenders` for employees.
    - Clear the cache, fetch a new CSRF token, then navigate to `next`.
 3. Errors from either call:
    - `410 SETUP_LINK_EXPIRED`: "Send a new link" calls `POST /account-setup/resend` with `{ "token": "…" }`, which always returns `202`.
@@ -851,11 +889,11 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
 - **Edit.** `PATCH /manage/emails/m-1` with `{ "subject": "…", "body": "…", "revision": 2 }` returns `200 { "revision": 3 }`.
   - An older revision returns `409 VERSION_CONFLICT`.
   - An email that is `sending` or `sent` returns `409 EMAIL_NOT_EDITABLE`.
-- **Send one, or retry.** `POST /manage/emails/m-1/send` with `{ "revision": 3 }` and `Idempotency-Key`:
+- **Send one, or retry.** `POST /manage/emails/m-1/send` with `{ "revision": 3 }`. `Idempotency-Key` is optional:
   - From `draft` or `failed`: `202 { "status": "sending", "revision": 3 }`.
   - Already `sending` or `sent`: `200` with the current status. Nothing is delivered twice.
   - A different revision: `409 VERSION_CONFLICT`.
-- **Send all reviewed.** `POST /manage/tenders/t-1001/emails/send` with `{ "kind": "award", "revisions": { "m-1": 3, "m-2": 1, "m-3": 1 } }` and `Idempotency-Key` returns `202`:
+- **Send all reviewed.** `POST /manage/tenders/t-1001/emails/send` with `{ "kind": "award", "revisions": { "m-1": 3, "m-2": 1, "m-3": 1 } }` returns `202`. `Idempotency-Key` is optional:
   ```json
   { "sending": ["m-1", "m-3"],
     "skipped": [{ "id": "m-2", "reason": "revision_changed" }] }
@@ -864,7 +902,7 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
   - Send one and Send all claim the reviewed revision only while it is `draft` or `failed`. Concurrent requests schedule one delivery. An uncertain delivery stays `sending` during reconciliation. Retry becomes available only after confirmed failure.
 - **Polling.** While any email is `sending`, refetch the list every 3 seconds, for at most 60 seconds. After that, show "Still sending, check again later".
 - **Failure.** A failed email shows `failure: { "code": "DELIVERY_FAILED", "at": "…" }` and a Retry button. Retry is the same call as Send one.
-- **Contact Supplier.** `POST /manage/suppliers/s-12/contact-drafts` with `{ "tenderId": "t-1001" }` (`tenderId` is optional) and `Idempotency-Key` returns `201`:
+- **Contact Supplier (planned).** The proposed `POST /manage/suppliers/s-12/contact-drafts` with `{ "tenderId": "t-1001" }` (`tenderId` is optional) and `Idempotency-Key` returns `201`:
   ```json
   { "id": "m-9", "kind": "contact_supplier", "status": "draft", "revision": 1, "language": "ar",
     "subject": "", "body": "" }

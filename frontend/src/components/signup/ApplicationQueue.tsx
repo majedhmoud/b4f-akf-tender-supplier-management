@@ -11,6 +11,7 @@ import { useSignupReviewsList, useSignupRequestsList } from '@/lib/api/generated
 import { privateKey } from '@/lib/api/query-keys';
 import { formatDateTime } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
+import { listCardActionClass, listCardClass } from '@/components/ui/list-card';
 
 function useQueueState() {
   const search = useSearchParams();
@@ -56,44 +57,64 @@ function ApplicationQueueView({
       )}
       {data &&
         (data.data.length ? (
-          <div className="overflow-x-auto panel">
-            <table className="w-full text-start text-sm">
-              <thead className="bg-secondary/50">
-                <tr>
-                  {['legalName', 'registrationNumber', 'submittedAt', 'action'].map((key) => (
-                    <th className="px-5 py-3 text-start" scope="col" key={key}>
-                      {t(key)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {data.data.map((row) => (
-                  <tr key={row.applicationId}>
-                    <td className="min-w-44 px-5 py-5" dir="auto">
-                      {row.legalName}
-                    </td>
-                    <td className="px-5 py-5" dir="auto">
-                      {row.registrationNumber}
-                    </td>
-                    <td className="px-5 py-5">
-                      <time dateTime={row.submittedAt}>
-                        {formatDateTime(locale, row.submittedAt)}
-                      </time>
-                    </td>
-                    <td className="px-5 py-5">
-                      <Link
-                        href={`${path}/${row.applicationId}`}
-                        className="font-semibold text-primary hover:underline"
-                      >
-                        {t('view')}
-                      </Link>
-                    </td>
+          <>
+            <ul className="space-y-3 lg:hidden">
+              {data.data.map((row) => (
+                <li key={row.applicationId} className={listCardClass}>
+                  <p className="font-semibold" dir="auto">
+                    {row.legalName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <span dir="auto">{row.registrationNumber}</span> ·{' '}
+                    <time dateTime={row.submittedAt}>
+                      {formatDateTime(locale, row.submittedAt)}
+                    </time>
+                  </p>
+                  <Link href={`${path}/${row.applicationId}`} className={listCardActionClass}>
+                    {t('view')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto panel lg:block">
+              <table className="w-full text-start text-sm">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    {['legalName', 'registrationNumber', 'submittedAt', 'action'].map((key) => (
+                      <th className="px-5 py-3 text-start" scope="col" key={key}>
+                        {t(key)}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y">
+                  {data.data.map((row) => (
+                    <tr key={row.applicationId}>
+                      <td className="min-w-44 px-5 py-5" dir="auto">
+                        {row.legalName}
+                      </td>
+                      <td className="px-5 py-5" dir="auto">
+                        {row.registrationNumber}
+                      </td>
+                      <td className="px-5 py-5">
+                        <time dateTime={row.submittedAt}>
+                          {formatDateTime(locale, row.submittedAt)}
+                        </time>
+                      </td>
+                      <td className="px-5 py-5">
+                        <Link
+                          href={`${path}/${row.applicationId}`}
+                          className="font-semibold text-primary hover:underline"
+                        >
+                          {t('view')}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <EmptyState title={t('emptyQueue')} />
         ))}

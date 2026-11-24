@@ -42,10 +42,9 @@ describe('Managed tender list', () => {
   });
   it('uses the locale/user private key and status filter', () => {
     render(<ManagedTenderList />, { wrapper: ManagementTestProvider });
-    expect(screen.getByRole('link', { name: 'School repairs' })).toHaveAttribute(
-      'href',
-      '/manage/tenders/t-1',
-    );
+    const titles = screen.getAllByRole('link', { name: 'School repairs' });
+    expect(titles).toHaveLength(2);
+    for (const title of titles) expect(title).toHaveAttribute('href', '/manage/tenders/t-1');
     expect(useManageTendersList).toHaveBeenCalledWith(
       { page: 2, limit: 20, status: 'accepted' },
       {

@@ -19,9 +19,12 @@ import { privateKey } from '@/lib/api/query-keys';
 import { directionOf, formatDateTime } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { ManagedDocuments } from './ManagedDocuments';
+import { TenderAward } from '@/components/awards/TenderAward';
+import { TenderEmails } from '@/components/awards/TenderEmails';
 import { TenderCommittees } from '@/components/committees/TenderCommittees';
 import { ManagedTenderForm, PublishTenderForm } from './ManagedTenderForm';
 import { ManagementFeedback, useManagementAction } from './ManagementFeedback';
+import { BackLink } from '@/components/ui/back-link';
 
 function TenderPanels({
   tender,
@@ -56,9 +59,7 @@ function TenderPanels({
   ];
   return (
     <article className="space-y-5">
-      <Link href="/manage/tenders" className="text-sm text-primary hover:underline">
-        {t('Manage.back')}
-      </Link>
+      <BackLink href="/manage/tenders">{t('Manage.back')}</BackLink>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1
@@ -215,6 +216,8 @@ function TenderPanels({
         </div>
       </div>
       <TenderCommittees tenderId={tender.id} status={tender.status} />
+      <TenderAward tenderId={tender.id} status={tender.status} />
+      <TenderEmails tenderId={tender.id} status={tender.status} />
     </article>
   );
 }

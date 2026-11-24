@@ -19,6 +19,12 @@ import ar from '@/messages/ar.json';
 
 type Stage =
   'checking' | 'ready' | 'expired' | 'used' | 'invalid' | 'error' | 'resent' | 'completed';
+const setupDestinations = {
+  supplier_profile: '/profile',
+  my_assignments: '/my-assignments',
+  employee_tenders: '/employee/tenders',
+} satisfies Record<CompletedSetupView['next'], string>;
+
 function errorCode(error: unknown) {
   return error instanceof ApiError
     ? error.status === 404
@@ -134,7 +140,7 @@ export function AccountSetup() {
         serverTime: result.serverTime,
       });
       completed.current = null;
-      router.replace(result.next === 'my_assignments' ? '/my-assignments' : '/profile', {
+      router.replace(setupDestinations[result.next], {
         locale: result.user.preferredLanguage,
       });
     } catch {

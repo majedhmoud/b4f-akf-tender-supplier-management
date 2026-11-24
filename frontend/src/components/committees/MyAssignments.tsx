@@ -6,7 +6,8 @@ import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { STAGE_OF } from '@/components/evaluations/stages';
 import { useMyAssignmentsList } from '@/lib/api/generated/committees/committees';
 import { privateKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
@@ -57,13 +58,20 @@ export function MyAssignments() {
                 className="panel flex flex-wrap items-center justify-between gap-3 p-4"
               >
                 <div className="min-w-0 space-y-1">
-                  <p className="font-semibold" dir="auto" lang={a.tenderContent.language}>
+                  <Link
+                    href={`/evaluations/${STAGE_OF[a.committeeType]}/tenders/${a.tenderId}`}
+                    className="font-semibold text-primary underline underline-offset-4"
+                    dir="auto"
+                    lang={a.tenderContent.language}
+                  >
                     {a.tenderContent.title}
-                  </p>
+                  </Link>
                   <p className="text-sm text-muted-foreground">{t(`types.${a.committeeType}`)}</p>
                 </div>
                 <Badge variant={a.stage === 'open' ? 'default' : 'secondary'}>
-                  {t(`stages.${a.stage}`)}
+                  {a.stage === 'open'
+                    ? t('pendingCount', { count: a.pendingCount })
+                    : t(`stages.${a.stage}`)}
                 </Badge>
               </li>
             ))}

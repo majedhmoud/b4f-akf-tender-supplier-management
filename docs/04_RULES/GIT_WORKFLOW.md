@@ -2,6 +2,8 @@
 
 Status: accepted.
 
+Use the formal [b4f-akf-tender-supplier-management repository](https://github.com/majedhmoud/b4f-akf-tender-supplier-management) and start task branches from its `develop` branch.
+
 ## Long-lived branches
 
 | Branch | Purpose | Rule |
