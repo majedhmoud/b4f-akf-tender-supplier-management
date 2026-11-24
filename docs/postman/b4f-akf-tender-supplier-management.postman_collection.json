@@ -1,0 +1,5078 @@
+{
+  "info": {
+    "name": "AKF Tender and Supplier Management — S1–S5",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "S1 implemented operations, derived from Swagger and API_CONTRACT.md. Cookie authentication; leave the Postman cookie jar enabled. Set baseUrl, language (en/ar), email, and password locally. Never export live credentials, tokens, cookies, or signed paths. Request folders match the README Backend API Overview.\n\nUse requests individually; do not run every folder blindly: writes change state. Recommended path: A1 as employee → Q1/Q3/Q4 → A4 → change email/password to officer → A1 → M2/M3 → M5 (select a file)/M10/M11 → M2 → set future ISO UTC deadlines → M8 → T1/T2/T2d. Set tenderId explicitly when choosing an existing or cancelled seeded tender. M6 deletes files and M9 copies only a cancelled tender. Fetch M2 or M10 before changes; revision updates are chained from successful responses. Standard bid inputs are fixed. Auth refresh/sign-out rotate or revoke cookies. All examples are illustrative, not captured production data.\n\nCollection generation: current NestJS Swagger is the endpoint/DTO source; examples and scripts implement the accepted contract. Extend this collection in later slices.\n\nS2 sign-up: R2, U1–U7 including U3d, and account setup S1–S3. Supplier profile P1–P2 and the admin directory P4–P5 are included; certificate replacement and download (P3, P3d) are included; technical documents are not implemented yet. Start signed out for U1, then use the legal and admin demo accounts. U7 emails a setup link; read it in Mailpit (http://localhost:8025) and copy the token after #token= into setupToken locally. Never save a live setupToken or newPassword in the collection. Retain applicationKey for a retry; clear it only for a deliberately new/changed action. The guest cookie scope survives CSRF renewal."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "language",
+      "value": "en",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "employee@akf-demo.test",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "docId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "revision",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "categoryCode",
+      "value": "construction",
+      "type": "string"
+    },
+    {
+      "key": "applicationDeadline",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "technicalDeadline",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "financialDeadline",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "signedDownloadPath",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sourceTenderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "applicationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "applicationKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "registrationNumber",
+      "value": "CR-DEMO-001",
+      "type": "string"
+    },
+    {
+      "key": "contactEmail",
+      "value": "supplier@example.test",
+      "type": "string"
+    },
+    {
+      "key": "reviewDecision",
+      "value": "accepted",
+      "type": "string"
+    },
+    {
+      "key": "supplierId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "setupToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "committeeType",
+      "value": "technical_committee",
+      "type": "string"
+    },
+    {
+      "key": "nomineeEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "nominationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bidId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bidKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bidderCode",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Every write uses the CSRF token bound to the current cookie-jar session.",
+          "if ([\"POST\", \"PUT\", \"PATCH\", \"DELETE\"].includes(pm.request.method)) {",
+          "  const response = await pm.sendRequest({ url: pm.variables.get(\"baseUrl\") + \"/api/v1/auth/csrf\", method: \"GET\", header: { \"Accept-Language\": pm.variables.get(\"language\") } });",
+          "  if (response.code !== 200) throw new Error(\"Cannot obtain CSRF token\");",
+          "  pm.variables.set(\"csrfToken\", response.json().csrfToken);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "H1 Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "description": "Reports API and database health."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/health",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "health"
+                  ]
+                },
+                "description": "Reports API and database health."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"ok\",\n  \"database\": \"up\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "A0 CSRF token and server time",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/csrf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "csrf"
+              ]
+            },
+            "description": "Returns a CSRF token and serverTime; never cache. Collection prerequest obtains a fresh token before each write. Do not export live tokens."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { pm.variables.set(\"csrfToken\", pm.response.json().csrfToken); }",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/csrf",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "csrf"
+                  ]
+                },
+                "description": "Returns a CSRF token and serverTime; never cache. Collection prerequest obtains a fresh token before each write. Do not export live tokens."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"csrfToken\": \"<runtime-token-not-exported>\",\n  \"serverTime\": \"2030-01-01T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "A1 Sign in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/sign-in",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sign-in"
+              ]
+            },
+            "description": "Set email and password locally (see README demo accounts). Cookie jar stores HttpOnly session and refresh cookies. No bearer header. A fresh session-bound CSRF token is fetched before the next write.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "A2 Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "session"
+              ]
+            },
+            "description": "Current session, private and never cached. SESSION_EXPIRED requires A3; SESSION_REVOKED requires sign-in."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "A3 Refresh cookies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Uses refresh cookies, rotates tokens, and returns 204. Obtain a new CSRF token after refresh; collection prerequest does this before every write."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "A4 Sign out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/sign-out",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "sign-out"
+              ]
+            },
+            "description": "Returns 204 and clears session cookies. The session is immediately revoked."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "A5 Preferred language",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me"
+              ]
+            },
+            "description": "Signed in only. Updates preferredLanguage to en or ar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferredLanguage\": \"{{language}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employee Tenders",
+      "item": [
+        {
+          "name": "Q1 Create draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employee/tenders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "tenders"
+              ]
+            },
+            "description": "Employee only. Creates a draft; saves its ID and revision for subsequent requests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set(\"tenderId\", data.id);",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/employee/tenders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "employee",
+                    "tenders"
+                  ]
+                },
+                "description": "Employee only. Creates a draft; saves its ID and revision for subsequent requests.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"00000000-0000-4000-8000-000000000001\",\n  \"status\": \"draft\",\n  \"revision\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Q2 My tenders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employee/tenders?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "tenders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Employee only; returns only their own tenders, newest first. Optional page and limit query parameters."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Q3 My tender details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employee/tenders/{{tenderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "tenders",
+                "{{tenderId}}"
+              ]
+            },
+            "description": "Employee only. Fetch before editing; updates revision. Invisible records return 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "  if (data.documents?.[0]) pm.collectionVariables.set(\"docId\", data.documents[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Q4 Edit draft",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employee/tenders/{{tenderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "tenders",
+                "{{tenderId}}"
+              ]
+            },
+            "description": "Employee only, draft only. A stale revision returns VERSION_CONFLICT; acceptance returns TENDER_STATUS_CHANGED.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/employee/tenders/{{tenderId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "employee",
+                    "tenders",
+                    "{{tenderId}}"
+                  ]
+                },
+                "description": "Employee only, draft only. A stale revision returns VERSION_CONFLICT; acceptance returns TENDER_STATUS_CHANGED.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"revision\": 2\n}"
+            },
+            {
+              "name": "Stale revision (reload before retry)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/employee/tenders/{{tenderId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "employee",
+                    "tenders",
+                    "{{tenderId}}"
+                  ]
+                },
+                "description": "Employee only, draft only. A stale revision returns VERSION_CONFLICT; acceptance returns TENDER_STATUS_CHANGED.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Q5 My document download link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/employee/tenders/{{tenderId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "employee",
+                "tenders",
+                "{{tenderId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Employee only, own tender. Returns a private, short-lived signed path; other employees receive 404."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tender Management",
+      "item": [
+        {
+          "name": "M1 Managed tenders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "status",
+                  "value": "accepted",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Officer only. Enable status to filter. Optional page and limit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "M2 Managed tender details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}"
+              ]
+            },
+            "description": "Officer only. Fetch immediately before each change; saves revision, category and first original document ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "  if (data.documents?.[0]) pm.collectionVariables.set(\"docId\", data.documents[0].id);",
+                  "  pm.collectionVariables.set(\"categoryCode\", data.categoryCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "M4 Edit accepted tender",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}"
+              ]
+            },
+            "description": "Officer only, accepted only. Sends the reviewed revision. One complete language is required; a second is optional.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ],\n  \"scoring\": {\n    \"technicalWeight\": 70,\n    \"financialWeight\": 30,\n    \"minimumTechnicalScore\": 60\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}"
+                  ]
+                },
+                "description": "Officer only, accepted only. Sends the reviewed revision. One complete language is required; a second is optional.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ],\n  \"scoring\": {\n    \"technicalWeight\": 70,\n    \"financialWeight\": 30,\n    \"minimumTechnicalScore\": 60\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"revision\": 4\n}"
+            },
+            {
+              "name": "Stale revision (reload before retry)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}"
+                  ]
+                },
+                "description": "Officer only, accepted only. Sends the reviewed revision. One complete language is required; a second is optional.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"estimatedBalance\": {\n    \"amount\": \"125000.00\",\n    \"currency\": \"USD\"\n  },\n  \"translations\": [\n    {\n      \"language\": \"en\",\n      \"title\": \"School maintenance\",\n      \"description\": \"Repair the school roof.\"\n    },\n    {\n      \"language\": \"ar\",\n      \"title\": \"صيانة المدرسة\",\n      \"description\": \"إصلاح سقف المدرسة.\"\n    }\n  ],\n  \"scoring\": {\n    \"technicalWeight\": 70,\n    \"financialWeight\": 30,\n    \"minimumTechnicalScore\": 60\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "M3 Accept draft with scoring",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "accept"
+              ]
+            },
+            "description": "Officer only, draft only. Weights total 100; all scoring values are integers from 0 to 100.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}},\n  \"technicalWeight\": 70,\n  \"financialWeight\": 30,\n  \"minimumTechnicalScore\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/accept",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "accept"
+                  ]
+                },
+                "description": "Officer only, draft only. Weights total 100; all scoring values are integers from 0 to 100.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"technicalWeight\": 70,\n  \"financialWeight\": 30,\n  \"minimumTechnicalScore\": 60\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"accepted\",\n  \"revision\": 3\n}"
+            },
+            {
+              "name": "Stale revision (reload before retry)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/accept",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "accept"
+                  ]
+                },
+                "description": "Officer only, draft only. Weights total 100; all scoring values are integers from 0 to 100.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"technicalWeight\": 70,\n  \"financialWeight\": 30,\n  \"minimumTechnicalScore\": 60\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "M5 Upload Terms of Reference",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "documents"
+              ]
+            },
+            "description": "Officer only, accepted only. Select a local file in form-data. Enable translationOf only for a translated copy in a different language. An original of the same kind must be removed before replacement. Choose language en or ar.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "revision",
+                  "value": "{{revision}}",
+                  "type": "text"
+                },
+                {
+                  "key": "kind",
+                  "value": "terms_of_reference",
+                  "type": "text"
+                },
+                {
+                  "key": "language",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "translationOf",
+                  "value": "{{docId}}",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "  pm.collectionVariables.set(\"docId\", data.document.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "M6 Remove document and its translations",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/documents/{{docId}}?revision={{revision}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "documents",
+                "{{docId}}"
+              ],
+              "query": [
+                {
+                  "key": "revision",
+                  "value": "{{revision}}",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Officer only, accepted only. Destructive: deleting an original deletes all translations. Fetch M2 first and check docId and revision."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/documents/{{docId}}?revision={{revision}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "documents",
+                    "{{docId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "revision",
+                      "value": "{{revision}}",
+                      "disabled": false
+                    }
+                  ]
+                },
+                "description": "Officer only, accepted only. Destructive: deleting an original deletes all translations. Fetch M2 first and check docId and revision."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"revision\": 5\n}"
+            }
+          ]
+        },
+        {
+          "name": "M7 Managed document download link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Officer only. Returns a private, short-lived signed path. Follow the path exactly; do not construct it."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "M8 Publish tender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "publish"
+              ]
+            },
+            "description": "Officer only, accepted only. Future deadlines must be strictly ordered. This locks content, scoring, deadlines, documents and the bid form.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"deadlines\": {\n    \"application\": \"{{applicationDeadline}}\",\n    \"technical\": \"{{technicalDeadline}}\",\n    \"financial\": \"{{financialDeadline}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/publish",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "publish"
+                  ]
+                },
+                "description": "Officer only, accepted only. Future deadlines must be strictly ordered. This locks content, scoring, deadlines, documents and the bid form.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"categoryCode\": \"{{categoryCode}}\",\n  \"deadlines\": {\n    \"application\": \"{{applicationDeadline}}\",\n    \"technical\": \"{{technicalDeadline}}\",\n    \"financial\": \"{{financialDeadline}}\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"published\",\n  \"revision\": 6,\n  \"publishedAt\": \"2030-01-01T12:00:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "M9 Copy cancelled tender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/copy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "copy"
+              ]
+            },
+            "description": "Officer only. Set tenderId to a cancelled source. Copying is allowed once. The accepted copy has no deadlines or bids. To inspect the result, run M2. A second copy returns TENDER_ALREADY_COPIED."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set(\"tenderId\", data.id);",
+                  "  pm.collectionVariables.set(\"sourceTenderId\", data.copiedFromTenderId);",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Success DTO example (illustrative)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/copy",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "copy"
+                  ]
+                },
+                "description": "Officer only. Set tenderId to a cancelled source. Copying is allowed once. The accepted copy has no deadlines or bids. To inspect the result, run M2. A second copy returns TENDER_ALREADY_COPIED."
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"00000000-0000-4000-8000-000000000002\",\n  \"status\": \"accepted\",\n  \"revision\": 1,\n  \"copiedFromTenderId\": \"00000000-0000-4000-8000-000000000001\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "M10 Read supplier bid form",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/bid-form",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "bid-form"
+              ]
+            },
+            "description": "Officer only, from acceptance. Standard fields/documents are immutable. Saves current revision."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "M11 Save supplier bid form",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/bid-form",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "bid-form"
+              ]
+            },
+            "description": "Officer only, accepted only. Replaces the full ordered custom template in all three parts. For existing fields retain fieldId from M10; omit it only for new fields. This sample replaces existing custom fields. Types: text, number, boolean, file. Unit/minimum are numeric-only. Publication locks it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revision\": {{revision}},\n  \"parts\": [\n    {\n      \"partType\": \"legal_information\",\n      \"customFields\": []\n    },\n    {\n      \"partType\": \"technical_offer\",\n      \"customFields\": [\n        {\n          \"type\": \"number\",\n          \"required\": true,\n          \"unit\": \"GB\",\n          \"minimum\": 16,\n          \"translations\": [\n            {\n              \"language\": \"en\",\n              \"label\": \"Memory per laptop\",\n              \"instructions\": \"Enter installed memory.\"\n            },\n            {\n              \"language\": \"ar\",\n              \"label\": \"الذاكرة لكل حاسوب\",\n              \"instructions\": \"أدخل سعة الذاكرة.\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"partType\": \"financial_offer\",\n      \"customFields\": []\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined) pm.collectionVariables.set(\"revision\", data.revision);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Stale revision (reload before retry)",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/bid-form",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "manage",
+                    "tenders",
+                    "{{tenderId}}",
+                    "bid-form"
+                  ]
+                },
+                "description": "Officer only, accepted only. Replaces the full ordered custom template in all three parts. For existing fields retain fieldId from M10; omit it only for new fields. This sample replaces existing custom fields. Types: text, number, boolean, file. Unit/minimum are numeric-only. Publication locks it.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"revision\": {{revision}},\n  \"parts\": [\n    {\n      \"partType\": \"legal_information\",\n      \"customFields\": []\n    },\n    {\n      \"partType\": \"technical_offer\",\n      \"customFields\": [\n        {\n          \"type\": \"number\",\n          \"required\": true,\n          \"unit\": \"GB\",\n          \"minimum\": 16,\n          \"translations\": [\n            {\n              \"language\": \"en\",\n              \"label\": \"Memory per laptop\",\n              \"instructions\": \"Enter installed memory.\"\n            },\n            {\n              \"language\": \"ar\",\n              \"label\": \"الذاكرة لكل حاسوب\",\n              \"instructions\": \"أدخل سعة الذاكرة.\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"partType\": \"financial_offer\",\n      \"customFields\": []\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"VERSION_CONFLICT\",\n    \"message\": \"Tender changed\",\n    \"details\": {\n      \"currentRevision\": 6\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public Tenders",
+      "item": [
+        {
+          "name": "T1 Published tenders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenders?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "category",
+                  "value": "{{categoryCode}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Anyone. Published only; no balance or scoring. Optional category, page and limit. Language fallback follows Accept-Language."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test(\"Public view contains no balance or scoring\", () => pm.expect(JSON.stringify(data)).not.to.match(/estimatedBalance|scoring|requestedBy/));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "T2 Published tender details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenders/{{tenderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenders",
+                "{{tenderId}}"
+              ]
+            },
+            "description": "Anyone. Published only; all other statuses are 404. No balance or scoring."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.documents?.[0]) pm.collectionVariables.set(\"docId\", data.documents[0].id);",
+                  "  pm.test(\"Public view contains no balance or scoring\", () => pm.expect(JSON.stringify(data)).not.to.match(/estimatedBalance|scoring|requestedBy/));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "T2d Public document download link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenders/{{tenderId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenders",
+                "{{tenderId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Anyone; published tender only. Returns a short-lived signed path, not the file bytes. Follow it through the Files request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reference",
+      "item": [
+        {
+          "name": "R1 Tender categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reference/tender-categories?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reference",
+                "tender-categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Anyone. Paginated category codes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "R2 Supplier application form",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reference/forms/supplier-application",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reference",
+                "forms",
+                "supplier-application"
+              ]
+            },
+            "description": "Anyone. Fixed required legal fields and certificate requirements; publicly cacheable."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sign-up",
+      "item": [
+        {
+          "name": "U1 Submit legal information",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{applicationKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/supplier-applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "supplier-applications"
+              ]
+            },
+            "description": "Guest only: sign out first. Select both local files. applicationKey is generated once and retained for retries; clear it for a deliberately changed application. A replay returns the original 201 body with Idempotent-Replayed. Invalid same-key payload returns 422; in-progress returns 409 (retry after one second). A registered supplier number returns REGISTRATION_NUMBER_EXISTS. No account or email is created by this endpoint.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "application",
+                  "value": "{\"legalName\": \"Al-Noor Engineering\", \"registrationNumber\": \"{{registrationNumber}}\", \"contactEmail\": \"{{contactEmail}}\", \"preferredLanguage\": \"{{language}}\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "files[registration_certificate]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[registration_certificate]",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "files[tax_certificate]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[tax_certificate]",
+                  "value": "{{language}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get(\"applicationKey\")) { pm.collectionVariables.set(\"applicationKey\", pm.variables.replaceIn(\"{{$guid}}\")); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.collectionVariables.set(\"applicationId\", data.applicationId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U2 Pending legal reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/signup-reviews?status=pending&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "signup-reviews"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Standing legal_committee role only. Oldest pending first; paginated. Only pending is a supported status."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U3 Legal application detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/supplier-applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "supplier-applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Standing legal_committee role only. Application fields and original document metadata. No storage keys or other audience data."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.documents?.[0]) pm.collectionVariables.set(\"docId\", data.documents[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U3d Legal application document link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/supplier-applications/{{applicationId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "supplier-applications",
+                "{{applicationId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Standing legal_committee role only. The document must belong to this application. Returns an expiring signed URL; use the Files request to follow it."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U4 Accept or reject once",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/supplier-applications/{{applicationId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "supplier-applications",
+                "{{applicationId}}",
+                "review"
+              ]
+            },
+            "description": "Standing legal_committee role only. accepted raises the request to admin; rejected ends sign-up. Repeated review returns 409 ALREADY_SUBMITTED with details.decision. Concurrent reviews store only one decision.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"{{reviewDecision}}\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Already reviewed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/supplier-applications/{{applicationId}}/review",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "supplier-applications",
+                    "{{applicationId}}",
+                    "review"
+                  ]
+                },
+                "description": "Standing legal_committee role only. accepted raises the request to admin; rejected ends sign-up. Repeated review returns 409 ALREADY_SUBMITTED with details.decision. Concurrent reviews store only one decision.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"decision\": \"{{reviewDecision}}\",\n  \"reason\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"ALREADY_SUBMITTED\",\n    \"message\": \"Already reviewed\",\n    \"details\": {\n      \"decision\": \"accepted\"\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "U5 Raised signup requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/signup-requests?status=raised&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "signup-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "raised"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Admin only. Oldest raised, not-yet-admin-accepted requests first, paginated."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U6 Admin request detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/signup-requests/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "signup-requests",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Admin only, legally accepted/raised applications only. Read-only application fields and accepted review; no application document-download permission. U7 is not implemented in this task."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.test(\"Admin view has no documents\", () => pm.expect(data).not.to.have.property(\"documents\"));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "U7 Accept a raised request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/signup-requests/{{applicationId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "signup-requests",
+                "{{applicationId}}",
+                "accept"
+              ]
+            },
+            "description": "Admin only, no body. Creates the supplier, its pending_setup account and first setup link in one transaction, then emails the link in the applicant's language. Provisions at most once: 409 ALREADY_ACCEPTED (details.supplierId), then 409 EMAIL_ALREADY_REGISTERED, then 409 REGISTRATION_NUMBER_EXISTS (the request stays raised)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"supplierId\", data.supplierId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Already accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/signup-requests/{{applicationId}}/accept",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "signup-requests",
+                    "{{applicationId}}",
+                    "accept"
+                  ]
+                },
+                "description": "Admin only, no body. Creates the supplier, its pending_setup account and first setup link in one transaction, then emails the link in the applicant's language. Provisions at most once: 409 ALREADY_ACCEPTED (details.supplierId), then 409 EMAIL_ALREADY_REGISTERED, then 409 REGISTRATION_NUMBER_EXISTS (the request stays raised)."
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"ALREADY_ACCEPTED\",\n    \"message\": \"Request already accepted\",\n    \"details\": {\n      \"supplierId\": \"s-12\"\n    },\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Account Setup",
+      "item": [
+        {
+          "name": "S1 Check a setup link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-setup/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-setup",
+                "verify"
+              ]
+            },
+            "description": "Public; the token from the emailed link's #token= fragment. Checks the link without using it up. 404 invalid, 410 SETUP_LINK_EXPIRED or SETUP_LINK_USED. Rate limited per IP.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{setupToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Expired link",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/account-setup/verify",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "account-setup",
+                    "verify"
+                  ]
+                },
+                "description": "Public; the token from the emailed link's #token= fragment. Checks the link without using it up. 404 invalid, 410 SETUP_LINK_EXPIRED or SETUP_LINK_USED. Rate limited per IP.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{setupToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Gone",
+              "code": 410,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"SETUP_LINK_EXPIRED\",\n    \"message\": \"Setup link expired\",\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "S2 Set a password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-setup/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-setup",
+                "complete"
+              ]
+            },
+            "description": "Public. Uses the link up, activates the account, verifies the email and signs in (session cookies). Returns the session body plus next: supplier_profile or my_assignments. Fetch a new CSRF token afterwards (A0). A password needs at least 12 characters: 400 VALIDATION_FAILED with PASSWORD_TOO_WEAK.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{setupToken}}\",\n  \"password\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "Link already used",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "{{language}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrfToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/account-setup/complete",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "account-setup",
+                    "complete"
+                  ]
+                },
+                "description": "Public. Uses the link up, activates the account, verifies the email and signs in (session cookies). Returns the session body plus next: supplier_profile or my_assignments. Fetch a new CSRF token afterwards (A0). A password needs at least 12 characters: 400 VALIDATION_FAILED with PASSWORD_TOO_WEAK.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"token\": \"{{setupToken}}\",\n  \"password\": \"{{newPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Gone",
+              "code": 410,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"SETUP_LINK_USED\",\n    \"message\": \"Setup link already used\",\n    \"requestId\": \"example-request-id\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "S3 Request a new link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/account-setup/resend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "account-setup",
+                "resend"
+              ]
+            },
+            "description": "Public. Always 202. Emails a new link only for an expired, unused link of an account still pending setup, at most 5 links an hour per account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{setupToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 202\", () => pm.response.to.have.status(202));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " // No body.",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "P1 My supplier profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/supplier-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "supplier-profile"
+              ]
+            },
+            "description": "Supplier only. Legal and technical information, status and editableFields. technicalDocuments stays empty until P3."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P2 Edit legal and technical information",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/supplier-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "supplier-profile"
+              ]
+            },
+            "description": "Supplier only, also while suspended. Any of legalName, registrationNumber, technicalInformation; any other field is 400 FIELD_NOT_EDITABLE. 409 REGISTRATION_NUMBER_EXISTS. Legal changes are audited with values before and after.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicalInformation\": \"Civil works and water infrastructure since 2009.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P3 Replace a certificate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/supplier-profile/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "supplier-profile",
+                "documents"
+              ]
+            },
+            "description": "Supplier only. Multipart kind (registration_certificate or tax_certificate), language and file (select a local file). Replaces the current certificate of that kind; the reviewed sign-up file stays on the application. Returns 201 with the profile.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "kind",
+                  "value": "registration_certificate",
+                  "type": "text"
+                },
+                {
+                  "key": "language",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.certificates[0]) pm.variables.set(\"docId\", data.certificates[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P3d My document download link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/supplier-profile/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "supplier-profile",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Supplier only. Signed link for a file listed in certificates; any other ID is 404. Follow it with the Files request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P4 Supplier directory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/suppliers?status=active&search=&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "suppliers"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Admin only. Paginated, by legal name. Filter by status; search matches legal name or registration number. allowedActions is suspend or reactivate."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"supplierId\", data.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P5 Suspend supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/suppliers/{{supplierId}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "suppliers",
+                "{{supplierId}}",
+                "suspend"
+              ]
+            },
+            "description": "Admin only. Blocks new bids only; the supplier still signs in. Repeating returns the same result."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "P5 Reactivate supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/suppliers/{{supplierId}}/reactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "suppliers",
+                "{{supplierId}}",
+                "reactivate"
+              ]
+            },
+            "description": "Admin only. Repeating returns the same result."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Committees",
+      "item": [
+        {
+          "name": "C1 Tender committees",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/committees?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "committees"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "procurement_officer. Committees and nominations, paginated."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C2 Raise a committee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/committees",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "committees"
+              ]
+            },
+            "description": "procurement_officer; tender accepted, published or closed. 201, or 200 when already raised.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"{{committeeType}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C3 Nominate a member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/tenders/{{tenderId}}/committees/{{committeeType}}/nominations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "tenders",
+                "{{tenderId}}",
+                "committees",
+                "{{committeeType}}",
+                "nominations"
+              ]
+            },
+            "description": "procurement_officer; the committee is raised. Use a fictional address.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomineeName\": \"Omar F.\",\n  \"nomineeEmail\": \"{{nomineeEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"nominationId\", data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C4 Withdraw a nomination",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/manage/nominations/{{nominationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "manage",
+                "nominations",
+                "{{nominationId}}"
+              ]
+            },
+            "description": "procurement_officer, while nominated. 409 ASSIGNMENT_ALREADY_DECIDED otherwise."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 204\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C5 Nomination queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/committee-nominations?status=nominated&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "committee-nominations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "nominated"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "admin. Waiting nominations, oldest first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"nominationId\", data.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C6 Approve a nomination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/committee-nominations/{{nominationId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "committee-nominations",
+                "{{nominationId}}",
+                "approve"
+              ]
+            },
+            "description": "admin. preferredLanguage is required only when no account exists; then an account and a setup email are created. 409 ASSIGNMENT_* or TENDER_STATUS_CHANGED.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferredLanguage\": \"{{language}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C6 Reject a nomination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/committee-nominations/{{nominationId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "committee-nominations",
+                "{{nominationId}}",
+                "reject"
+              ]
+            },
+            "description": "admin. 409 ASSIGNMENT_ALREADY_DECIDED when already decided."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "C7 My assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/assignments?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "assignments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Any signed-in user. Approved assignments; stage is waiting until bids exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bids",
+      "item": [
+        {
+          "name": "B1 Bid form and eligibility",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenders/{{tenderId}}/bid-form",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenders",
+                "{{tenderId}}",
+                "bid-form"
+              ]
+            },
+            "description": "Supplier only. Standard and custom fields per part; canSubmit with reasonCode."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "B2 Submit a bid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{bidKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tenders/{{tenderId}}/bids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tenders",
+                "{{tenderId}}",
+                "bids"
+              ]
+            },
+            "description": "Active supplier, published tender, before the application deadline. Set bidKey to a new UUID per deliberate submission and reuse it on retries. Select the three files locally. Add custom answers under bid.answers keyed by part and field ID; custom file fields use files[part][fieldId].",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "bid",
+                  "value": "{\"legalInformation\":{\"authorizedSignatoryName\":\"Hiba Saleh\"},\"answers\":{}}",
+                  "type": "text"
+                },
+                {
+                  "key": "files[legal_information][registration_certificate]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[legal_information][registration_certificate]",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "files[technical_offer][technical_proposal]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[technical_offer][technical_proposal]",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "files[financial_offer][financial_proposal]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[financial_offer][financial_proposal]",
+                  "value": "{{language}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"bidId\", data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "B3 My bids",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Supplier only. Tender status only, never won or not won."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"bidId\", data.data[0].bidId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "B3d My bid detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids/{{bidId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids",
+                "{{bidId}}"
+              ]
+            },
+            "description": "Supplier only, own bid. No bidder code, evaluations or other bids."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " const doc = data.parts[0] && data.parts[0].documents[0]; if (doc) pm.variables.set(\"docId\", doc.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "B4 Replace the technical offer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{bidKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids/{{bidId}}/parts/technical_offer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids",
+                "{{bidId}}",
+                "parts",
+                "technical_offer"
+              ]
+            },
+            "description": "Supplier only, before the technical deadline; allowed while suspended. Sends the whole part; every previous file is replaced. 422 BID_PART_LOCKED after the deadline. Use a new bidKey.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "files[technical_proposal]",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "languages[technical_proposal]",
+                  "value": "{{language}}",
+                  "type": "text"
+                },
+                {
+                  "key": "answers",
+                  "value": "{}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "B6 Bid document download link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/me/bids/{{bidId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "me",
+                "bids",
+                "{{bidId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Supplier only, own file. Follow it with the Files request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Evaluations",
+      "item": [
+        {
+          "name": "L1 Legal queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/legal/tenders/{{tenderId}}/bids?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "legal",
+                "tenders",
+                "{{tenderId}}",
+                "bids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Approved legal_committee assignment on this tender. 409 TENDER_STATUS_CHANGED before under_evaluation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"bidId\", data.data[0].bidId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "L2 Legal bid detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/legal/tenders/{{tenderId}}/bids/{{bidId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "legal",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidId}}"
+              ]
+            },
+            "description": "Supplier identity, legal information and documents only."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.documents[0]) pm.variables.set(\"docId\", data.documents[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "L3 Submit legal evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/legal/tenders/{{tenderId}}/bids/{{bidId}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "legal",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidId}}",
+                "evaluation"
+              ]
+            },
+            "description": "While under_evaluation. A fail needs a reason. Repeat: 409 ALREADY_SUBMITTED.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"pass\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "L4 Legal document link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/legal/tenders/{{tenderId}}/bids/{{bidId}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "legal",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidId}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Signed link; follow it with the Files request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "X1 Technical queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/technical/tenders/{{tenderId}}/bids?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "technical",
+                "tenders",
+                "{{tenderId}}",
+                "bids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Approved technical_committee assignment; bids that passed Legal only, by bidder code."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"bidderCode\", data.data[0].bidderCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "X2 Technical bid detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/technical/tenders/{{tenderId}}/bids/{{bidderCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "technical",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}"
+              ]
+            },
+            "description": "No bid ID, supplier identity or original file names."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.documents[0]) pm.variables.set(\"docId\", data.documents[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "X3 Submit technical score",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/technical/tenders/{{tenderId}}/bids/{{bidderCode}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "technical",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}",
+                "evaluation"
+              ]
+            },
+            "description": "Whole number 0–100, one shared score per bid.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicalScore\": 78,\n  \"comments\": \"Clear method statement.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "X4 Technical document link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/technical/tenders/{{tenderId}}/bids/{{bidderCode}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "technical",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Neutral download name."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "F1 Financial queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/financial/tenders/{{tenderId}}/bids?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "financial",
+                "tenders",
+                "{{tenderId}}",
+                "bids"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Approved financial_committee assignment; bids that met the minimum technical score only."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.data[0]) pm.variables.set(\"bidderCode\", data.data[0].bidderCode);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "F2 Financial bid detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/financial/tenders/{{tenderId}}/bids/{{bidderCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "financial",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}"
+              ]
+            },
+            "description": "Financial offer and tender currency only."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " if (data.documents[0]) pm.variables.set(\"docId\", data.documents[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "F3 Submit financial evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrfToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/financial/tenders/{{tenderId}}/bids/{{bidderCode}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "financial",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}",
+                "evaluation"
+              ]
+            },
+            "description": "Score 0–100 and the confirmed total price as a decimal string.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"financialScore\": 85,\n  \"confirmedTotalPrice\": \"58500.00\",\n  \"comments\": \"Prices match the schedule.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "F4 Financial document link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{language}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/evaluations/financial/tenders/{{tenderId}}/bids/{{bidderCode}}/documents/{{docId}}/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "evaluations",
+                "financial",
+                "tenders",
+                "{{tenderId}}",
+                "bids",
+                "{{bidderCode}}",
+                "documents",
+                "{{docId}}",
+                "download"
+              ]
+            },
+            "description": "Neutral download name."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Expected status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Private response is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));",
+                  "if (pm.response.code < 300) {",
+                  " const data = pm.response.json();",
+                  " pm.variables.set(\"signedDownloadPath\", data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Follow returned signed download URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{signedDownloadPath}}"
+            },
+            "description": "Use the exact path returned by Q5, M7 or T2d, valid for five minutes. In a collection run it is transiently chained; for an individual Send paste the returned path into a local signedDownloadPath value. Never export it. No file key or signature is constructed by the client."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"File downloaded\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"File is never cached\", () => pm.expect(pm.response.headers.get(\"Cache-Control\")).to.include(\"no-store\"));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}
