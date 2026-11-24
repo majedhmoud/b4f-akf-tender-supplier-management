@@ -4,6 +4,7 @@
 
 - Keep work focused on requirements and documentation. Do not write code until P2. Tools are those in `docs/05_ARCHITECTURE/ADR/0004_TECHNOLOGY_STACK.md`; propose any other tool before using it.
 - Keep updates, documents, and review comments concise.
+- Test the product by running automated test files only. Do not use computer use or browser automation for product testing unless Majed explicitly changes this rule.
 - Fix typos by default, and mention each typo fixed.
 - Do only the step that was asked for. Do not move to the next step or phase, or raise its questions, until the user explicitly asks.
 - Codex and Claude review each other’s changes. Use brief handoffs that identify the files changed, what needs review, and any open questions.

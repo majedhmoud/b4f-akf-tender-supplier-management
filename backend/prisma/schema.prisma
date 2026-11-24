@@ -1,0 +1,749 @@
+// Database schema. Source of truth: docs/05_ARCHITECTURE/ERD.md.
+// Never let it differ from the ERD without updating the ERD first.
+// Models arrive with the slices that need them. S1 adds the tables listed in
+// docs/06_SLICES/S1_TENDER_PUBLISHING.md, "Tables".
+//
+// Conventions (CODING_STANDARDS.md §2.5): models are PascalCase and singular,
+// fields camelCase mapped to the ERD's snake_case, tables snake_case plural,
+// enum values exactly as in the ERD. CHECK constraints that Prisma cannot
+// express live in the migration SQL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Language {
+  en
+  ar
+
+  @@map("language")
+}
+
+enum Role {
+  supplier
+  employee
+  procurement_officer
+  admin
+  legal_committee
+
+  @@map("role")
+}
+
+enum AccountStatus {
+  pending_setup
+  active
+  disabled
+
+  @@map("account_status")
+}
+
+enum TenderStatus {
+  draft
+  accepted
+  published
+  closed
+  under_evaluation
+  awarded
+  cancelled
+
+  @@map("tender_status")
+}
+
+enum CancellationReason {
+  no_bids
+  no_qualified_bid
+
+  @@map("cancellation_reason")
+}
+
+enum DocumentOwnerType {
+  application
+  supplier
+  tender
+  bid_part
+
+  @@map("document_owner_type")
+}
+
+enum TenderDocumentKind {
+  terms_of_reference
+  other
+
+  @@map("tender_document_kind")
+}
+
+enum PartType {
+  legal_information
+  technical_offer
+  financial_offer
+
+  @@map("part_type")
+}
+
+enum FormInputType {
+  text
+  number
+  boolean
+  file
+
+  @@map("form_input_type")
+}
+
+// ---------------------------------------------------------------------------
+// Accounts (ERD: USER_ACCOUNT, USER_ROLE; Supporting tables: SESSION,
+// SESSION_REFRESH_TOKEN)
+// ---------------------------------------------------------------------------
+
+model UserAccount {
+  id                String        @id @default(uuid()) @db.Uuid
+  email             String        @unique
+  // Set at account creation and never empty (ERD A15).
+  displayName       String        @map("display_name")
+  // Null until account setup (ERD).
+  passwordHash      String?       @map("password_hash")
+  preferredLanguage Language      @map("preferred_language")
+  status            AccountStatus
+  emailVerifiedAt   DateTime?     @map("email_verified_at") @db.Timestamptz
+
+  roles               UserRole[]
+  sessions            Session[]
+  requestedTenders    Tender[]              @relation("TenderRequestedBy")
+  uploadedDocuments   Document[]            @relation("DocumentUploadedBy")
+  auditEvents         AuditEvent[]
+  idempotencyKeys     IdempotencyKey[]      @ignore
+  signupReviews       SignupReview[]        @relation("SignupReviewer")
+  acceptedSignups     SignupReview[]        @relation("SignupAdmin")
+  supplier            Supplier?
+  setupTokens         AccountSetupToken[]
+  emailsReceived      EmailMessage[]        @relation("EmailRecipient")
+  emailsSent          EmailMessage[]        @relation("EmailSender")
+  assignments         CommitteeAssignment[] @relation("AssignmentMember")
+  approvedAssignments CommitteeAssignment[] @relation("AssignmentApprover")
+
+  @@map("user_accounts")
+}
+
+model UserRole {
+  userId String      @map("user_id") @db.Uuid
+  // Cascade: a role means nothing without its account.
+  user   UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role
+
+  @@id([userId, role])
+  @@map("user_roles")
+}
+
+// One row per sign-in. Sign-out sets revokedAt, and every request checks it.
+model Session {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  user      UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz
+  revokedAt DateTime?   @map("revoked_at") @db.Timestamptz
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  refreshTokens SessionRefreshToken[]
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Replaced hashes are kept until the session expires, so reuse of an old
+// refresh token can be detected (ERD, Supporting tables).
+model SessionRefreshToken {
+  tokenHash  String    @id @map("token_hash")
+  sessionId  String    @map("session_id") @db.Uuid
+  session    Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  issuedAt   DateTime  @default(now()) @map("issued_at") @db.Timestamptz
+  replacedAt DateTime? @map("replaced_at") @db.Timestamptz
+
+  @@index([sessionId])
+  @@map("session_refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Tenders (ERD: TENDER_CATEGORY, TENDER, TENDER_TRANSLATION, TENDER_SCORING)
+// ---------------------------------------------------------------------------
+
+// A fixed, seeded list. Labels live in the app translations (ERD A7).
+model TenderCategory {
+  code String @id
+
+  tenders Tender[]
+
+  @@map("tender_categories")
+}
+
+model Tender {
+  id                  String              @id @default(uuid()) @db.Uuid
+  status              TenderStatus        @default(draft)
+  // Increases on every edit (ERD, Tender revision).
+  revision            Int                 @default(1)
+  categoryCode        String              @map("category_code")
+  // Restrict: categories are a fixed list and are never deleted.
+  category            TenderCategory      @relation(fields: [categoryCode], references: [code], onDelete: Restrict)
+  requestedByUserId   String              @map("requested_by_user_id") @db.Uuid
+  // Restrict: deleting an account must never remove tender history.
+  requestedBy         UserAccount         @relation("TenderRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  estimatedBalance    Decimal             @map("estimated_balance") @db.Decimal(14, 2)
+  currencyCode        String              @map("currency_code") @db.Char(3)
+  applicationDeadline DateTime?           @map("application_deadline") @db.Timestamptz
+  technicalDeadline   DateTime?           @map("technical_deadline") @db.Timestamptz
+  financialDeadline   DateTime?           @map("financial_deadline") @db.Timestamptz
+  acceptedAt          DateTime?           @map("accepted_at") @db.Timestamptz
+  publishedAt         DateTime?           @map("published_at") @db.Timestamptz
+  cancelledAt         DateTime?           @map("cancelled_at") @db.Timestamptz
+  cancellationReason  CancellationReason? @map("cancellation_reason")
+  // A cancelled tender is copied at most once (ERD, Copying a cancelled tender).
+  copiedFromTenderId  String?             @unique @map("copied_from_tender_id") @db.Uuid
+  // Restrict: the source of a copy stays as history.
+  copiedFrom          Tender?             @relation("TenderCopy", fields: [copiedFromTenderId], references: [id], onDelete: Restrict)
+  copiedInto          Tender?             @relation("TenderCopy")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
+
+  translations TenderTranslation[]
+  scoring      TenderScoring?
+  documents    TenderDocument[]
+  formFields   TenderFormField[]
+  emails       EmailMessage[]
+  committees   TenderCommittee[]
+  bids         Bid[]
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([status, applicationDeadline])
+  @@index([status, financialDeadline])
+  // "My tenders", newest first (ERD, Indexes).
+  @@index([requestedByUserId, createdAt])
+  @@map("tenders")
+}
+
+// A row exists only when complete; title and description are checked as
+// non-empty in the migration (ERD, Language).
+model TenderTranslation {
+  tenderId    String   @map("tender_id") @db.Uuid
+  // Cascade: translations belong to their tender.
+  tender      Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  language    Language
+  title       String
+  description String
+
+  @@id([tenderId, language])
+  @@map("tender_translations")
+}
+
+// Ranges and the 100 total are CHECK constraints in the migration.
+model TenderScoring {
+  tenderId              String @id @map("tender_id") @db.Uuid
+  tender                Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  technicalWeight       Int    @map("technical_weight")
+  financialWeight       Int    @map("financial_weight")
+  minimumTechnicalScore Int    @map("minimum_technical_score")
+
+  @@map("tender_scorings")
+}
+
+// ---------------------------------------------------------------------------
+// Files (ERD: DOCUMENT, TENDER_DOCUMENT). The other link tables arrive with
+// S2 and S4.
+// ---------------------------------------------------------------------------
+
+model Document {
+  id               String            @id @default(uuid()) @db.Uuid
+  ownerType        DocumentOwnerType @map("owner_type")
+  // Random and server-generated; contains no supplier or tender data (ADR 0006).
+  storageKey       String            @unique @map("storage_key")
+  // Never sent to blind reviewers (ERD, Document ownership).
+  originalName     String            @map("original_name")
+  mimeType         String            @map("mime_type")
+  sizeBytes        Int               @map("size_bytes")
+  // Any ISO 639-1 code (ERD A10).
+  language         String
+  translationOfId  String?           @map("translation_of_id") @db.Uuid
+  // Cascade: deleting an original deletes its translations (ERD, Language).
+  translationOf    Document?         @relation("DocumentTranslation", fields: [translationOfId], references: [id], onDelete: Cascade)
+  translations     Document[]        @relation("DocumentTranslation")
+  // Null for a guest upload. SetNull keeps the file if the account goes.
+  uploadedByUserId String?           @map("uploaded_by_user_id") @db.Uuid
+  uploadedBy       UserAccount?      @relation("DocumentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  uploadedAt       DateTime          @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  tenderLink      TenderDocument?
+  applicationLink ApplicationDocument?
+  supplierLink    SupplierDocument?
+  bidPartLink     BidPartDocument?
+  fieldAnswers    BidFieldAnswer[]
+
+  // Link tables reference (id, owner_type), so a document can have only one
+  // kind of owner (ERD, Document ownership).
+  @@unique([id, ownerType])
+  @@unique([translationOfId, language])
+  @@map("documents")
+}
+
+model TenderDocument {
+  documentId String             @id @map("document_id") @db.Uuid
+  // Always `tender`; a CHECK constraint in the migration enforces it.
+  ownerType  DocumentOwnerType  @default(tender) @map("owner_type")
+  // Cascade: the link goes with its document.
+  document   Document           @relation(fields: [documentId, ownerType], references: [id, ownerType], onDelete: Cascade)
+  tenderId   String             @map("tender_id") @db.Uuid
+  tender     Tender             @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  kind       TenderDocumentKind
+
+  @@unique([documentId, ownerType])
+  @@index([tenderId])
+  @@map("tender_documents")
+}
+
+// ---------------------------------------------------------------------------
+// Supplier bid form (ERD: TENDER_FORM_FIELD, TENDER_FORM_FIELD_TRANSLATION).
+// Answers arrive with S4.
+// ---------------------------------------------------------------------------
+
+model TenderFormField {
+  id        String        @id @default(uuid()) @db.Uuid
+  tenderId  String        @map("tender_id") @db.Uuid
+  tender    Tender        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  partType  PartType      @map("part_type")
+  inputType FormInputType @map("input_type")
+  position  Int
+  required  Boolean
+  // Unit and minimum apply to number fields only (CHECK in the migration).
+  unit      String?
+  minimum   Decimal?      @db.Decimal(18, 4)
+
+  translations TenderFormFieldTranslation[]
+  answers      BidFieldAnswer[]
+
+  // Order is unique within the tender and part (ERD, Supplier bid form).
+  @@unique([tenderId, partType, position])
+  @@map("tender_form_fields")
+}
+
+model TenderFormFieldTranslation {
+  fieldId      String          @map("field_id") @db.Uuid
+  field        TenderFormField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  language     Language
+  label        String
+  instructions String?
+
+  @@id([fieldId, language])
+  @@map("tender_form_field_translations")
+}
+
+// ---------------------------------------------------------------------------
+// Audit (ERD supporting table AUDIT_EVENT; fields from
+// ENGINEERING_STANDARDS.md §8). Append-only: written only through the Audit
+// module.
+// ---------------------------------------------------------------------------
+
+model AuditEvent {
+  id           String       @id @default(uuid()) @db.Uuid
+  // Null for system actions, such as deadline jobs.
+  actorUserId  String?      @map("actor_user_id") @db.Uuid
+  // Restrict: audit history must never lose its actor silently.
+  actor        UserAccount? @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  action       String
+  resourceType String       @map("resource_type")
+  resourceId   String       @map("resource_id")
+  occurredAt   DateTime     @default(now()) @map("occurred_at") @db.Timestamptz
+  context      Json?
+  requestId    String?      @map("request_id")
+
+  @@index([resourceType, resourceId, occurredAt])
+  @@index([occurredAt])
+  @@map("audit_events")
+}
+
+// S2 application/review tables. ERD: Sign-up and Document ownership.
+enum SignupDecision {
+  accepted
+  rejected
+
+  @@map("signup_decision")
+}
+
+enum ApplicationDocumentKind {
+  registration_certificate
+  tax_certificate
+
+  @@map("application_document_kind")
+}
+
+// Technical kinds join when technical documents are implemented (P3).
+enum SupplierDocumentKind {
+  registration_certificate
+  tax_certificate
+
+  @@map("supplier_document_kind")
+}
+
+enum SupplierStatus {
+  active
+  suspended
+
+  @@map("supplier_status")
+}
+
+model SupplierApplication {
+  id                 String                @id @default(uuid()) @db.Uuid
+  legalName          String                @map("legal_name")
+  registrationNumber String                @map("registration_number")
+  contactEmail       String                @map("contact_email")
+  preferredLanguage  Language              @map("preferred_language")
+  submittedAt        DateTime              @default(now()) @map("submitted_at") @db.Timestamptz
+  review             SignupReview?
+  documents          ApplicationDocument[]
+  supplier           Supplier?
+
+  @@index([submittedAt])
+  @@map("supplier_applications")
+}
+
+model SignupReview {
+  id              String              @id @default(uuid()) @db.Uuid
+  applicationId   String              @unique @map("application_id") @db.Uuid
+  // Restrict: legal decisions retain their original application and actors.
+  application     SupplierApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  reviewerUserId  String              @map("reviewer_user_id") @db.Uuid
+  reviewer        UserAccount         @relation("SignupReviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  decision        SignupDecision
+  reason          String?
+  decidedAt       DateTime            @default(now()) @map("decided_at") @db.Timestamptz
+  raisedToAdminAt DateTime?           @map("raised_to_admin_at") @db.Timestamptz
+  adminUserId     String?             @map("admin_user_id") @db.Uuid
+  admin           UserAccount?        @relation("SignupAdmin", fields: [adminUserId], references: [id], onDelete: Restrict)
+  adminAcceptedAt DateTime?           @map("admin_accepted_at") @db.Timestamptz
+
+  @@index([reviewerUserId])
+  @@index([adminUserId])
+  @@index([decision, raisedToAdminAt])
+  @@map("signup_reviews")
+}
+
+model ApplicationDocument {
+  documentId    String                  @id @map("document_id") @db.Uuid
+  ownerType     DocumentOwnerType       @default(application) @map("owner_type")
+  document      Document                @relation(fields: [documentId, ownerType], references: [id, ownerType], onDelete: Cascade)
+  applicationId String                  @map("application_id") @db.Uuid
+  application   SupplierApplication     @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  kind          ApplicationDocumentKind
+
+  @@unique([documentId, ownerType])
+  @@index([applicationId])
+  @@map("application_documents")
+}
+
+// Used for already-registered number checks; provisioning and profile APIs
+// remain outside this task (ERD: SUPPLIER).
+model Supplier {
+  id                   String              @id @default(uuid()) @db.Uuid
+  applicationId        String              @unique @map("application_id") @db.Uuid
+  application          SupplierApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  userId               String              @unique @map("user_id") @db.Uuid
+  user                 UserAccount         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  legalName            String              @map("legal_name")
+  registrationNumber   String              @unique @map("registration_number")
+  technicalInformation String              @default("") @map("technical_information")
+  status               SupplierStatus      @default(active)
+  documents            SupplierDocument[]
+  bids                 Bid[]
+
+  @@map("suppliers")
+}
+
+// No surrogate ID in the ERD. Partial owner indexes, user FK and CHECKs live
+// in SQL; parameterized raw queries access this ignored Prisma model.
+model IdempotencyKey {
+  user           UserAccount? @relation(fields: [userId], references: [id], onDelete: Restrict)
+  userId         String?      @map("user_id") @db.Uuid
+  guestScopeId   String?      @map("guest_scope_id") @db.Uuid
+  route          String
+  key            String       @db.Uuid
+  payloadHash    String       @map("payload_hash")
+  responseStatus Int?         @map("response_status")
+  responseBody   Json?        @map("response_body")
+  expiresAt      DateTime     @map("expires_at") @db.Timestamptz
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+  @@ignore
+}
+
+// ---------------------------------------------------------------------------
+// Account setup and email (ERD: ACCOUNT_SETUP_TOKEN, EMAIL_MESSAGE; ADR 0005).
+// ---------------------------------------------------------------------------
+
+// Single-use and expiring; only the hash is stored (ENGINEERING_STANDARDS.md
+// §2.1). Issued at expires_at minus 48 hours.
+model AccountSetupToken {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  // Cascade: a token means nothing without its account.
+  user      UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String      @unique @map("token_hash")
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz
+  usedAt    DateTime?   @map("used_at") @db.Timestamptz
+
+  @@index([userId])
+  @@map("account_setup_tokens")
+}
+
+enum EmailKind {
+  account_setup
+  award_winner
+  award_other
+  cancellation
+  contact_supplier
+
+  @@map("email_kind")
+}
+
+enum EmailStatus {
+  draft
+  sending
+  sent
+  failed
+
+  @@map("email_status")
+}
+
+// Status changes and the partial unique index for award and cancellation
+// emails are in the migration SQL (ERD, Emails).
+model EmailMessage {
+  id              String       @id @default(uuid()) @db.Uuid
+  kind            EmailKind
+  recipientUserId String       @map("recipient_user_id") @db.Uuid
+  // Restrict: email history keeps its recipient.
+  recipient       UserAccount  @relation("EmailRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  // Snapshots taken when the email is prepared (ERD, Language).
+  recipientEmail  String       @map("recipient_email")
+  language        Language
+  subject         String
+  // An account setup body holds a {{setupLink}} placeholder, never the link.
+  body            String
+  tenderId        String?      @map("tender_id") @db.Uuid
+  tender          Tender?      @relation(fields: [tenderId], references: [id], onDelete: Restrict)
+  status          EmailStatus
+  revision        Int          @default(1)
+  failureCode     String?      @map("failure_code")
+  failedAt        DateTime?    @map("failed_at") @db.Timestamptz
+  // Null when the platform sends it automatically.
+  sentByUserId    String?      @map("sent_by_user_id") @db.Uuid
+  sentBy          UserAccount? @relation("EmailSender", fields: [sentByUserId], references: [id], onDelete: Restrict)
+  preparedAt      DateTime     @default(now()) @map("prepared_at") @db.Timestamptz
+  sentAt          DateTime?    @map("sent_at") @db.Timestamptz
+
+  @@index([tenderId])
+  @@index([status, kind])
+  @@map("email_messages")
+}
+
+// A file the supplier keeps on its profile (ERD, Sign-up). At most one per
+// certificate kind: a partial unique index in SQL, so technical kinds can
+// have many later. The reviewed APPLICATION_DOCUMENT is never changed.
+model SupplierDocument {
+  documentId String               @id @map("document_id") @db.Uuid
+  ownerType  DocumentOwnerType    @default(supplier) @map("owner_type")
+  document   Document             @relation(fields: [documentId, ownerType], references: [id, ownerType], onDelete: Cascade)
+  supplierId String               @map("supplier_id") @db.Uuid
+  supplier   Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  kind       SupplierDocumentKind
+
+  @@unique([documentId, ownerType])
+  @@index([supplierId])
+  @@map("supplier_documents")
+}
+
+// The tender committee types use the glossary role names (ERD, Committees).
+enum CommitteeType {
+  legal_committee
+  technical_committee
+  financial_committee
+
+  @@map("committee_type")
+}
+
+enum AssignmentStatus {
+  nominated
+  approved
+  rejected
+
+  @@map("assignment_status")
+}
+
+// One committee of each type per tender (ERD, Committees).
+model TenderCommittee {
+  id       String        @id @default(uuid()) @db.Uuid
+  tenderId String        @map("tender_id") @db.Uuid
+  tender   Tender        @relation(fields: [tenderId], references: [id], onDelete: Restrict)
+  type     CommitteeType
+  raisedAt DateTime      @default(now()) @map("raised_at") @db.Timestamptz
+
+  assignments CommitteeAssignment[]
+
+  @@unique([tenderId, type])
+  @@unique([id, tenderId])
+  @@map("tender_committees")
+}
+
+// A nomination, then an approved or rejected member. tender_id is copied from
+// the committee (composite FK), so one person sits on one committee per tender.
+model CommitteeAssignment {
+  id               String           @id @default(uuid()) @db.Uuid
+  committeeId      String           @map("committee_id") @db.Uuid
+  tenderId         String           @map("tender_id") @db.Uuid
+  committee        TenderCommittee  @relation(fields: [committeeId, tenderId], references: [id, tenderId], onDelete: Restrict)
+  nomineeName      String           @map("nominee_name")
+  // Lower-cased, like account emails.
+  nomineeEmail     String           @map("nominee_email")
+  userId           String?          @map("user_id") @db.Uuid
+  user             UserAccount?     @relation("AssignmentMember", fields: [userId], references: [id], onDelete: Restrict)
+  status           AssignmentStatus @default(nominated)
+  approvedByUserId String?          @map("approved_by_user_id") @db.Uuid
+  approvedBy       UserAccount?     @relation("AssignmentApprover", fields: [approvedByUserId], references: [id], onDelete: Restrict)
+  nominatedAt      DateTime         @default(now()) @map("nominated_at") @db.Timestamptz
+  decidedAt        DateTime?        @map("decided_at") @db.Timestamptz
+
+  legalEvaluations     LegalEvaluation[]
+  technicalEvaluations TechnicalEvaluation[]
+  financialEvaluations FinancialEvaluation[]
+
+  @@unique([tenderId, userId])
+  @@index([committeeId, tenderId])
+  @@index([status, nominatedAt])
+  @@index([userId])
+  @@map("committee_assignments")
+}
+
+// One bid per supplier per tender, with a random bidder code for blind
+// evaluation (ERD, Bids). Created with all three parts in one transaction.
+model Bid {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenderId    String   @map("tender_id") @db.Uuid
+  tender      Tender   @relation(fields: [tenderId], references: [id], onDelete: Restrict)
+  supplierId  String   @map("supplier_id") @db.Uuid
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  bidderCode  String   @map("bidder_code")
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+
+  parts               BidPart[]
+  legalEvaluation     LegalEvaluation?
+  technicalEvaluation TechnicalEvaluation?
+  financialEvaluation FinancialEvaluation?
+
+  @@unique([tenderId, supplierId])
+  @@unique([tenderId, bidderCode])
+  @@unique([id, tenderId])
+  @@index([supplierId])
+  @@map("bids")
+}
+
+// Replacing a part overwrites this row and its documents (ERD, Bids).
+model BidPart {
+  id              String   @id @default(uuid()) @db.Uuid
+  bidId           String   @map("bid_id") @db.Uuid
+  bid             Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  partType        PartType @map("part_type")
+  // Values of the standard bid form fields of this part.
+  standardAnswers Json     @default("{}") @map("standard_answers")
+  lastSubmittedAt DateTime @default(now()) @map("last_submitted_at") @db.Timestamptz
+
+  documents BidPartDocument[]
+  answers   BidFieldAnswer[]
+
+  @@unique([bidId, partType])
+  @@map("bid_parts")
+}
+
+// kind names the standard document; null for a custom file field's file.
+model BidPartDocument {
+  documentId String            @id @map("document_id") @db.Uuid
+  ownerType  DocumentOwnerType @default(bid_part) @map("owner_type")
+  document   Document          @relation(fields: [documentId, ownerType], references: [id, ownerType], onDelete: Cascade)
+  bidPartId  String            @map("bid_part_id") @db.Uuid
+  bidPart    BidPart           @relation(fields: [bidPartId], references: [id], onDelete: Cascade)
+  kind       String?
+
+  @@unique([documentId, ownerType])
+  @@index([bidPartId])
+  @@map("bid_part_documents")
+}
+
+// An answer to a custom field of the tender's bid form.
+model BidFieldAnswer {
+  bidPartId   String          @map("bid_part_id") @db.Uuid
+  bidPart     BidPart         @relation(fields: [bidPartId], references: [id], onDelete: Cascade)
+  fieldId     String          @map("field_id") @db.Uuid
+  field       TenderFormField @relation(fields: [fieldId], references: [id], onDelete: Restrict)
+  scalarValue Json?           @map("scalar_value")
+  documentId  String?         @map("document_id") @db.Uuid
+  document    Document?       @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@id([bidPartId, fieldId])
+  @@index([fieldId])
+  @@map("bid_field_answers")
+}
+
+enum LegalOutcome {
+  pass
+  fail
+
+  @@map("legal_outcome")
+}
+
+// One evaluation per committee per bid, insert-only (ERD, Sealed, blind
+// evaluation). Each records the approved assignment that submitted it.
+model LegalEvaluation {
+  bidId        String              @id @map("bid_id") @db.Uuid
+  bid          Bid                 @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  assignmentId String              @map("assignment_id") @db.Uuid
+  assignment   CommitteeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  outcome      LegalOutcome
+  // Required when the outcome is fail (CHECK in the migration).
+  reason       String?
+  submittedAt  DateTime            @default(now()) @map("submitted_at") @db.Timestamptz
+
+  @@index([assignmentId])
+  @@map("legal_evaluations")
+}
+
+// One shared technical score per bid; meets_minimum is set by the system.
+model TechnicalEvaluation {
+  bidId          String              @id @map("bid_id") @db.Uuid
+  bid            Bid                 @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  assignmentId   String              @map("assignment_id") @db.Uuid
+  assignment     CommitteeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  technicalScore Int                 @map("technical_score")
+  meetsMinimum   Boolean             @map("meets_minimum")
+  comments       String?
+  submittedAt    DateTime            @default(now()) @map("submitted_at") @db.Timestamptz
+
+  @@index([assignmentId])
+  @@map("technical_evaluations")
+}
+
+model FinancialEvaluation {
+  bidId               String              @id @map("bid_id") @db.Uuid
+  bid                 Bid                 @relation(fields: [bidId], references: [id], onDelete: Cascade)
+  assignmentId        String              @map("assignment_id") @db.Uuid
+  assignment          CommitteeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  financialScore      Int                 @map("financial_score")
+  // In the tender's currency.
+  confirmedTotalPrice Decimal             @map("confirmed_total_price") @db.Decimal(14, 2)
+  comments            String?
+  submittedAt         DateTime            @default(now()) @map("submitted_at") @db.Timestamptz
+
+  @@index([assignmentId])
+  @@map("financial_evaluations")
+}
