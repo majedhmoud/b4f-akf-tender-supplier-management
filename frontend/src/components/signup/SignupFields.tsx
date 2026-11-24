@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import { FieldLabel } from '@/components/ui/field-label';
 import type { LegalApplicationView } from '@/lib/api/generated/model';
 import { formatDateTime, languageName } from '@/lib/format';
 
@@ -8,15 +9,19 @@ export const signupControl = 'field-control';
 export function SignupField({
   label,
   error,
+  optional = false,
   children,
 }: {
   label: string;
   error?: string;
+  optional?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-2 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className="field-label">
+        <FieldLabel optional={optional}>{label}</FieldLabel>
+      </span>
       {children}
       {error && <span className="text-xs text-destructive">{error}</span>}
     </label>

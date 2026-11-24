@@ -38,8 +38,8 @@ describe('Supplier bid form editor', () => {
       target: { value: 'Years trading' },
     });
     fireEvent.change(screen.getByLabelText('Arabic label'), { target: { value: 'سنوات العمل' } });
-    fireEvent.change(screen.getByLabelText('Unit (optional)'), { target: { value: 'years' } });
-    fireEvent.change(screen.getByLabelText('Minimum (optional)'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Unit (Optional)'), { target: { value: 'years' } });
+    fireEvent.change(screen.getByLabelText('Minimum (Optional)'), { target: { value: '2' } });
     fireEvent.click(screen.getByLabelText('Required'));
     save();
     await waitFor(() => expect(done).toHaveBeenCalled());
@@ -97,7 +97,7 @@ describe('Supplier bid form editor', () => {
     addLegal();
     fireEvent.change(screen.getByLabelText('English label'), { target: { value: 'Memory' } });
     fireEvent.change(screen.getByLabelText('Field type'), { target: { value: 'number' } });
-    fireEvent.change(screen.getByLabelText('Minimum (optional)'), { target: { value: '16' } });
+    fireEvent.change(screen.getByLabelText('Minimum (Optional)'), { target: { value: '16' } });
     fireEvent.change(screen.getByLabelText('Field type'), { target: { value: 'text' } });
     save();
     await waitFor(() => expect(mocks.save).toHaveBeenCalled());

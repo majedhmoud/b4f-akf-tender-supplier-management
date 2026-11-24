@@ -76,7 +76,7 @@ describe('Managed tender actions', () => {
   });
   it('updates content and scoring without losing decimal precision', async () => {
     mount();
-    fireEvent.change(screen.getByLabelText('English title'), {
+    fireEvent.change(screen.getByLabelText('English title (Optional)'), {
       target: { value: 'Updated school' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
@@ -99,12 +99,12 @@ describe('Managed tender actions', () => {
       new ApiError(409, { error: { code: 'VERSION_CONFLICT', message: 'private server text' } }),
     );
     const { reload } = mount();
-    fireEvent.change(screen.getByLabelText('English title'), {
+    fireEvent.change(screen.getByLabelText('English title (Optional)'), {
       target: { value: 'Unsaved title' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('newer revision');
-    expect(screen.getByLabelText('English title')).toHaveValue('Unsaved title');
+    expect(screen.getByLabelText('English title (Optional)')).toHaveValue('Unsaved title');
     expect(reload).not.toHaveBeenCalled();
     expect(screen.queryByText('private server text')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Reload and discard my changes' }));

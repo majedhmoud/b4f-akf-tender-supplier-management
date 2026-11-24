@@ -26,7 +26,7 @@ export function SupplierCertificates({
 }) {
   const t = useTranslations('Suppliers');
   return (
-    <section className="panel space-y-3 p-5">
+    <section className="panel space-y-4 p-6">
       <h2 className="text-lg font-bold">{t('certificatesTitle')}</h2>
       <p className="text-sm text-muted-foreground">{t('certificatesHint')}</p>
       <ul>

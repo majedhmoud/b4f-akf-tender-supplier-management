@@ -155,7 +155,7 @@ export function BidFormFields({
       {invalid && <ErrorState title={t('fieldInvalid')} />}
       {!editable && <p role="status">{t('readOnly')}</p>}
       {parts.map((part) => (
-        <section key={part.partType} className="space-y-4 panel p-5">
+        <section key={part.partType} className="space-y-5 panel p-6">
           <h2 className="text-lg font-bold">{t(`part_${part.partType}`)}</h2>
           <div className="rounded-md bg-secondary/50 p-4">
             <h3 className="mb-2 text-sm font-semibold">{t('standardInputs')}</h3>
@@ -215,7 +215,7 @@ export function BidFormFields({
                 </div>
                 {field.type === 'number' && (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <ManagementField label={t('unit')}>
+                    <ManagementField label={t('unit')} optional>
                       <input
                         className={managementControl}
                         maxLength={20}
@@ -225,7 +225,7 @@ export function BidFormFields({
                         }
                       />
                     </ManagementField>
-                    <ManagementField label={t('minimum')}>
+                    <ManagementField label={t('minimum')} optional>
                       <input
                         className={managementControl}
                         type="number"

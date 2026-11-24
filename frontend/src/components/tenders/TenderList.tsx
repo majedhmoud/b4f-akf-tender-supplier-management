@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field-label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import {
@@ -53,16 +54,16 @@ export function TenderList() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 rounded-md bg-deep-green p-6 text-white sm:p-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             {t('Tenders.title')}
           </h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{t('Tenders.subtitle')}</p>
+          <p className="mt-1 max-w-2xl text-sm text-white/75">{t('Tenders.subtitle')}</p>
         </div>
         <label className="flex w-full flex-col gap-2 text-sm sm:max-w-xs">
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t('Tenders.categoryFilter')}
+          <span className="text-xs font-semibold text-white/80">
+            <FieldLabel optional>{t('Tenders.categoryFilter')}</FieldLabel>
           </span>
           <select
             value={category ?? ''}

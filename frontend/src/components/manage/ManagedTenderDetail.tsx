@@ -84,7 +84,7 @@ function TenderPanels({
         </Link>
       )}
       {canCopy && (
-        <div className="space-y-3 panel p-4">
+        <div className="space-y-4 panel p-5">
           <p className="text-sm">{t('Manage.copyHint')}</p>
           {!confirmCopy ? (
             <Button variant="outline" onClick={() => setConfirmCopy(true)}>
@@ -115,7 +115,7 @@ function TenderPanels({
         </div>
       )}
       <div className="grid items-start gap-5 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        <nav aria-label={t('Employee.sections')} className="flex flex-col gap-2 panel p-4">
+        <nav aria-label={t('Employee.sections')} className="flex flex-col gap-2 panel p-5">
           {panels.map((item) => (
             <Button
               key={item}
@@ -130,7 +130,7 @@ function TenderPanels({
         </nav>
         <div className="min-w-0">
           {panel === 'overview' && (
-            <section className="space-y-5 panel p-5">
+            <section className="space-y-6 panel p-6">
               <h2 className="text-lg font-bold">{t('Manage.panel_overview')}</h2>
               <dl className="grid gap-4 text-sm sm:grid-cols-2">
                 <div>

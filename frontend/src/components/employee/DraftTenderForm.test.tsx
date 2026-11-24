@@ -55,8 +55,10 @@ function complete() {
   fireEvent.change(screen.getByLabelText('Estimated balance'), { target: { value: '125000.00' } });
   fireEvent.change(screen.getByLabelText('Currency code'), { target: { value: 'usd' } });
   fireEvent.click(screen.getByRole('tab', { name: 'Title and description' }));
-  fireEvent.change(screen.getByLabelText('English title'), { target: { value: 'School repairs' } });
-  fireEvent.change(screen.getByLabelText('English description'), {
+  fireEvent.change(screen.getByLabelText('English title (Optional)'), {
+    target: { value: 'School repairs' },
+  });
+  fireEvent.change(screen.getByLabelText('English description (Optional)'), {
     target: { value: 'Repair the roof.' },
   });
 }
@@ -74,14 +76,18 @@ describe('DraftTenderForm', () => {
     fireEvent.change(screen.getByLabelText('Estimated balance'), { target: { value: '999.00' } });
     fireEvent.click(screen.getByRole('tab', { name: 'Title and description' }));
     expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
-    fireEvent.change(screen.getByRole('textbox', { name: 'English title' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: 'English title (Optional)' }), {
       target: { value: 'Unsaved title' },
     });
     fireEvent.click(screen.getByRole('tab', { name: 'Basic information' }));
     expect(screen.getByRole('textbox', { name: 'Estimated balance' })).toHaveValue('999.00');
-    expect(screen.queryByRole('textbox', { name: 'English title' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: 'English title (Optional)' }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Title and description' }));
-    expect(screen.getByRole('textbox', { name: 'English title' })).toHaveValue('Unsaved title');
+    expect(screen.getByRole('textbox', { name: 'English title (Optional)' })).toHaveValue(
+      'Unsaved title',
+    );
     expect(mocks.create).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -107,7 +113,7 @@ describe('DraftTenderForm', () => {
       'true',
     );
     await waitFor(() =>
-      expect(screen.getByRole('textbox', { name: 'English title' })).toHaveFocus(),
+      expect(screen.getByRole('textbox', { name: 'English title (Optional)' })).toHaveFocus(),
     );
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -140,8 +146,10 @@ describe('DraftTenderForm', () => {
   it('accepts Arabic as the only completed language', async () => {
     render(<DraftTenderForm />, { wrapper });
     complete();
-    fireEvent.change(screen.getByLabelText('English title'), { target: { value: '' } });
-    fireEvent.change(screen.getByLabelText('English description'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('English title (Optional)'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('English description (Optional)'), {
+      target: { value: '' },
+    });
     fireEvent.change(screen.getByLabelText('Arabic title'), { target: { value: 'ترميم مدرسة' } });
     fireEvent.change(screen.getByLabelText('Arabic description'), {
       target: { value: 'ترميم السقف' },
@@ -165,13 +173,13 @@ describe('DraftTenderForm', () => {
     fireEvent.change(screen.getByLabelText('الرصيد التقديري'), { target: { value: '100.00' } });
     fireEvent.change(screen.getByLabelText('رمز العملة'), { target: { value: 'USD' } });
     fireEvent.click(screen.getByRole('tab', { name: arabicMessages.Employee.translations }));
-    fireEvent.change(screen.getByLabelText('العنوان باللغة العربية'), {
+    fireEvent.change(screen.getByLabelText('العنوان باللغة العربية (اختياري)'), {
       target: { value: 'ترميم مدرسة' },
     });
-    fireEvent.change(screen.getByLabelText('الوصف باللغة العربية'), {
+    fireEvent.change(screen.getByLabelText('الوصف باللغة العربية (اختياري)'), {
       target: { value: 'ترميم السقف' },
     });
-    expect(screen.getByLabelText('العنوان باللغة العربية')).toHaveAttribute('dir', 'rtl');
+    expect(screen.getByLabelText('العنوان باللغة العربية (اختياري)')).toHaveAttribute('dir', 'rtl');
     fireEvent.click(screen.getByRole('button', { name: 'حفظ المسودة' }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/employee/tenders/t-2'));
   });
@@ -195,7 +203,9 @@ describe('DraftTenderForm', () => {
   it('updates with the revision that was opened, retaining it if background data changes', async () => {
     const view = render(<DraftTenderForm initial={initial} />, { wrapper });
     view.rerender(<DraftTenderForm initial={{ ...initial, revision: 9 }} />);
-    fireEvent.change(screen.getByLabelText('English title'), { target: { value: 'My edits' } });
+    fireEvent.change(screen.getByLabelText('English title (Optional)'), {
+      target: { value: 'My edits' },
+    });
     save();
     await waitFor(() => expect(mocks.update).toHaveBeenCalled());
     expect(mocks.update.mock.calls[0][0]).toMatchObject({ tenderId: 't-1', data: { revision: 4 } });
@@ -205,12 +215,12 @@ describe('DraftTenderForm', () => {
     mocks.update.mockRejectedValue(new ApiError(409, { error: { code: 'VERSION_CONFLICT' } }));
     const reload = vi.fn().mockResolvedValue(undefined);
     render(<DraftTenderForm initial={initial} onReload={reload} />, { wrapper });
-    fireEvent.change(screen.getByLabelText('English title'), {
+    fireEvent.change(screen.getByLabelText('English title (Optional)'), {
       target: { value: 'My unsaved title' },
     });
     save();
     await screen.findByRole('button', { name: 'Reload and discard my changes' });
-    expect(screen.getByLabelText('English title')).toHaveValue('My unsaved title');
+    expect(screen.getByLabelText('English title (Optional)')).toHaveValue('My unsaved title');
     expect(reload).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Reload and discard my changes' }));
     expect(reload).toHaveBeenCalledOnce();
@@ -221,7 +231,7 @@ describe('DraftTenderForm', () => {
     save();
     await screen.findByText(/This tender is no longer editable/);
     expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
-    expect(screen.getByLabelText('English title')).toBeDisabled();
+    expect(screen.getByLabelText('English title (Optional)')).toBeDisabled();
   });
   it('maps validation errors to the translated field and never displays server messages', async () => {
     mocks.update.mockRejectedValue(
@@ -236,13 +246,16 @@ describe('DraftTenderForm', () => {
     render(<DraftTenderForm initial={initial} />, { wrapper });
     save();
     await screen.findByText('Check the highlighted fields.');
-    expect(screen.getByLabelText('English title')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('English title (Optional)')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
     expect(screen.getByRole('tab', { name: 'Title and description' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    expect(screen.getByRole('textbox', { name: 'English title' })).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'English title (Optional)' })).toHaveFocus();
     expect(screen.queryByText('private error text')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('English description')).toHaveValue('Repair the roof.');
+    expect(screen.getByLabelText('English description (Optional)')).toHaveValue('Repair the roof.');
   });
 });

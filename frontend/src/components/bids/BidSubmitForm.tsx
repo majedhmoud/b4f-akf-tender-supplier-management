@@ -69,7 +69,7 @@ export function BidSubmitForm() {
   const form = query.data;
   if (!form.canSubmit)
     return (
-      <section className="panel max-w-2xl space-y-3 p-5">
+      <section className="panel max-w-2xl space-y-4 p-6">
         <h1 className="text-2xl font-bold">{t('submitTitle')}</h1>
         <p>{t(`reasons.${form.reasonCode ?? 'APPLICATION_CLOSED'}`)}</p>
         {form.existingBid && (
@@ -150,7 +150,7 @@ export function BidSubmitForm() {
         <p className="panel border-advisory-border bg-advisory p-3 text-sm">{t('anonymity')}</p>
       </header>
       {form.parts.map((part) => (
-        <fieldset key={part.partType} className="panel space-y-4 p-5">
+        <fieldset key={part.partType} className="panel space-y-5 p-6">
           <legend className="px-1 text-lg font-bold">{t(`parts.${part.partType}`)}</legend>
           <p className="text-sm text-muted-foreground">
             {t('partDeadline', {

@@ -114,7 +114,7 @@ function NominationRow({ row, base }: { row: AdminNominationItem; base: readonly
   }
 
   return (
-    <li className="panel space-y-3 p-4">
+    <li className="panel space-y-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <p className="font-semibold" dir="auto">

@@ -98,7 +98,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
     );
   }
   return (
-    <form onSubmit={submit} noValidate className="space-y-5 panel p-5">
+    <form onSubmit={submit} noValidate className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t(accepting ? 'Manage.accept' : 'Manage.edit')}</h2>
       <ManagementFeedback error={action.error} reload={reload} />
       {invalid && <ErrorState title={t('Manage.formInvalid')} />}
@@ -157,6 +157,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
               >
                 <ManagementField
                   label={t('Employee.titleIn', { language: t(`Employee.${row.language}`) })}
+                  optional
                 >
                   <input
                     className={managementControl}
@@ -173,6 +174,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
                 </ManagementField>
                 <ManagementField
                   label={t('Employee.descriptionIn', { language: t(`Employee.${row.language}`) })}
+                  optional
                 >
                   <textarea
                     className={managementControl}
@@ -263,7 +265,7 @@ export function PublishTenderForm({ tender, done, reload }: Props) {
     );
   }
   return (
-    <form onSubmit={submit} noValidate className="space-y-5 panel p-5">
+    <form onSubmit={submit} noValidate className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t('publish')}</h2>
       <p className="text-sm text-muted-foreground">{t('publishHint')}</p>
       <p className="text-xs text-muted-foreground">{t('localTimes')}</p>
