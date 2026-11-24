@@ -128,6 +128,7 @@ model UserAccount {
   emailsSent          EmailMessage[]        @relation("EmailSender")
   assignments         CommitteeAssignment[] @relation("AssignmentMember")
   approvedAssignments CommitteeAssignment[] @relation("AssignmentApprover")
+  tieBreaks           TenderAward[]
 
   @@map("user_accounts")
 }
@@ -217,6 +218,8 @@ model Tender {
   emails       EmailMessage[]
   committees   TenderCommittee[]
   bids         Bid[]
+  rankings     BidRanking[]
+  award        TenderAward?
 
   @@index([status])
   @@index([publishedAt])
@@ -641,6 +644,8 @@ model Bid {
   legalEvaluation     LegalEvaluation?
   technicalEvaluation TechnicalEvaluation?
   financialEvaluation FinancialEvaluation?
+  ranking             BidRanking?
+  award               TenderAward?
 
   @@unique([tenderId, supplierId])
   @@unique([tenderId, bidderCode])
@@ -746,4 +751,44 @@ model FinancialEvaluation {
 
   @@index([assignmentId])
   @@map("financial_evaluations")
+}
+
+enum AwardSelection {
+  top_rank
+  tie_break
+
+  @@map("award_selection")
+}
+
+// Written by the system when the Financial Evaluation completes (ERD, Scoring
+// and award). Rank is calculated on read; equal scores share a rank.
+model BidRanking {
+  bidId                 String   @id @map("bid_id") @db.Uuid
+  tenderId              String   @map("tender_id") @db.Uuid
+  bid                   Bid      @relation(fields: [bidId, tenderId], references: [id, tenderId], onDelete: Cascade)
+  tender                Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  combinedScore         Decimal  @map("combined_score") @db.Decimal(5, 2)
+  // Informational: it never stops a bid from winning.
+  aboveEstimatedBalance Boolean  @map("above_estimated_balance")
+  calculatedAt          DateTime @default(now()) @map("calculated_at") @db.Timestamptz
+
+  @@unique([bidId, tenderId])
+  @@index([tenderId, combinedScore])
+  @@map("bid_rankings")
+}
+
+// The winner: the unique top score (top_rank), or the officer's choice among
+// bids tied at the top (tie_break).
+model TenderAward {
+  tenderId          String         @id @map("tender_id") @db.Uuid
+  tender            Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  winningBidId      String         @unique @map("winning_bid_id") @db.Uuid
+  winningBid        Bid            @relation(fields: [winningBidId, tenderId], references: [id, tenderId], onDelete: Restrict)
+  selection         AwardSelection
+  tieBrokenByUserId String?        @map("tie_broken_by_user_id") @db.Uuid
+  tieBrokenBy       UserAccount?   @relation(fields: [tieBrokenByUserId], references: [id], onDelete: Restrict)
+  awardedAt         DateTime       @default(now()) @map("awarded_at") @db.Timestamptz
+
+  @@unique([winningBidId, tenderId])
+  @@map("tender_awards")
 }
