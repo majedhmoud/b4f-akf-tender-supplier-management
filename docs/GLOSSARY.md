@@ -20,10 +20,11 @@ The committee that evaluates financial offers.
 A record of a person’s nomination and approval status for one **tender**’s `legal_committee`, `technical_committee`, or `financial_committee`.
 
 **procurement_officer**:
-The AKF employee who runs tenders from draft to award.
+The AKF staff member who runs tenders from draft to award.
 
-**requester**:
-The AKF employee who requests a **tender**.
+**employee**:
+An AKF staff member who can request a **tender**.
+_Avoid_: requester
 
 **supplier**:
 A `guest` who has completed the **supplier_signup_process**.
@@ -42,7 +43,7 @@ A published request with three deadlines (application, technical, and financial)
 _Avoid_: bidding, RFP
 
 **draft tender**:
-A requester's proposal for a **tender**. It has estimated technical requirements and financial requirements based on the project's balance, but no deadlines, suppliers, or committees.
+An employee's proposal for a **tender**. It has estimated technical requirements and financial requirements based on the project's balance, but no deadlines, suppliers, or committees.
 _Avoid_: bid draft
 
 **bid**:
@@ -58,6 +59,9 @@ _Avoid_: budget, ceiling
 
 **bid part**:
 One of the three parts of a **bid**: legal information, technical offer, or financial offer. Each has its own deadline.
+
+**supplier bid form**:
+The form a `supplier` fills in to submit a **bid**: the standard fields and files for each **bid part**, plus any custom fields the `procurement_officer` adds before publishing.
 
 **bidder code**:
 The label, such as "Bidder A", that the `technical_committee` and `financial_committee` see instead of the supplier's identity.
@@ -100,4 +104,4 @@ How a `guest` becomes a `supplier`. See [WORKFLOWS.md](01_PROBLEM/WORKFLOWS.md#s
 The `legal_committee`'s decision to accept or reject a `guest`'s legal information during the **supplier_signup_process**.
 
 **account setup link**:
-A single-use, expiring link through which an approved applicant sets a password and verifies their email address.
+A single-use, expiring link through which an approved applicant or a newly approved committee member sets a password and verifies their email address.

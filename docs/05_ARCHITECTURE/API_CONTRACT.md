@@ -1,6 +1,6 @@
 # Frontend API contract (V1)
 
-Status: accepted (revision 2). Section 4 lists ERD changes that still need separate approval.
+Status: accepted (revision 2). The ERD changes in section 4 are approved.
 
 For the Next.js teammate building against mocks. Every endpoint shape, header, and error code is a **proposal**, except what the accepted docs already fix: `/api/v1`, the HttpOnly JWT cookie, 404 for records a user may not see, the pagination envelope, and the response DTO names in ENGINEERING_STANDARDS §2.7.
 
@@ -10,7 +10,7 @@ For the Next.js teammate building against mocks. Every endpoint shape, header, a
 - "My bids" shows the tender status only. Each supplier learns their own result from the officer-reviewed email.
 - Newly approved committee members activate through the same account setup page, in a language the `admin` chooses. Existing accounts just receive the assignment.
 
-ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pending-approval). Mock against them, but they need separate approval.
+The ERD changes this contract depends on are listed in [section 4](#4-erd-changes-approved) and are in the [ERD](ERD.md).
 
 ## 1. Shared behaviour
 
@@ -19,7 +19,7 @@ ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pe
 - **Cookies.** The API sets two HttpOnly, Secure, `SameSite=Lax` cookies: `access_token` (10 minutes) and `refresh_token`. The web app and the API run on the same site. The frontend never reads either cookie.
 - **Credentials.** Every request uses `credentials: 'include'`, set once in the Orval mutator. CORS allows credentials only from the web app's exact origin.
 - **CSRF.**
-  - `GET /auth/csrf` returns `{ "csrfToken": "…" }`. It works without a session, so guest forms are covered too.
+  - `GET /auth/csrf` returns `{ "csrfToken": "…", "serverTime": "…" }`. It works without a session, so guest forms are covered too.
   - The token is bound to the current session, or to the anonymous visitor.
   - Keep it in memory, and send it as `X-CSRF-Token` on every POST, PUT, PATCH, and DELETE.
   - Fetch a new token on app load and after sign-in, sign-out, refresh, account setup, and `SESSION_REVOKED`.
@@ -30,7 +30,7 @@ ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pe
   - Each refresh replaces the refresh token. If an old refresh token is used again, the server revokes every session in that chain and returns `401 SESSION_REVOKED`.
 - **Session ended.** On `401 UNAUTHENTICATED` or `401 SESSION_REVOKED`, clear the cache and go to sign-in with `?returnTo=`.
 - **Sign-out.** `POST /auth/sign-out` revokes the session on the server. Every access token for that session stops working at once, because each request checks the session.
-- **Server enforcement.** The server enforces every permission and deadline. Detail responses include `allowedActions`, which the UI uses only to show or hide controls. Responses with deadlines include `serverTime`, so countdowns use server time, not the device clock.
+- **Server enforcement.** The server enforces every permission and deadline. Detail responses include `allowedActions`, which the UI uses only to show or hide controls. Countdowns use the deadline from the response, anchored to the `serverTime` from the latest `GET /auth/csrf` response and advanced by elapsed time, never the device clock.
 
 ### 1.2 Query cache and HTTP caching
 
@@ -39,8 +39,9 @@ ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pe
   - Private data: `['me', userId, …]`, always including the signed-in user's id.
 - **Clearing.** Clear the whole TanStack Query cache on sign-in, sign-out, successful account setup, and `SESSION_REVOKED`. Never persist the cache to browser storage.
 - **HTTP caching.**
-  - Public tender endpoints (`/tenders…` and `/reference/…`) send `Cache-Control: public, max-age=60` and `Vary: Accept-Language`.
-  - Every other response sends `Cache-Control: private, no-store`, including signed download URLs.
+  - Only `GET /tenders`, `GET /tenders/:tenderId`, and `GET /reference/…` send `Cache-Control: public, max-age=60` and `Vary: Accept-Language`.
+  - Every other response sends `Cache-Control: private, no-store`. This includes B1 (`GET /tenders/:tenderId/bid-form`) and every download endpoint, the public Terms of Reference download among them, because they return supplier-specific data or signed URLs.
+  - Clients use the `serverTime` from `GET /auth/csrf`, which is never cached, for countdowns, not the `serverTime` in a cached tender response.
 
 ### 1.3 Idempotency
 
@@ -52,7 +53,7 @@ ERD changes this contract depends on are listed in [section 4](#4-erd-changes-pe
   - tie-break award
   - email preparation and sending
 - **Retries.** Create the key once per user action, and keep it in the mutation's state, so every retry of that action reuses it.
-- **Scope.** The server stores keys per user and per route for 24 hours. A different user using the same key is simply a new request.
+- **Scope.** The server stores keys for 24 hours per caller and target route. Signed-in callers use their account. Guest applications use the server-issued browser scope established by CSRF bootstrap, which survives CSRF token renewal. Retry from the same browser with credentials included.
 - **Replays and misuse.**
   - Same key, same payload (including file hashes): the server returns the original status and body, with `Idempotent-Replayed: true`.
   - Same key, different payload: `422 IDEMPOTENCY_KEY_REUSED`. The UI creates a new key only if the user deliberately changed the form.
@@ -94,7 +95,9 @@ The UI translates `code`. It never displays `message`.
 | 409 | `ALREADY_SUBMITTED` | Show `details.evaluation` read-only. |
 | 409 | `BID_EXISTS` | Open `details.bidId`. |
 | 409 | `IDEMPOTENCY_IN_PROGRESS` | Retry after one second with the same key. |
-| 409 | `EMAIL_NOT_EDITABLE`, `TIE_BREAK_NOT_REQUIRED`, `ALREADY_AWARDED`, `TENDER_NOT_CANCELLED`, `TENDER_ALREADY_COPIED`, `ASSIGNMENT_*` | Refetch and show the reason. |
+| 409 | `EMAIL_ALREADY_REGISTERED` | An account already uses this email. Show "Sign in instead" with a link to sign-in. |
+| 409 | `REGISTRATION_NUMBER_EXISTS` | Field error on `registrationNumber`. |
+| 409 | `EMAIL_NOT_EDITABLE`, `TIE_BREAK_NOT_REQUIRED`, `ALREADY_AWARDED`, `ALREADY_ACCEPTED`, `TENDER_NOT_CANCELLED`, `TENDER_ALREADY_COPIED`, `ASSIGNMENT_*` | Refetch and show the reason. |
 | 410 | `SETUP_LINK_EXPIRED` | Offer "Send a new link". |
 | 410 | `SETUP_LINK_USED` | Offer "Sign in". |
 | 413, 415 | `FILE_TOO_LARGE`, `FILE_TYPE_NOT_ALLOWED` | Error on that file input. |
@@ -142,6 +145,8 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 
 | # | Screen / action | Who, when | Endpoint |
 |---|---|---|---|
+| **System** | | | |
+| H1 | API and database status | Anyone | `GET /health` |
 | **Auth** | | | |
 | A0 | CSRF token | Anyone | `GET /auth/csrf` |
 | A1 | Sign in | An `active` account | `POST /auth/sign-in` |
@@ -156,12 +161,12 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | T1 | Tender list | Anyone. `published` only | `GET /tenders` |
 | T2 | Tender detail (`PublicTender`) | Anyone. `published` only; otherwise 404 | `GET /tenders/:tenderId` |
 | T2d | Terms of Reference download | Same as T2 | `GET /tenders/:tenderId/documents/:docId/download` |
-| **Requester Tenders** | | | |
-| Q1 | Create a draft tender | `requester` | `POST /requester/tenders` |
-| Q2 | My tenders | `requester`, their own only | `GET /requester/tenders` |
-| Q3 | Tender detail (`RequesterTender`) | `requester`, their own only | `GET /requester/tenders/:tenderId` |
-| Q4 | Edit draft | `requester`, own, while `draft` | `PATCH /requester/tenders/:tenderId` |
-| Q5 | Document download | `requester`, own | `GET /requester/tenders/:tenderId/documents/:docId/download` |
+| **Employee Tenders** | | | |
+| Q1 | Create a draft tender | `employee` | `POST /employee/tenders` |
+| Q2 | My tenders | `employee`, their own only | `GET /employee/tenders` |
+| Q3 | Tender detail (`EmployeeTender`) | `employee`, their own only | `GET /employee/tenders/:tenderId` |
+| Q4 | Edit draft | `employee`, own, while `draft` | `PATCH /employee/tenders/:tenderId` |
+| Q5 | Document download | `employee`, own | `GET /employee/tenders/:tenderId/documents/:docId/download` |
 | **Tender Management** | | | |
 | M1 | Tender list | `procurement_officer` | `GET /manage/tenders?status=` |
 | M2 | Tender detail (`ManagedTender`) | `procurement_officer` | `GET /manage/tenders/:tenderId` |
@@ -172,6 +177,8 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | M7 | Document download | `procurement_officer` | `GET /manage/tenders/:tenderId/documents/:docId/download` |
 | M8 | Publish | `procurement_officer`, while `accepted` | `POST /manage/tenders/:tenderId/publish` |
 | M9 | Copy a cancelled tender | `procurement_officer`, while `cancelled` and not yet copied | `POST /manage/tenders/:tenderId/copy` |
+| M10 | Read supplier form editor | `procurement_officer`, from acceptance | `GET /manage/tenders/:tenderId/bid-form` |
+| M11 | Save supplier form template | `procurement_officer`, while `accepted` | `PUT /manage/tenders/:tenderId/bid-form` |
 | **Sign-up** | | | |
 | U1 | Submit a sign-up application | `guest` | `POST /supplier-applications` |
 | U2 | Review queue | Standing `legal_committee` role | `GET /signup-reviews?status=pending` |
@@ -187,8 +194,9 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | S3 | Request a new link | The holder of an expired link | `POST /account-setup/resend` |
 | **Suppliers** | | | |
 | P1 | My profile | `supplier` | `GET /me/supplier-profile` |
-| P2 | Edit technical information | `supplier` | `PUT /me/supplier-profile` |
-| P3 | Add or remove a technical document | `supplier` | `POST /me/supplier-profile/documents`, `DELETE /me/supplier-profile/documents/:docId` |
+| P2 | Edit technical and legal information | `supplier` | `PUT /me/supplier-profile` |
+| P3 | Replace a certificate | `supplier` | `POST /me/supplier-profile/documents` |
+| P3d | Download one of my documents | `supplier` | `GET /me/supplier-profile/documents/:docId/download` |
 | P4 | Supplier directory | `admin` | `GET /admin/suppliers?status=&search=` |
 | P5 | Suspend or reactivate | `admin` | `POST /admin/suppliers/:supplierId/suspend`, `POST /admin/suppliers/:supplierId/reactivate` |
 | P6 | Find a supplier to contact | `procurement_officer` | `GET /manage/suppliers?search=` |
@@ -207,7 +215,7 @@ Each group below is one Swagger tag, and the README and Postman folder use the s
 | B3 | My bids | `supplier`, own | `GET /me/bids` |
 | B3d | Bid detail (`SupplierBid`) | `supplier`, own | `GET /me/bids/:bidId` |
 | B4 | Replace a bid part | `supplier`, own; before that part's deadline; allowed while suspended | `PUT /me/bids/:bidId/parts/:partType` |
-| B5 | Add, replace or remove a translation | Same as B4 | `PUT /me/bids/:bidId/parts/:partType/documents/:docId/translations/:language`, `DELETE` on the same path |
+| B5 | Add, replace or remove a translation (postponed after V1) | Same as B4 | `PUT /me/bids/:bidId/parts/:partType/documents/:docId/translations/:language`, `DELETE` on the same path |
 | B6 | Bid document download | `supplier`, own | `GET /me/bids/:bidId/documents/:docId/download` |
 | **Legal Evaluation** | | | |
 | L1 | Queue | Approved `legal_committee` assignment on this tender | `GET /evaluations/legal/tenders/:tenderId/bids` |
@@ -242,7 +250,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 
 ### Auth
 
-`GET /auth/csrf` returns `200 { "csrfToken": "c1f…" }`.
+`GET /auth/csrf` returns `200 { "csrfToken": "c1f…", "serverTime": "2026-11-23T09:00:00Z" }`.
 
 `POST /auth/sign-in` with `{ "email": "rana@akf.org", "password": "••••••••" }` sets the cookies and returns `200`:
 
@@ -253,7 +261,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
-- `roles` are account roles only: `supplier`, `requester`, `procurement_officer`, `admin`, and the standing `legal_committee` role.
+- `roles` are account roles only: `supplier`, `employee`, `procurement_officer`, `admin`, and the standing `legal_committee` role.
 - Tender assignments always come from `GET /me/assignments`. A standing legal reviewer can also hold tender assignments.
 - After sign-in: clear the cache, fetch a new CSRF token, then load `/me/assignments`.
 
@@ -290,13 +298,13 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
-- Never included: estimated balance, scoring settings, committees, requester, bid counts.
+- Never included: estimated balance, scoring settings, committees, requesting employee, bid counts.
 - Statuses other than `published` return 404 here. A participating supplier reads the tender through `GET /me/bids/:bidId`.
 - `GET /tenders/t-1001/documents/d-8/download` returns `{ "url": "…", "expiresAt": "2026-11-23T09:05:00Z" }`.
 
-### Requester Tenders
+### Employee Tenders
 
-`POST /requester/tenders`:
+`POST /employee/tenders`:
 
 ```json
 { "categoryCode": "construction",
@@ -308,7 +316,17 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 - Deadline, committee, supplier, and scoring fields return `400` with field code `FIELD_NOT_EDITABLE`.
 - Each translation must have both a title and a description.
 
-`GET /requester/tenders/t-1001` (`RequesterTender`):
+`GET /employee/tenders?page=1&limit=20` lists the employee's own tenders, newest first:
+
+```json
+{ "data": [{ "id": "t-1001", "status": "draft", "categoryCode": "construction",
+    "content": { "language": "en", "title": "School maintenance" },
+    "requestedLanguage": "ar", "isFallback": true,
+    "createdAt": "2026-11-23T08:30:00Z" }],
+  "meta": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 } }
+```
+
+`GET /employee/tenders/t-1001` (`EmployeeTender`):
 
 ```json
 { "id": "t-1001", "status": "draft", "revision": 2, "categoryCode": "construction",
@@ -319,14 +337,25 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 ```
 
 - Never included: scoring settings, committees, ranking, award details, bids.
-- `PATCH /requester/tenders/t-1001` takes `{ "revision": 2, "translations": [ … ] }` and returns `200 { "revision": 3 }`.
+- `PATCH /employee/tenders/t-1001` takes `{ "revision": 2, "translations": [ … ] }` and returns `200 { "revision": 3 }`.
 - After the officer accepts the tender, editing returns `409 TENDER_STATUS_CHANGED`.
 
 ### Tender Management
 
+**Supplier form editor (M10/M11).** GET returns `revision`, `allowedActions` and the three `parts`. Each part has its `partType`, read-only standard `fields` and `documents` as in B1, and an ordered `customFields` array. Only an accepted tender allows saving. Management responses contain definitions only.
+
+PUT takes the current `revision` and all three parts, each containing its `partType` and complete ordered `customFields` array. An empty array clears that part’s custom fields. Omission of an existing field removes it. For new fields omit `fieldId`; for existing ones retain the server-issued ID. Example field:
+
+```json
+{ "type": "number", "required": true, "unit": "GB", "minimum": 16,
+  "translations": [{ "language": "en", "label": "Memory per laptop", "instructions": "Enter the installed RAM." }] }
+```
+
+Types are `text`, `number`, `boolean`, and `file`. Unit and minimum are optional and numeric-field-only. Require at least one labelled language, with at most one entry per language. Reject unknown or duplicate IDs, foreign fields, invalid sections and attempts to replace standard inputs. A changed template increments the tender revision once. Return 200 with the saved M10 body and assigned IDs. Apply status before revision checks and save all parts atomically. Publish locks the template.
+
 A draft and an accepted tender are the same resource, with the same id and one `revision` counter. The current revision comes from `GET /manage/tenders/:tenderId`. These changes increase it:
 
-- the requester's edits
+- the employee's edits
 - the officer's edits to content, category, estimated balance, or scoring
 - uploading or removing Terms of Reference
 - accepting and publishing
@@ -337,7 +366,7 @@ Raising committees and nominating members don't change it.
 
 ```json
 { "id": "t-1001", "status": "accepted", "revision": 5, "categoryCode": "construction",
-  "requester": { "id": "u-20", "name": "Lina H." },
+  "requestedBy": { "id": "u-20", "name": "Lina H." },
   "estimatedBalance": { "amount": "125000.00", "currency": "USD" },
   "translations": [{ "language": "en", "title": "School maintenance", "description": "…" },
                    { "language": "ar", "title": "صيانة مدرسة الروضة", "description": "…" }],
@@ -355,7 +384,7 @@ Raising committees and nominating members don't change it.
 { "revision": 3, "technicalWeight": 70, "financialWeight": 30, "minimumTechnicalScore": 60 }
 ```
 
-Returns `200 { "status": "accepted", "revision": 4 }`. If the requester edited the draft in the meantime, the officer gets `409 VERSION_CONFLICT`.
+Returns `200 { "status": "accepted", "revision": 4 }`. If the employee edited the draft in the meantime, the officer gets `409 VERSION_CONFLICT`.
 
 `POST /manage/tenders/t-1001/documents` uploads Terms of Reference as multipart:
 
@@ -396,8 +425,8 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 
 ```json
 { "fields": [{ "name": "legalName", "type": "text", "required": true, "maxLength": 200 },
-             { "name": "registrationNumber", "type": "text", "required": true },
-             { "name": "contactEmail", "type": "email", "required": true },
+             { "name": "registrationNumber", "type": "text", "required": true, "maxLength": 100 },
+             { "name": "contactEmail", "type": "email", "required": true, "maxLength": 254 },
              { "name": "preferredLanguage", "type": "enum", "values": ["en", "ar"], "required": true }],
   "documents": [{ "kind": "registration_certificate", "required": true },
                 { "kind": "tax_certificate", "required": true }] }
@@ -415,11 +444,19 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 
 - Returns `201 { "applicationId": "a-55", "submittedAt": "2026-11-23T09:10:00Z" }`. Show "Submitted for legal review".
 - `409 REGISTRATION_NUMBER_EXISTS` is shown as a field error.
+- `409 EMAIL_ALREADY_REGISTERED`: an account already uses this contact email. Show "Sign in instead". A registered supplier updates their legal information on their profile (P2), not through a new application.
+- At most 5 applications a minute per IP; then `429 RATE_LIMITED` with `Retry-After`.
 - V1 has no status page and no rejection email for the applicant.
 
 `GET /supplier-applications/a-55` shows the legal reviewer the application fields and documents with their original names. Documents download through `GET /supplier-applications/a-55/documents/:docId/download`.
 
 `POST /supplier-applications/a-55/review` with `{ "decision": "accepted", "reason": null }` returns `201 { "decision": "accepted", "raisedToAdminAt": "2026-11-23T11:00:00Z" }`. Submitting again returns `409 ALREADY_SUBMITTED`, with the saved decision in `details`.
+
+**Application/review response shapes (approved clarification).** U2 (`status=pending`) and U5 (`status=raised`) use the §1.6 pagination envelope. Each item is `{ applicationId, legalName, registrationNumber, submittedAt }`; queues show oldest first. Pending means no legal review yet; the raised queue excludes requests already accepted by the admin.
+
+U3 returns `{ applicationId, legalName, registrationNumber, contactEmail, preferredLanguage, submittedAt, documents }`. Each document is `{ id, kind, name, language }`; `name` is its original display name. U3d returns the standard signed download link only after checking application/document ownership and the standing legal role.
+
+U6 returns the same application fields **without documents**, plus `review: { reviewerUserId, decision, reason, decidedAt, raisedToAdminAt }` for a legally accepted/raised request. Admin acceptance does not grant application-document download permission. Legal and admin responses never expose storage keys, setup tokens, password data or signed URLs embedded in metadata.
 
 `POST /signup-requests/a-55/accept` (no body) returns `200`:
 
@@ -428,7 +465,13 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
   "setupEmail": { "language": "ar", "status": "sending" } }
 ```
 
-**The setup link.** The email links to `/{lang}/account-setup#token=…`. The token sits in the URL fragment, so it never appears in a request URL or server log.
+U7 provisions at most once. Its conflicts, checked in this order:
+
+- `409 ALREADY_ACCEPTED`, with `details.supplierId`: the request was already accepted, including by a simultaneous request.
+- `409 EMAIL_ALREADY_REGISTERED`: an account was created for this contact email meanwhile.
+- `409 REGISTRATION_NUMBER_EXISTS`: another supplier already has this registration number. The application stays raised.
+
+**The setup link.** The email links to `/{lang}/account-setup#token=…`. The token sits in the URL fragment, so it never appears in a request URL or server log. A link expires 48 hours after it is issued.
 
 1. `POST /account-setup/verify` with `{ "token": "…" }` returns `200 { "email": "i***@alnoor.example", "preferredLanguage": "ar", "accountType": "supplier" }`.
    - This only checks the link. The token stays valid.
@@ -440,7 +483,7 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
    - `410 SETUP_LINK_EXPIRED`: "Send a new link" calls `POST /account-setup/resend` with `{ "token": "…" }`, which always returns `202`.
    - `410 SETUP_LINK_USED`: show "Sign in".
    - `404`: the link is invalid.
-   - `400 PASSWORD_TOO_WEAK`: field error.
+   - `400 PASSWORD_TOO_WEAK`: field error. A password needs at least 12 characters, with no other complexity rules.
 
 ### Suppliers
 
@@ -449,13 +492,20 @@ Returns `201 { "document": { "id": "d-7", … }, "revision": 5 }`.
 ```json
 { "id": "s-12", "legalName": "Al-Noor Engineering", "registrationNumber": "CR-88231",
   "status": "active", "technicalInformation": "…",
+  "certificates": [{ "id": "d-31", "kind": "registration_certificate", "name": "register.pdf",
+    "language": "ar", "uploadedAt": "2026-11-23T09:10:00Z", "source": "sign_up" }],
   "technicalDocuments": [{ "id": "d-40", "kind": "company_profile", "name": "Profile.pdf",
     "language": "fr", "translations": [] }],
-  "editableFields": ["technicalInformation"] }
+  "editableFields": ["legalName", "registrationNumber", "technicalInformation"] }
 ```
 
-- `PUT /me/supplier-profile` with `{ "technicalInformation": "…" }` returns `200`. Any other field returns `400 FIELD_NOT_EDITABLE`.
-- `POST /me/supplier-profile/documents` is multipart (`kind`, `file`, `language`, optional `translationOf`). Only technical kinds are accepted.
+- `PUT /me/supplier-profile` takes any of `legalName`, `registrationNumber`, and `technicalInformation`, and returns `200` with the updated profile. Any other field returns `400 FIELD_NOT_EDITABLE`; the account email is not editable.
+- A registration number another supplier already has returns `409 REGISTRATION_NUMBER_EXISTS`.
+- Legal changes are recorded as audit events with the values before and after. The reviewed sign-up application keeps its original values.
+- `certificates` always lists the registration and tax certificates. `source` is `sign_up` for the file the `legal_committee` reviewed, or `updated` for one the supplier uploaded since.
+- `POST /me/supplier-profile/documents` is multipart (`kind`, `file`, `language`). It accepts the two certificate kinds. A certificate replaces the current one of its kind and returns `201` with the updated profile; the reviewed sign-up file stays on the application. File errors follow §1.8. The replacement is audited.
+- `GET /me/supplier-profile/documents/:docId/download` returns the standard signed download link for any file in `certificates` or `technicalDocuments`; any other ID returns `404`.
+- **Postponed after V1:** technical documents (kinds such as `company_profile`, translations through `translationOf`, and `DELETE /me/supplier-profile/documents/:docId`). In V1, `technicalDocuments` is always `[]`.
 
 `GET /admin/suppliers?status=active&search=noor` returns a paginated list of `{ id, legalName, registrationNumber, status, allowedActions: ["suspend"] }`. `POST /admin/suppliers/s-12/suspend` returns `200 { "status": "suspended" }`. Repeating it returns the same result.
 
@@ -493,9 +543,13 @@ Neither supplier endpoint returns bids, tender participation, or evaluations.
 - With an existing account, the body is ignored and no email is sent: `200 { "status": "approved", "accountCreated": false }`.
 - Rule violations return `409`:
   - `ASSIGNMENT_ONE_COMMITTEE_PER_TENDER`
-  - `ASSIGNMENT_REQUESTER_CONFLICT`
+  - `ASSIGNMENT_REQUESTING_EMPLOYEE_CONFLICT`
   - `ASSIGNMENT_STAFF_CONFLICT`
 - If the tender is already `under_evaluation`, approval returns `409 TENDER_STATUS_CHANGED`.
+- **Check order (an exception to §1.4):** `404`, then `409 ASSIGNMENT_ALREADY_DECIDED`, then the three conflicts above in their order, then `409 TENDER_STATUS_CHANGED`, then `400` for a missing `preferredLanguage`. With an existing account the body is not validated.
+- A nomination already approved or rejected returns `409 ASSIGNMENT_ALREADY_DECIDED`, for approve, reject and withdraw.
+
+`POST /admin/committee-nominations/n-9/reject` (no body) returns `200 { "status": "rejected" }`. `DELETE /manage/nominations/n-9` returns `204`. C2 and C3 return `409 TENDER_STATUS_CHANGED` unless the tender is `accepted`, `published` or `closed`.
 
 `GET /me/assignments`. Counts include only bids this assignment may see:
 
@@ -540,6 +594,8 @@ Neither supplier endpoint returns bids, tender participation, or evaluations.
   "serverTime": "2026-11-23T09:00:00Z" }
 ```
 
+B1 also returns `customFields` per part (empty for the example above). For each published field return its stable `fieldId`, type, required flag, numeric settings if any, and the resolved label, instructions and language with English/Arabic fallback.
+
 When `canSubmit` is false, `reasonCode` is one of:
 
 - `SUPPLIER_SUSPENDED`
@@ -560,7 +616,9 @@ When `canSubmit` is false, `reasonCode` is one of:
 | `files[financial_offer][financial_proposal]` | `price-schedule.xlsx` |
 | `languages[financial_offer][financial_proposal]` | `en` |
 
-At submission, each original can carry at most one translation. Add more later with B5. The form tells suppliers not to identify themselves in technical or financial files.
+The form tells suppliers not to identify themselves in technical or financial files.
+
+**Postponed after V1:** bid document translations: the `translations[…]` and `translationLanguages[…]` fields of B2 and B4, and B5. In V1, `translations` is always `[]` and `allowedActions` never contains `manage_translations`.
 
 Returns `201` (`SupplierBid`, the same shape as B3d):
 
@@ -624,6 +682,8 @@ The list shows the tender status only, never "won" or "not won".
 - After the deadline: `422 BID_PART_LOCKED`.
 - Allowed while the supplier is suspended.
 
+**Custom answers in B2 and B4.** In B2 add `answers` to the multipart `bid` JSON, keyed by part type and then field ID. For example, `{"answers":{"technical_offer":{"field-ram":32}}}` adds a number. In B4 send the current part’s complete scalar answer map in a multipart JSON field named `answers`. For custom file fields use the field ID in place of the document kind in the existing file, language and translation inputs. Standard inputs remain required as specified. Reject missing required answers, foreign field IDs, wrong types and values below a field’s minimum with `400 VALIDATION_FAILED`. A failed validation preserves the previous part. Supplier detail returns saved values keyed by field ID; committee responses expose only their authorized part, with the existing blind download rules.
+
 **B5: one translation.** `PUT /me/bids/bid-3/parts/technical_offer/documents/d-31/translations/en` is multipart with a `file` field.
 
 - Returns `200 { "id": "d-35", "translationOf": "d-31", "language": "en", "name": "proposal-en.pdf" }`.
@@ -656,7 +716,9 @@ All three committees follow the same rules:
 ```
 
 - Never included: the technical and financial offers, other committees' evaluations, scoring settings, estimated balance.
-- Submit with `POST /evaluations/legal/tenders/t-1001/bids/bid-3/evaluation` and `{ "outcome": "pass", "reason": null }`. It returns `201`.
+- Submit with `POST /evaluations/legal/tenders/t-1001/bids/bid-3/evaluation` and `{ "outcome": "pass", "reason": null }`. It returns `201`. A `fail` needs a `reason` of up to 2,000 characters: `400 VALIDATION_FAILED` with `REQUIRED` otherwise.
+- The legal queue (L1) is a paginated list of `{ bidId, supplier: { legalName }, evaluated }`.
+- Each view also carries `answers`: that part's custom field answers, keyed by field ID. Bid translations are postponed, so `translations` is `[]`.
 
 **Technical** (`TechnicalBidView`). The queue is `GET /evaluations/technical/tenders/t-1001/bids?page=1`:
 
@@ -799,7 +861,7 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
     "skipped": [{ "id": "m-2", "reason": "revision_changed" }] }
   ```
   - Other skip reasons: `already_sending`, `already_sent`, `not_listed` (an email missing from `revisions`).
-  - Send one and Send all both move an email out of `draft` only if it is still `draft`, so an email racing between them is delivered once.
+  - Send one and Send all claim the reviewed revision only while it is `draft` or `failed`. Concurrent requests schedule one delivery. An uncertain delivery stays `sending` during reconciliation. Retry becomes available only after confirmed failure.
 - **Polling.** While any email is `sending`, refetch the list every 3 seconds, for at most 60 seconds. After that, show "Still sending, check again later".
 - **Failure.** A failed email shows `failure: { "code": "DELIVERY_FAILED", "at": "…" }` and a Retry button. Retry is the same call as Send one.
 - **Contact Supplier.** `POST /manage/suppliers/s-12/contact-drafts` with `{ "tenderId": "t-1001" }` (`tenderId` is optional) and `Idempotency-Key` returns `201`:
@@ -811,16 +873,16 @@ Show "Choose winner" only when `awardStatus` is `tie_break_required`, and only f
   - Then edit and send it through E3 and E4.
 - **Cancellation emails** (`kind=cancellation`) follow the same flow. No email exists for an applicant whose sign-up was rejected; that is outside the accepted V1 sign-up flow.
 
-## 4. ERD changes pending approval
+## 4. ERD changes (approved)
 
-The contract uses these, but they aren't in the accepted ERD.
+These were added to the [ERD](ERD.md) with this contract.
 
 1. **Email statuses.** `EMAIL_MESSAGE.status` gains `sending`, and `EMAIL_MESSAGE` gains `revision`.
 2. **Tender revision.** `TENDER` gains `revision`, the counter behind `VERSION_CONFLICT`.
-3. **Supporting tables, not drawn** (like `AUDIT_EVENT):
-   - `SESSION`: refresh-token rotation, replay detection, sign-out revocation.
+3. **Supporting tables, not drawn** (like `AUDIT_EVENT`):
+   - `SESSION` and `SESSION_REFRESH_TOKEN`: refresh-token rotation, replay detection, sign-out revocation.
    - `IDEMPOTENCY_KEY`: user, route, key, payload hash, stored response, expiry.
-4. **Committee member accounts.** Approving a nomination for someone without an account creates a `pending_setup` account in the language the `admin` chose. It reuses `ACCOUNT_SETUP_TOKEN` and the `account_setup` email kind. Once approved, the ERD and WORKFLOWS must describe this.
+4. **Committee member accounts.** Approving a nomination for someone without an account creates a `pending_setup` account in the language the `admin` chose. It reuses `ACCOUNT_SETUP_TOKEN` and the `account_setup` email kind. The ERD and [WORKFLOWS.md](../01_PROBLEM/WORKFLOWS.md#committee-assignments) describe it.
 
 ## 5. Out of scope for V1
 
