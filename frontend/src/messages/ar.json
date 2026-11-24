@@ -672,5 +672,94 @@
     "previous": "السابق",
     "next": "التالي",
     "pageOf": "الصفحة {page} من {total}"
+  },
+  "Award": {
+    "title": "التقييم والترسية",
+    "statuses": {
+      "in_progress": "قيد التنفيذ",
+      "tie_break_required": "تعادل بانتظار الحسم",
+      "awarded": "تمت الترسية",
+      "cancelled": "ملغاة"
+    },
+    "stages": {
+      "legal": "التقييم القانوني",
+      "technical": "التقييم الفني",
+      "financial": "التقييم المالي"
+    },
+    "progress": "تم تقييم {done} من {total}",
+    "awardedTo": "تمت الترسية على {name}.",
+    "selection": {
+      "top_rank": "أعلى درجة",
+      "tie_break": "اختيار عند التعادل"
+    },
+    "cancelled": {
+      "no_bids": "ملغاة: لم تُستلم أي عروض.",
+      "no_qualified_bid": "ملغاة: لم يستوفِ أي عرض المتطلبات."
+    },
+    "tieHint": "تتساوى عدة عروض في أعلى درجة إجمالية. اختر الفائز من بينها.",
+    "columns": {
+      "rank": "الترتيب",
+      "supplier": "المورّد",
+      "technical": "الفنية",
+      "financial": "المالية",
+      "combined": "الإجمالية",
+      "balance": "السعر",
+      "action": "الإجراء"
+    },
+    "aboveBalance": "أعلى من الميزانية التقديرية",
+    "chooseWinner": "اختيار الفائز",
+    "confirm": "تأكيد الفائز",
+    "cancel": "إلغاء",
+    "noRanking": "يظهر الترتيب بعد اكتمال التقييم المالي.",
+    "loadFailed": "تعذّر تحميل معلومات الترسية.",
+    "retry": "حاول مرة أخرى",
+    "failures": {
+      "ALREADY_AWARDED": "تمت ترسية المناقصة مسبقًا.",
+      "TIE_BREAK_NOT_REQUIRED": "لا يوجد تعادل لحسمه.",
+      "BID_NOT_TIE_CANDIDATE": "يمكن اختيار عرض متعادل في المرتبة الأولى فقط."
+    },
+    "failed": "تعذّر تنفيذ الإجراء. حاول مرة أخرى."
+  },
+  "OfficerEmails": {
+    "titles": {
+      "award": "رسائل الترسية",
+      "cancellation": "رسائل الإلغاء"
+    },
+    "hint": "راجع كل رسالة وعدّلها ثم أرسلها. لا يتلقى المورّدون غير الفائزين أي درجات.",
+    "sendAll": "إرسال كل ما تمت مراجعته",
+    "sentSummary": "{sending} قيد الإرسال، و{skipped} تم تجاوزها.",
+    "stillSending": "ما زالت قيد الإرسال، تحقّق لاحقًا.",
+    "empty": "لا توجد رسائل لهذه المناقصة.",
+    "loadFailed": "تعذّر تحميل الرسائل.",
+    "retry": "حاول مرة أخرى",
+    "failed": "تعذّر تنفيذ الإجراء. حاول مرة أخرى.",
+    "kinds": {
+      "award_winner": "الفائز",
+      "award_other": "مورّد آخر",
+      "cancellation": "إلغاء",
+      "account_setup": "إعداد الحساب",
+      "contact_supplier": "تواصل"
+    },
+    "statuses": {
+      "draft": "مسودة",
+      "sending": "قيد الإرسال",
+      "sent": "أُرسلت",
+      "failed": "فشل الإرسال"
+    },
+    "revision": "النسخة {revision}",
+    "sentAt": "أُرسلت {when}",
+    "subject": "الموضوع",
+    "body": "الرسالة",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "send": "إرسال",
+    "retrySend": "إعادة المحاولة",
+    "failure": "فشل الإرسال في {when}. يمكنك إعادة المحاولة.",
+    "errors": {
+      "REQUIRED": "الموضوع والرسالة مطلوبان.",
+      "VERSION_CONFLICT": "تغيّرت الرسالة. تظهر الآن أحدث نسخة.",
+      "EMAIL_NOT_EDITABLE": "هذه الرسالة قيد الإرسال أو أُرسلت."
+    }
   }
 }

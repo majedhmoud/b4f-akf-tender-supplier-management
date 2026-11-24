@@ -19,6 +19,8 @@ import { privateKey } from '@/lib/api/query-keys';
 import { directionOf, formatDateTime } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { ManagedDocuments } from './ManagedDocuments';
+import { TenderAward } from '@/components/awards/TenderAward';
+import { TenderEmails } from '@/components/awards/TenderEmails';
 import { TenderCommittees } from '@/components/committees/TenderCommittees';
 import { ManagedTenderForm, PublishTenderForm } from './ManagedTenderForm';
 import { ManagementFeedback, useManagementAction } from './ManagementFeedback';
@@ -215,6 +217,8 @@ function TenderPanels({
         </div>
       </div>
       <TenderCommittees tenderId={tender.id} status={tender.status} />
+      <TenderAward tenderId={tender.id} status={tender.status} />
+      <TenderEmails tenderId={tender.id} status={tender.status} />
     </article>
   );
 }
