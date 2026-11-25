@@ -1359,6 +1359,7 @@ export async function seed(
   prisma: PrismaService,
   storage: FileStorage,
   tokens: SetupTokens,
+  passwords = { staff: DEMO_STAFF_PASSWORD, supplier: DEMO_SUPPLIER_PASSWORD },
 ): Promise<SeedSummary> {
   await prisma.tenderCategory.createMany({
     data: CATEGORIES.map((code) => ({ code })),
@@ -1367,8 +1368,8 @@ export async function seed(
   await removeDemoData(prisma, storage);
 
   const [passwordHash, supplierPasswordHash] = await Promise.all([
-    bcrypt.hash(DEMO_STAFF_PASSWORD, 12),
-    bcrypt.hash(DEMO_SUPPLIER_PASSWORD, 12),
+    bcrypt.hash(passwords.staff, 12),
+    bcrypt.hash(passwords.supplier, 12),
   ]);
   const ids: Record<string, string> = {};
   for (const account of DEMO_ACCOUNTS) {

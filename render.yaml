@@ -1,0 +1,72 @@
+services:
+  - type: web
+    name: majedhmoud-akf-demo-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npx prisma migrate deploy && node dist/seed/render-demo.js && npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: majedhmoud-akf-demo-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: majedhmoud-akf-demo-redis
+          type: keyvalue
+          property: connectionString
+      - key: WEB_ORIGIN
+        value: https://majedhmoud-akf-demo.onrender.com
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CSRF_SECRET
+        generateValue: true
+      - key: FILE_URL_SECRET
+        generateValue: true
+      - key: SETUP_TOKEN_SECRET
+        generateValue: true
+      - key: DEMO_ACCESS_PASSWORD
+        generateValue: true
+      - key: RENDER_DEMO_SEED
+        value: 'true'
+      - key: EMAIL_RECOVERY_INTERVAL_MS
+        value: '0'
+      - key: SMTP_HOST
+        value: 127.0.0.1
+      - key: SMTP_PORT
+        value: '1'
+  - type: web
+    name: majedhmoud-akf-demo
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: frontend
+    buildCommand: npm ci --include=dev && npm run build -- --webpack
+    startCommand: npm run start
+    healthCheckPath: /en
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: BACKEND_API_ORIGIN
+        value: https://majedhmoud-akf-demo-api.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        value: https://majedhmoud-akf-demo.onrender.com
+  - type: keyvalue
+    name: majedhmoud-akf-demo-redis
+    region: frankfurt
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+databases:
+  - name: majedhmoud-akf-demo-db
+    region: frankfurt
+    plan: free
+    ipAllowList: []
