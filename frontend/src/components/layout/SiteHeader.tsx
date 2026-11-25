@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import logo from '@/components/ui/assets/logo-transparent.png';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useSession } from '@/lib/useSession';
 import { LanguageSwitch } from './LanguageSwitch';
@@ -27,13 +29,20 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-border bg-card">
+    <header className="sticky top-0 z-50 border-b border-border bg-card">
       <div className="mx-auto flex min-h-16 max-w-portal flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6 md:flex-nowrap md:py-0 lg:px-8">
         <Link
           href="/"
-          className="min-w-0 rounded-md text-lg font-bold tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="inline-flex min-w-0 items-end gap-2 rounded-md text-lg font-bold tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
-          {t('Common.appName')}
+          <Image
+            src={logo}
+            alt=""
+            width={135}
+            height={275}
+            className="h-10 w-auto object-contain"
+          />
+          <span>{t('Common.appName')}</span>
         </Link>
         {!session && (
           <nav

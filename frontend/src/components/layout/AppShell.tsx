@@ -8,15 +8,15 @@ import { SiteHeader } from './SiteHeader';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { session } = useSession();
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen">
       <SiteHeader />
       <div
         // Signed in, the sidebar sits at the screen's start edge (right in
         // Arabic); only the main content keeps the page width.
         className={
           session
-            ? 'w-full flex-1 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]'
-            : 'mx-auto w-full max-w-portal flex-1'
+            ? 'w-full lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]'
+            : 'mx-auto w-full max-w-portal'
         }
       >
         <Suspense fallback={null}>

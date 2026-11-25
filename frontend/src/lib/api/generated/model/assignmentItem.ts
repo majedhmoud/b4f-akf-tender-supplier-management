@@ -7,6 +7,7 @@
  */
 import type { AssignmentStage } from './assignmentStage';
 import type { CommitteeType } from './committeeType';
+import type { EvaluationWindowView } from './evaluationWindowView';
 import type { TenderContentTitle } from './tenderContentTitle';
 
 export interface AssignmentItem {
@@ -16,4 +17,6 @@ export interface AssignmentItem {
   committeeType: CommitteeType;
   stage: AssignmentStage;
   pendingCount: number;
+  /** @nullable */
+  evaluationWindow: EvaluationWindowView | null;
 }

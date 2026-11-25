@@ -29,12 +29,12 @@ export function HomeLanding() {
 
   return (
     <div className="flex flex-col gap-12">
-      <section className="relative isolate overflow-hidden rounded-md bg-deep-green px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14 lg:px-14">
+      <section className="relative isolate flex min-h-[34rem] items-center overflow-hidden rounded-md bg-deep-green px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14 md:min-h-[32rem] lg:px-14">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <Image src={heroMap} alt="" fill sizes="100vw" className="object-cover opacity-75" />
           <div className="absolute inset-0 bg-deep-green/30" />
         </div>
-        <div className="relative z-10 max-w-3xl space-y-5 lg:max-w-[58%]">
+        <div className="relative z-10 w-full max-w-3xl space-y-5 lg:max-w-[58%]">
           <p className="text-sm font-semibold tracking-wide text-advisory-border">
             {t('Home.eyebrow')}
           </p>
