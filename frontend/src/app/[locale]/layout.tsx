@@ -37,9 +37,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
       className={`${geist.variable} ${geistMono.variable} ${notoArabic.variable}`}
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <Suspense
-          fallback={<div className="min-h-screen animate-pulse bg-muted" aria-busy="true" />}
-        >
+        <Suspense fallback={<div className="min-h-dvh animate-pulse bg-muted" aria-busy="true" />}>
           <NextIntlClientProvider>
             <Providers>
               <AppShell>{children}</AppShell>

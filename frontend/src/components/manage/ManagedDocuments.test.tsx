@@ -44,7 +44,7 @@ describe('Managed Terms of Reference', () => {
       target: { files: [file] },
     });
     fireEvent.change(screen.getByLabelText('Document language'), { target: { value: 'ar' } });
-    fireEvent.change(screen.getByLabelText('Translated copy of'), { target: { value: 'doc-1' } });
+    fireEvent.change(screen.getByLabelText('Translated copy of (Optional)'), { target: { value: 'doc-1' } });
     fireEvent.click(screen.getByRole('button', { name: 'Upload document' }));
     await waitFor(() => expect(done).toHaveBeenCalled());
     expect(mocks.upload).toHaveBeenCalledWith({
