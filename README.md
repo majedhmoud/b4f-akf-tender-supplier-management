@@ -77,7 +77,7 @@ Check it at http://localhost:4000/api/v1/health. Swagger is at http://localhost:
 
 Run `npm run seed -- --tenders-only` from `backend/` to replace tenders owned by the demo employee while keeping existing accounts and supplier applications. This also replaces associated bids, evaluations, and tender files. Back up the local database and uploads before running it.
 
-`npm run seed` creates thirteen fictional tenders covering draft, accepted, open bidding, closed with financial submission still open, separate legal, technical and financial evaluation queues, a tie awaiting the officer’s decision, automatic and officer-selected awards with draft, sent, and failed email examples, and both cancellation reasons. One public notice is Arabic only. Tender deadlines are relative to the date you run the seed. Wadi Supplies is the pending-setup fixture. Open Mailpit to inspect its setup email. Rerunning the seed resets demo data and is limited to a local database.
+`npm run seed` creates seventeen fictional tenders with detailed descriptions and six public opportunities covering all procurement categories. The fixtures cover draft, accepted, open bidding, closed with financial submission still open, separate legal, technical and financial evaluation queues, a tie awaiting the officer’s decision, automatic and officer-selected awards with draft, sent, and failed email examples, and both cancellation reasons. One public notice is Arabic only. Tender deadlines are relative to the date you run the seed. Wadi Supplies is the pending-setup fixture. Open Mailpit to inspect its setup email. Rerunning the seed resets demo data and is limited to a local database.
 
 | Role | Email | Password |
 |---|---|---|

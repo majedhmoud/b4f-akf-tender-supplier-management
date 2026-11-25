@@ -18,6 +18,7 @@ import { accountSetupEmail } from '../notifications/email-templates.js';
 import type { FileStorage } from '../storage/file-storage.js';
 import { PART_TYPES, STANDARD_BID_FORM } from '../tenders/standard-bid-form.js';
 import { demoPdf } from './demo-pdf.js';
+import { tenderDescriptions } from './tender-descriptions.js';
 
 // Fictional fixtures for local development. Mail must go to a local catcher.
 export const DEMO_DOMAIN = '@akf.org';
@@ -144,7 +145,6 @@ const at = (days: number) => new Date(Date.now() + days * DAY);
 interface Translation {
   language: Language;
   title: string;
-  description: string;
 }
 
 interface DemoFile {
@@ -204,44 +204,28 @@ const additionalEvaluationTenders: DemoTender[] = (
       kind: 'technical_pending',
       category: 'maintenance_services',
       title: 'Backup generator servicing at community centres',
-      description:
-        'Service nine diesel generators and submit load-test reports, a spare-parts schedule, and an emergency response plan.',
       arTitle: 'صيانة المولدات الاحتياطية في المراكز المجتمعية',
-      arDescription:
-        'صيانة تسعة مولدات ديزل وتقديم تقارير اختبار الحمل وجداول قطع الغيار وخطة الاستجابة للأعطال.',
       amount: '21000.00',
     },
     {
       kind: 'financial_pending',
       category: 'information_technology',
       title: 'Network renewal for district offices',
-      description:
-        'Install managed switches and secure wireless access at five offices. Include acceptance test records and a three-year support plan.',
       arTitle: 'تحديث الشبكات في مكاتب المناطق',
-      arDescription:
-        'تركيب محولات شبكية واتصال لاسلكي آمن في خمسة مكاتب مع اختبارات الاستلام ودعم لمدة ثلاث سنوات.',
       amount: '47000.00',
     },
     {
       kind: 'disqualified',
       category: 'construction',
       title: 'Accessible washrooms for learning centres',
-      description:
-        'Renovate washrooms at six learning centres. Include accessibility drawings, qualified supervision, and a site safety plan.',
       arTitle: 'مرافق صحية ميسّرة في مراكز التعلّم',
-      arDescription:
-        'تأهيل المرافق الصحية في ستة مراكز تعلّم، مع مخططات تيسير الوصول وإشراف مؤهل وخطة سلامة.',
       amount: '43000.00',
     },
     {
       kind: 'tie_resolved',
       category: 'goods_and_supplies',
       title: 'Water testing kits for community laboratories',
-      description:
-        'Supply 24 portable water testing kits, calibration standards, operator training, and replenishment consumables for one year.',
       arTitle: 'أطقم فحص المياه للمختبرات المجتمعية',
-      arDescription:
-        'توريد 24 طقمًا لفحص المياه مع مواد المعايرة وتدريب المشغّلين والمواد الاستهلاكية لمدة عام.',
       amount: '42000.00',
     },
   ] as const
@@ -254,8 +238,52 @@ const additionalEvaluationTenders: DemoTender[] = (
   scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 70 },
   bidScenario: entry.kind,
   translations: [
-    { language: 'en', title: entry.title, description: entry.description },
-    { language: 'ar', title: entry.arTitle, description: entry.arDescription },
+    { language: 'en', title: entry.title },
+    { language: 'ar', title: entry.arTitle },
+  ],
+}));
+
+const EXTRA_OPEN_TENDERS: DemoTender[] = (
+  [
+    {
+      title: 'Rehabilitation of community learning rooms',
+      arTitle: 'تأهيل قاعات التعلّم في المراكز المجتمعية',
+      categoryCode: 'construction',
+      amount: '34600.00',
+      applicationDays: 6,
+    },
+    {
+      title: 'Market assessment for small agricultural enterprises',
+      arTitle: 'دراسة سوق للمشروعات الزراعية الصغيرة',
+      categoryCode: 'consulting_services',
+      amount: '18700.00',
+      applicationDays: 9,
+    },
+    {
+      title: 'Preventive maintenance for clinic electrical systems',
+      arTitle: 'الصيانة الوقائية للأنظمة الكهربائية في العيادات',
+      categoryCode: 'maintenance_services',
+      amount: '24500.00',
+      applicationDays: 12,
+    },
+    {
+      title: 'Distribution of school hygiene kits',
+      arTitle: 'توزيع طرود النظافة المدرسية',
+      categoryCode: 'transport_and_logistics',
+      amount: '13900.00',
+      applicationDays: 16,
+    },
+  ] as const
+).map((entry) => ({
+  status: 'published',
+  categoryCode: entry.categoryCode,
+  amount: entry.amount,
+  createdDaysAgo: 4,
+  deadlines: [entry.applicationDays, entry.applicationDays + 7, entry.applicationDays + 14],
+  scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 65 },
+  translations: [
+    { language: 'en', title: entry.title },
+    { language: 'ar', title: entry.arTitle },
   ],
 }));
 
@@ -270,12 +298,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Solar panels for health clinics',
-        description: 'Supply and installation of solar panels for four rural health clinics.',
       },
       {
         language: 'ar',
         title: 'ألواح شمسية للعيادات الصحية',
-        description: 'توريد وتركيب ألواح شمسية لأربع عيادات صحية ريفية.',
       },
     ],
     scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 65 },
@@ -293,12 +319,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Water pumps for farming cooperatives',
-        description: 'Supply of twelve solar water pumps for three farming cooperatives.',
       },
       {
         language: 'ar',
         title: 'مضخات مياه للتعاونيات الزراعية',
-        description: 'توريد اثنتي عشرة مضخة مياه تعمل بالطاقة الشمسية لثلاث تعاونيات زراعية.',
       },
     ],
     scoring: { technicalWeight: 50, financialWeight: 50, minimumTechnicalScore: 60 },
@@ -315,14 +339,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Roof repair at the Rawda school',
-        description:
-          'Replace damaged flashing and waterproof 840 square metres at Rawda primary school. Include a weekend work plan, a drainage inspection, and a two-year defects warranty.',
       },
       {
         language: 'ar',
         title: 'إصلاح سقف مدرسة الروضة',
-        description:
-          'عزل 840 مترًا مربعًا في مدرسة الروضة وفحص التصريف، مع خطة عمل خلال العطلات وضمان لعامين.',
       },
     ],
   },
@@ -335,12 +355,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Evaluation of the teacher training programme',
-        description: 'An independent evaluation of the 2025–2026 teacher training programme.',
       },
       {
         language: 'ar',
         title: 'تقييم برنامج تدريب المعلمين',
-        description: 'تقييم مستقل لبرنامج تدريب المعلمين للعام 2025–2026.',
       },
     ],
     scoring: { technicalWeight: 70, financialWeight: 30, minimumTechnicalScore: 60 },
@@ -362,13 +380,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Laptops for teachers',
-        description:
-          'Supply of 120 laptops for teachers in partner schools, with a 3-year warranty.',
       },
       {
         language: 'ar',
         title: 'حواسيب محمولة للمعلمين',
-        description: 'توريد 120 حاسوبًا محمولًا لمعلمي المدارس الشريكة مع ضمان لمدة 3 سنوات.',
       },
     ],
     scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 70 },
@@ -397,7 +412,6 @@ const TENDERS: DemoTender[] = [
       {
         language: 'ar',
         title: 'توريد لوازم مدرسية',
-        description: 'توريد دفاتر وأقلام وحقائب مدرسية لـ 500 طالب.',
       },
     ],
     scoring: { technicalWeight: 50, financialWeight: 50, minimumTechnicalScore: 50 },
@@ -413,14 +427,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Winter relief transport for rural communities',
-        description:
-          'Deliver 1,200 winter relief kits from the Hama warehouse to eight rural distribution sites. Provide covered trucks, proof of delivery, and a contingency plan for road closures.',
       },
       {
         language: 'ar',
         title: 'نقل مساعدات الشتاء إلى المجتمعات الريفية',
-        description:
-          'نقل 1200 طرد شتوي من مستودع حماة إلى ثمانية مواقع توزيع ريفية باستخدام شاحنات مغطاة، مع إثبات التسليم وخطة بديلة لإغلاق الطرق.',
       },
     ],
     scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 65 },
@@ -438,14 +448,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Vaccine cold-chain equipment for primary care centres',
-        description:
-          'Supply and commission eight medical refrigerators with temperature data loggers. Include calibration, operator training, and on-site support for two years.',
       },
       {
         language: 'ar',
         title: 'تجهيزات سلسلة تبريد اللقاحات لمراكز الرعاية الأولية',
-        description:
-          'توريد وتشغيل ثماني ثلاجات طبية مع مسجلات لدرجات الحرارة، تشمل المعايرة وتدريب المشغّلين ودعمًا ميدانيًا لمدة عامين.',
       },
     ],
     scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 70 },
@@ -465,14 +471,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Water well maintenance in the north district',
-        description:
-          'Inspect six community wells and replace worn seals and control panels. Submit pump measurements and a safe water restoration schedule.',
       },
       {
         language: 'ar',
         title: 'صيانة آبار المياه في المنطقة الشمالية',
-        description:
-          'فحص ستة آبار مجتمعية واستبدال الحشيات ولوحات التحكم المتضررة وتقديم قياسات المضخات وجدول إعادة الخدمة.',
       },
     ],
     scoring: { technicalWeight: 70, financialWeight: 30, minimumTechnicalScore: 60 },
@@ -1111,6 +1113,88 @@ function fixtureAwards(prisma: PrismaService) {
   );
 }
 
+async function createDemoTender(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  accounts: Pick<DemoTenderAccounts, 'employee' | 'officer'>,
+  demo: DemoTender,
+) {
+  const details = tenderDescriptions[demo.translations[0].title];
+  if (!details) throw new Error('Missing demo tender description');
+  const translations = demo.translations.map((translation) => {
+    const description = details[translation.language];
+    if (!description) throw new Error('Missing demo tender translation');
+    return { ...translation, description };
+  });
+  // Only used when the tender has deadlines.
+  const [application, technical, financial] = demo.deadlines ?? [0, 0, 0];
+  const data: Prisma.TenderUncheckedCreateInput = {
+    status: demo.status,
+    categoryCode: demo.categoryCode,
+    requestedByUserId: accounts.employee,
+    estimatedBalance: demo.amount,
+    currencyCode: 'USD',
+    createdAt: at(-demo.createdDaysAgo),
+    translations: { create: translations },
+    ...(demo.scoring
+      ? { scoring: { create: demo.scoring }, acceptedAt: at(-demo.createdDaysAgo + 1) }
+      : {}),
+    ...(demo.deadlines
+      ? {
+          applicationDeadline: at(application),
+          technicalDeadline: at(technical),
+          financialDeadline: at(financial),
+          publishedAt: at(-demo.createdDaysAgo + 2),
+        }
+      : {}),
+    ...(demo.status === 'cancelled'
+      ? { cancellationReason: 'no_bids', cancelledAt: at(application) }
+      : {}),
+    ...(demo.scoring ? { formFields: { create: demoFields(demo) } } : {}),
+  };
+  const tender = await prisma.tender.create({ data, select: { id: true } });
+  if (demo.scoring) {
+    const primary = translations.find(({ language }) => language === 'en');
+    await addTermsOfReference(
+      prisma,
+      storage,
+      tender.id,
+      accounts.officer,
+      primary?.title ?? 'School materials - Terms of Reference',
+      primary?.description.split('\n\n')[0] ??
+        'Deliver durable school materials to 500 pupils and provide delivery notes by school.',
+      demo.termsOfReference ?? { language: 'en', name: 'Terms of Reference.pdf' },
+    );
+  }
+  return tender;
+}
+
+export async function addExtraOpenDemoTenders(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  accounts: Pick<DemoTenderAccounts, 'employee' | 'officer'>,
+) {
+  let added = 0;
+  for (const demo of EXTRA_OPEN_TENDERS) {
+    const existing = await prisma.tender.findFirst({
+      where: {
+        requestedByUserId: accounts.employee,
+        translations: { some: { language: 'en', title: demo.translations[0].title } },
+      },
+      select: { id: true },
+    });
+    if (existing) continue;
+    const tender = await createDemoTender(prisma, storage, accounts, demo);
+    await prisma.tenderCommittee.createMany({
+      data: (['legal_committee', 'technical_committee', 'financial_committee'] as const).map(
+        (type) => ({ tenderId: tender.id, type }),
+      ),
+    });
+    added++;
+  }
+  return added;
+}
+
 async function populateTenders(
   prisma: SeedDb,
   storage: SeedStorage,
@@ -1120,33 +1204,7 @@ async function populateTenders(
   const staffingTenders: { id: string; status: TenderStatus }[] = [];
   const bidScenarios: SeededBidScenario[] = [];
   for (const demo of TENDERS) {
-    // Only used when the tender has deadlines.
-    const [application, technical, financial] = demo.deadlines ?? [0, 0, 0];
-    const data: Prisma.TenderUncheckedCreateInput = {
-      status: demo.status,
-      categoryCode: demo.categoryCode,
-      requestedByUserId: accounts.employee,
-      estimatedBalance: demo.amount,
-      currencyCode: 'USD',
-      createdAt: at(-demo.createdDaysAgo),
-      translations: { create: demo.translations },
-      ...(demo.scoring
-        ? { scoring: { create: demo.scoring }, acceptedAt: at(-demo.createdDaysAgo + 1) }
-        : {}),
-      ...(demo.deadlines
-        ? {
-            applicationDeadline: at(application),
-            technicalDeadline: at(technical),
-            financialDeadline: at(financial),
-            publishedAt: at(-demo.createdDaysAgo + 2),
-          }
-        : {}),
-      ...(demo.status === 'cancelled'
-        ? { cancellationReason: 'no_bids', cancelledAt: at(application) }
-        : {}),
-      ...(demo.scoring ? { formFields: { create: demoFields(demo) } } : {}),
-    };
-    const tender = await prisma.tender.create({ data, select: { id: true } });
+    const tender = await createDemoTender(prisma, storage, accounts, demo);
     if (demo.status === 'accepted' || demo.status === 'published' || demo.status === 'closed')
       staffingTenders.push({ id: tender.id, status: demo.status });
     if (demo.bidScenario && demo.deadlines && demo.scoring) {
@@ -1158,21 +1216,8 @@ async function populateTenders(
         minimumTechnicalScore: demo.scoring.minimumTechnicalScore,
       });
     }
-
-    if (demo.scoring) {
-      const primary = demo.translations.find(({ language }) => language === 'en');
-      await addTermsOfReference(
-        prisma,
-        storage,
-        tender.id,
-        accounts.officer,
-        primary?.title ?? 'School materials - Terms of Reference',
-        primary?.description ??
-          'Deliver durable school materials to 500 pupils and provide delivery notes by school.',
-        demo.termsOfReference ?? { language: 'en', name: 'Terms of Reference.pdf' },
-      );
-    }
   }
+  await addExtraOpenDemoTenders(prisma, storage, accounts);
 
   await addDemoCommittees(
     prisma,
@@ -1193,7 +1238,7 @@ async function populateTenders(
 }
 
 function tenderSummary() {
-  return TENDERS.map((t) => ({
+  return [...TENDERS, ...EXTRA_OPEN_TENDERS].map((t) => ({
     title: t.translations[0].title,
     status:
       t.bidScenario === 'award' || t.bidScenario === 'tie_resolved'

@@ -53,7 +53,7 @@ describe('Seed (e2e)', () => {
         where: { contactEmail: { endsWith: DEMO_SUPPLIER_DOMAIN } },
       }),
     ).toBe(6);
-    expect(await prisma.tender.count({ where: demoUsers })).toBe(13);
+    expect(await prisma.tender.count({ where: demoUsers })).toBe(17);
     const tenderStatuses = await prisma.tender.findMany({
       where: demoUsers,
       select: { status: true },
@@ -81,11 +81,12 @@ describe('Seed (e2e)', () => {
     await refreshDemoTenders(prisma, app.get(FileStorage));
     const after = await prisma.tender.findMany({
       include: {
+        translations: true,
         formFields: { include: { translations: true } },
         bids: { include: { parts: { include: { answers: true } } } },
       },
     });
-    expect(after).toHaveLength(13);
+    expect(after).toHaveLength(17);
     expect(after.every((tender) => !before.some(({ id }) => id === tender.id))).toBe(true);
     expect(after.every((tender) => tender.requestedByUserId === employee.id)).toBe(true);
     expect(
@@ -95,6 +96,10 @@ describe('Seed (e2e)', () => {
         .sort(),
     ).toEqual(['no_bids', 'no_qualified_bid']);
     for (const tender of after) {
+      for (const translation of tender.translations) {
+        expect(translation.description.length).toBeGreaterThan(450);
+        expect(translation.description.split('\n\n')).toHaveLength(2);
+      }
       for (const field of tender.formFields) {
         expect(field.translations).toHaveLength(2);
         expect(field.translations.every(({ instructions }) => !!instructions)).toBe(true);
@@ -135,6 +140,7 @@ describe('Seed (e2e)', () => {
 
   it('publishes demo tenders a guest can see, with downloadable Terms of Reference', async () => {
     const list = await request(app.getHttpServer()).get('/api/v1/tenders?limit=100');
+    expect(list.body.data).toHaveLength(6);
     const laptops = (list.body.data as { id: string; content: { title: string } }[]).find(
       (t) => t.content.title === 'Laptops for teachers',
     );
