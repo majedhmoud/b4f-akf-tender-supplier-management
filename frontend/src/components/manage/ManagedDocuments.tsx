@@ -138,7 +138,7 @@ export function ManagedDocuments({
     );
   }
   return (
-    <section className="space-y-5 panel p-5">
+    <section className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t('Tender.documents')}</h2>
       <ManagementFeedback error={action.error} reload={reload} />
       <ul>
@@ -207,7 +207,7 @@ export function ManagedDocuments({
                 <option value="ar">{t('Employee.ar')}</option>
               </select>
             </ManagementField>
-            <ManagementField label={t('Manage.translationOf')}>
+            <ManagementField label={t('Manage.translationOf')} optional>
               <select
                 className={managementControl}
                 value={translationOf}

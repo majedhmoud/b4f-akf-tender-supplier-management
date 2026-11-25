@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field-label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from '@/i18n/navigation';
 import type { SupplierListItem, SupplierStatus } from '@/lib/api/generated/model';
@@ -154,8 +155,8 @@ export function AdminSupplierDirectory() {
         }}
       >
         <div className="min-w-56 flex-1 space-y-2">
-          <label htmlFor="supplier-search" className="block text-sm font-semibold">
-            {t('search')}
+          <label htmlFor="supplier-search" className="field-label">
+            <FieldLabel optional>{t('search')}</FieldLabel>
           </label>
           <input
             id="supplier-search"
@@ -167,8 +168,8 @@ export function AdminSupplierDirectory() {
           />
         </div>
         <div className="space-y-2">
-          <label htmlFor="supplier-status" className="block text-sm font-semibold">
-            {t('statusFilter')}
+          <label htmlFor="supplier-status" className="field-label">
+            <FieldLabel optional>{t('statusFilter')}</FieldLabel>
           </label>
           <select
             id="supplier-status"

@@ -35,7 +35,7 @@ export function TenderBidAction({ tenderId }: { tenderId: string }) {
   const link =
     'inline-flex min-h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-semibold';
   return (
-    <section className="panel space-y-3 p-5">
+    <section className="panel space-y-4 p-6">
       <h2 className="text-base font-bold">{t('bidTitle')}</h2>
       {form.canSubmit ? (
         <Link

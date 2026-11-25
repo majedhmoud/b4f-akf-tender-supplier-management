@@ -85,7 +85,7 @@ export function TenderDetail({ tenderId }: { tenderId: string }) {
             {t(`Categories.${data.categoryCode}`)}
           </p>
         </div>
-        <Badge variant="secondary" className="mt-1 px-3 font-semibold">
+        <Badge variant="secondary" className="mt-1">
           {t(`Statuses.${data.status}`)}
         </Badge>
       </header>

@@ -94,7 +94,7 @@ describe('TenderList', () => {
     );
 
     renderList();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Category' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'Category (Optional)' }), {
       target: { value: 'information_technology' },
     });
 

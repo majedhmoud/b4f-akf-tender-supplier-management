@@ -77,7 +77,7 @@ describe('Sign-up details and decisions', () => {
   it('shows rejection as final and retains the optional note in the request', async () => {
     mocks.review.mockResolvedValue({ decision: 'rejected', raisedToAdminAt: null });
     render(<LegalDecisionForm applicationId="a-1" />, { wrapper: SignupTestProvider });
-    fireEvent.change(screen.getByLabelText('Review note (optional)'), {
+    fireEvent.change(screen.getByLabelText('Review note (Optional)'), {
       target: { value: 'Invalid registration' },
     });
     decide('rejected');
@@ -107,18 +107,18 @@ describe('Sign-up details and decisions', () => {
   it('preserves the note after an unconfirmed failure and translates the error', async () => {
     mocks.review.mockRejectedValue(new Error('server internals'));
     render(<LegalDecisionForm applicationId="a-1" />, { wrapper: SignupTestProvider });
-    fireEvent.change(screen.getByLabelText('Review note (optional)'), {
+    fireEvent.change(screen.getByLabelText('Review note (Optional)'), {
       target: { value: 'Keep this' },
     });
     decide();
     await screen.findByRole('alert');
-    expect(screen.getByLabelText('Review note (optional)')).toHaveValue('Keep this');
+    expect(screen.getByLabelText('Review note (Optional)')).toHaveValue('Keep this');
     expect(screen.queryByText('server internals')).not.toBeInTheDocument();
   });
   it('limits review notes to 2000 characters before sending', () => {
     render(<LegalDecisionForm applicationId="a-1" />, { wrapper: SignupTestProvider });
-    expect(screen.getByLabelText('Review note (optional)')).toHaveAttribute('maxlength', '2000');
-    fireEvent.change(screen.getByLabelText('Review note (optional)'), {
+    expect(screen.getByLabelText('Review note (Optional)')).toHaveAttribute('maxlength', '2000');
+    fireEvent.change(screen.getByLabelText('Review note (Optional)'), {
       target: { value: 'x'.repeat(2001) },
     });
     decide();
@@ -132,7 +132,7 @@ describe('Sign-up details and decisions', () => {
       }),
     );
     render(<LegalDecisionForm applicationId="a-1" />, { wrapper: SignupTestProvider });
-    fireEvent.change(screen.getByLabelText('Review note (optional)'), {
+    fireEvent.change(screen.getByLabelText('Review note (Optional)'), {
       target: { value: 'Keep this note' },
     });
     decide();

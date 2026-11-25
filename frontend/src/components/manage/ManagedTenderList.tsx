@@ -54,7 +54,7 @@ export function ManagedTenderList() {
         <p className="mt-2 text-sm text-muted-foreground">{t('Manage.intro')}</p>
       </header>
       <div className="max-w-xs">
-        <ManagementField label={t('Employee.status')}>
+        <ManagementField label={t('Employee.status')} optional>
           <select
             className={managementControl}
             value={status ?? ''}

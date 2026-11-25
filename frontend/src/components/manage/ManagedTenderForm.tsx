@@ -3,7 +3,8 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ErrorState } from '@/components/layout/States';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Link } from '@/i18n/navigation';
 import type { ManagedTender } from '@/lib/api/generated/model';
 import { useReferenceCategories } from '@/lib/api/generated/reference/reference';
 import {
@@ -98,7 +99,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
     );
   }
   return (
-    <form onSubmit={submit} noValidate className="space-y-5 panel p-5">
+    <form onSubmit={submit} noValidate className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t(accepting ? 'Manage.accept' : 'Manage.edit')}</h2>
       <ManagementFeedback error={action.error} reload={reload} />
       {invalid && <ErrorState title={t('Manage.formInvalid')} />}
@@ -157,6 +158,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
               >
                 <ManagementField
                   label={t('Employee.titleIn', { language: t(`Employee.${row.language}`) })}
+                  optional
                 >
                   <input
                     className={managementControl}
@@ -173,6 +175,7 @@ export function ManagedTenderForm({ tender, done, reload }: Props) {
                 </ManagementField>
                 <ManagementField
                   label={t('Employee.descriptionIn', { language: t(`Employee.${row.language}`) })}
+                  optional
                 >
                   <textarea
                     className={managementControl}
@@ -263,7 +266,7 @@ export function PublishTenderForm({ tender, done, reload }: Props) {
     );
   }
   return (
-    <form onSubmit={submit} noValidate className="space-y-5 panel p-5">
+    <form onSubmit={submit} noValidate className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t('publish')}</h2>
       <p className="text-sm text-muted-foreground">{t('publishHint')}</p>
       <p className="text-xs text-muted-foreground">{t('localTimes')}</p>
@@ -291,10 +294,20 @@ export function PublishTenderForm({ tender, done, reload }: Props) {
           />
           {t('publishConfirm')}
         </label>
-        <Button type="submit" disabled={action.busy}>
+      </fieldset>
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-4">
+        <Link href="/manage/tenders" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+          {t('cancel')}
+        </Link>
+        <Button
+          type="submit"
+          size="lg"
+          className="min-w-44 shadow-sm"
+          disabled={action.busy || action.locked}
+        >
           {t(action.busy ? 'saving' : 'publish')}
         </Button>
-      </fieldset>
+      </div>
     </form>
   );
 }

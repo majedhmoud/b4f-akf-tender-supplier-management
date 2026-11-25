@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field-label';
 import { ApiError } from '@/lib/api/mutator';
 
 // A stale revision preserves inputs; a changed status stops further writes (§1.4).
@@ -87,10 +88,20 @@ export function ManagementFeedback({
 }
 
 export const managementControl = 'field-control';
-export function ManagementField({ label, children }: { label: string; children: React.ReactNode }) {
+export function ManagementField({
+  label,
+  optional = false,
+  children,
+}: {
+  label: string;
+  optional?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className="flex min-w-0 flex-col gap-2 text-sm">
-      <span>{label}</span>
+      <span className="field-label">
+        <FieldLabel optional={optional}>{label}</FieldLabel>
+      </span>
       {children}
     </label>
   );

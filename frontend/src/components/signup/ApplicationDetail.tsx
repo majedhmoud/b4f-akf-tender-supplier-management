@@ -137,7 +137,7 @@ export function LegalDecisionForm({ applicationId }: { applicationId: string }) 
     RATE_LIMITED: 'rateLimited',
   };
   return (
-    <form onSubmit={submit} className="space-y-4 panel p-5">
+    <form onSubmit={submit} className="space-y-5 panel p-6">
       <h2 className="font-bold">{t('legalDecision')}</h2>
       {failure && <ErrorState title={t(errorLabels[failure] ?? 'decisionFailed')} />}
       <fieldset disabled={mutation.isPending || failure === 'NOT_FOUND'} className="space-y-4">
@@ -155,7 +155,11 @@ export function LegalDecisionForm({ applicationId }: { applicationId: string }) 
             <option value="rejected">{t('reject')}</option>
           </select>
         </SignupField>
-        <SignupField label={t('reason')} error={reasonInvalid ? t('invalidField') : undefined}>
+        <SignupField
+          label={t('reason')}
+          optional
+          error={reasonInvalid ? t('invalidField') : undefined}
+        >
           <textarea
             className={signupControl}
             rows={3}
@@ -212,10 +216,10 @@ export function LegalApplicationDetail({ applicationId }: { applicationId: strin
     <article className="space-y-5">
       <BackLink href="/signup-reviews">{t('backQueue')}</BackLink>
       <h1 className="text-2xl font-bold">{t('legalDetail')}</h1>
-      <section className="panel p-5">
+      <section className="panel p-6">
         <SignupApplicationFields application={query.data} />
       </section>
-      <section className="panel p-5">
+      <section className="panel p-6">
         <h2 className="font-bold">{t('documents')}</h2>
         <ul>
           {query.data.documents.map((document) => (
@@ -332,10 +336,10 @@ export function AdminRequestDetail({ applicationId }: { applicationId: string })
       <BackLink href="/signup-requests">{t('backQueue')}</BackLink>
       <h1 className="text-2xl font-bold">{t('adminDetail')}</h1>
       {outcome}
-      <section className="panel p-5">
+      <section className="panel p-6">
         <SignupApplicationFields application={query.data} />
       </section>
-      <section className="space-y-4 panel p-5">
+      <section className="space-y-5 panel p-6">
         <h2 className="font-bold">{t('acceptedReview')}</h2>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>
