@@ -32,7 +32,7 @@ November 24, 2026: implemented in the back end and web app. No automated tests w
 
 ## Demo fixtures
 
-The seed creates all three committee types on each accepted/published demo tender. It adds one pending legal nomination on the accepted tender (`nominee@akf-demo.test`, no account yet), and one approved technical member on the first published tender (`member@akf-demo.test`, active account with no role). The approved member uses the existing demo password documented in the [README](../../README.md#demo-accounts).
+The seed creates all three committee types on each accepted/published demo tender. It adds one pending legal nomination on the accepted tender (`nominee@akf.org`, no account yet), and one approved technical member on the first published tender (`member@akf.org`, active account with no role). The approved member uses the existing demo password documented in the [README](../../README.md#demo-accounts).
 
 The reset removes demo assignment audit records, assignments, committees, recipient emails and accounts; setup tokens follow account deletion. It recreates the fixtures without changing non-demo accounts. Running the seed resets demo work, including approvals performed during the walkthrough. No tests were created or run; slice acceptance and the reported S3 review findings remain pending.
 
@@ -40,4 +40,4 @@ The reset removes demo assignment audit records, assignments, committees, recipi
 
 The S3 seed was loaded once into the local database. It reports five demo accounts, including the approved committee member, and one waiting nomination. The seed build and local load succeeded; no repeatability test was run.
 
-The sign-up form's headers object now uses stable state instead of reading a ref during render, preserving the idempotency-header behavior. Front-end lint passes. Back-end typecheck, lint, formatting, build (through the seed command) and schema comparison pass. Current full front-end typecheck/build are blocked by a separate bid-screen type error in `BidPartInputs.tsx:51`; formatting also reports five files under `components/bids/`. Those files were not edited in this task. No test files were created or run.
+The sign-up form's headers object now uses stable state instead of reading a ref during render, preserving the idempotency-header behavior. Front-end lint passes. Back-end typecheck, lint, formatting, build (through the seed command) and schema comparison pass. At that check, the full front-end typecheck and build were blocked by a bid-screen type error in `BidPartInputs.tsx:51`. Both pass in the [closeout checkpoint](../HACKATHON_ROADMAP.md#closeout-checkpoint--november-24-2026). No test files were created or run.

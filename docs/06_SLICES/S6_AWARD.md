@@ -23,13 +23,13 @@ The managed tender page (`/manage/tenders/[tenderId]`) gains an Evaluation and a
 ## Decisions (November 24, 2026)
 
 - Plain award and cancellation templates in English and Arabic, with the tender title and supplier name only; the officer edits them before sending.
-- Contact Supplier (E6) and the officer's supplier views (P6, P7) are later.
+- Contact Supplier (E6) and the officer's supplier views (P6, P7) are not shipped in V1 ([V1 scope](../03_SCOPE/V1_SCOPE.md#postponed)).
 - Send one and Send all accept an `Idempotency-Key` but do not require it: a send is idempotent by the reviewed revision.
 
 ## Demo fixtures
 
-"Water pumps for farming cooperatives" is seeded `under_evaluation` with both demo bids evaluated to a tie at 75.00, waiting for the officer (`officer@akf-demo.test`). Completing the S5 walkthrough on "Solar panels for health clinics" ranks it and awards a unique top score automatically.
+"Water pumps for farming cooperatives" is seeded `under_evaluation` with both demo bids evaluated to a tie at 75.00, waiting for the officer (`officer@akf.org`). Completing the S5 walkthrough on "Solar panels for health clinics" ranks it and awards a unique top score automatically.
 
 ## Status
 
-November 24, 2026: implemented in the back end and web app. No automated tests were written or run, by Majed's decision.
+November 24, 2026: backend PR #15 and frontend PR #18 are merged into `develop`. Majed accepted the local implementation, and an officer API call confirmed the seeded tie and its candidates. No S6 automated tests were written or run in that handoff. The integrated tie-break and email delivery flow still needs a recorded check.

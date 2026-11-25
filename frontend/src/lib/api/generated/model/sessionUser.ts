@@ -11,6 +11,7 @@ import type { Role } from './role';
 export interface SessionUser {
   id: string;
   email: string;
+  displayName: string;
   preferredLanguage: Language;
   roles: Role[];
 }

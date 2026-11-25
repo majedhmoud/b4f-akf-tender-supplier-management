@@ -22,18 +22,16 @@ import {
   useManagementAction,
 } from './ManagementFeedback';
 
-function ManagedDocument({
+export function ManagedDocument({
   tenderId,
   document,
-  canRemove,
   remove,
   disabled,
 }: {
   tenderId: string;
   document: Pick<TenderDocumentView, 'id' | 'name' | 'language'>;
-  canRemove: boolean;
-  remove: () => void;
-  disabled: boolean;
+  remove?: () => void;
+  disabled?: boolean;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -76,7 +74,7 @@ function ManagedDocument({
       <Button variant="outline" disabled={download.isFetching} onClick={() => void open()}>
         {t('Tender.download')}
       </Button>
-      {canRemove && (
+      {remove && (
         <Button
           variant="outline"
           disabled={disabled}
@@ -138,7 +136,7 @@ export function ManagedDocuments({
     );
   }
   return (
-    <section className="space-y-5 panel p-5">
+    <section className="space-y-6 panel p-6">
       <h2 className="text-lg font-bold">{t('Tender.documents')}</h2>
       <ManagementFeedback error={action.error} reload={reload} />
       <ul>
@@ -149,9 +147,8 @@ export function ManagedDocuments({
               key={document.id}
               tenderId={base.id}
               document={document}
-              canRemove={editable}
               disabled={action.busy || action.locked}
-              remove={() => setRemoveId(document.id)}
+              remove={editable ? () => setRemoveId(document.id) : undefined}
             />
           ))}
       </ul>
@@ -207,7 +204,7 @@ export function ManagedDocuments({
                 <option value="ar">{t('Employee.ar')}</option>
               </select>
             </ManagementField>
-            <ManagementField label={t('Manage.translationOf')}>
+            <ManagementField label={t('Manage.translationOf')} optional>
               <select
                 className={managementControl}
                 value={translationOf}

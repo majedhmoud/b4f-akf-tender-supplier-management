@@ -28,7 +28,7 @@ The phases (P0–P5) and the seven slices (S1–S7) are in the [hackathon roadma
 ## How we split the work
 
 - Every phase is broken into small tasks. Each task has **one owner and one reviewer**.
-- Each slice is split into a back-end task and a front-end task. S7 is a mobile task. All follow the API contract, so nobody waits for anyone.
+- Each slice is split into a backend and a client task. S7 uses a NestJS backend task and an Expo client task against the same API contract.
 - When you finish a task, **claim the next unclaimed one**. Whoever has completed the fewest tasks picks first, which keeps the load fair.
 
 ## How we decide

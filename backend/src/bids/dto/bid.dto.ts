@@ -109,6 +109,19 @@ export class SupplierBid {
   @ApiProperty() serverTime: string;
 }
 
+export class MobileBidPart {
+  @ApiProperty({ enum: PartType, enumName: 'PartType' }) partType: PartType;
+  @ApiProperty({ type: String, nullable: true }) deadline: string | null;
+  @ApiProperty() locked: boolean;
+}
+
+export class MobileSupplierBid {
+  @ApiProperty() id: string;
+  @ApiProperty({ type: BidTenderRef }) tender: BidTenderRef;
+  @ApiProperty({ type: [MobileBidPart] }) parts: MobileBidPart[];
+  @ApiProperty() serverTime: string;
+}
+
 export class BidListItem {
   @ApiProperty() bidId: string;
   @ApiProperty({ type: BidTenderRef }) tender: BidTenderRef;

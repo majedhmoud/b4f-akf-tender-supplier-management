@@ -6,7 +6,11 @@ import { AuthService } from '../auth/auth.service.js';
 import { ApiException } from '../common/errors/api-exception.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { EmailQueue } from '../notifications/email-queue.js';
-import { accountSetupEmail, committeeSetupEmail } from '../notifications/email-templates.js';
+import {
+  accountSetupEmail,
+  committeeSetupEmail,
+  employeeSetupEmail,
+} from '../notifications/email-templates.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { AccountType, CompletedSetupView, SetupLinkView } from './dto/account-setup.dto.js';
 import { hashToken, SetupTokens } from './setup-tokens.js';
@@ -29,6 +33,7 @@ const tokenSelect = {
       preferredLanguage: true,
       status: true,
       supplier: { select: { id: true } },
+      roles: { select: { role: true } },
     },
   },
 } satisfies Prisma.AccountSetupTokenSelect;
@@ -40,8 +45,21 @@ function maskEmail(email: string): string {
 }
 
 function accountType(row: TokenRow): AccountType {
-  return row.user.supplier ? 'supplier' : 'committee_member';
+  if (row.user.supplier) return 'supplier';
+  return row.user.roles.some(({ role }) => role === 'employee') ? 'employee' : 'committee_member';
 }
+
+const setupDestinations = {
+  supplier: 'supplier_profile',
+  committee_member: 'my_assignments',
+  employee: 'employee_tenders',
+} satisfies Record<AccountType, CompletedSetupView['next']>;
+
+const setupEmails = {
+  supplier: accountSetupEmail,
+  committee_member: committeeSetupEmail,
+  employee: employeeSetupEmail,
+} satisfies Record<AccountType, typeof accountSetupEmail>;
 
 // S1–S3 in API_CONTRACT.md §2. The link holder is not signed in; the token
 // is the only proof, so every answer about an unknown token is a plain 404.
@@ -107,7 +125,7 @@ export class AccountSetupService {
     });
 
     const session = await this.auth.startSession(row.userId, res);
-    return { ...session, next: row.user.supplier ? 'supplier_profile' : 'my_assignments' };
+    return { ...session, next: setupDestinations[accountType(row)] };
   }
 
   // Always answers 202, so the response never says whether a token exists.
@@ -139,11 +157,7 @@ export class AccountSetupService {
           recipientUserId: row.userId,
           recipientEmail: row.user.email,
           language,
-          // A committee member has no supplier, so it gets the committee wording.
-          ...(row.user.supplier ? accountSetupEmail : committeeSetupEmail)(
-            language,
-            row.user.displayName,
-          ),
+          ...setupEmails[accountType(row)](language, row.user.displayName),
           status: 'sending',
         },
         select: { id: true, revision: true },

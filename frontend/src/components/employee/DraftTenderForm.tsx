@@ -5,8 +5,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field-label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import {
   useEmployeeTendersCreate,
   useEmployeeTendersUpdate,
@@ -16,6 +17,7 @@ import { useReferenceCategories } from '@/lib/api/generated/reference/reference'
 import { ApiError } from '@/lib/api/mutator';
 import { privateKey, publicKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
+import { BackLink } from '@/components/ui/back-link';
 
 const languages = ['en', 'ar'] as const;
 const controlClassName = 'field-control';
@@ -167,7 +169,7 @@ export function DraftTenderForm({
   };
 
   return (
-    <form onSubmit={save} noValidate className="flex flex-col gap-5">
+    <form onSubmit={save} noValidate className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{base ? t('edit') : t('create')}</h1>
@@ -205,11 +207,11 @@ export function DraftTenderForm({
           <TabsTrigger value="translations">{t('translations')}</TabsTrigger>
         </TabsList>
         <fieldset disabled={saving || locked} className="min-w-0">
-          <TabsContent value="basics" keepMounted>
+          <TabsContent value="basics" keepMounted className="space-y-5 panel p-6">
             <h2 className="mb-5 font-bold">{t('basics')}</h2>
-            <div className="grid gap-5 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-3">
               <div>
-                <label htmlFor="category" className="mb-2 block text-sm">
+                <label htmlFor="category" className="field-label mb-2 block">
                   {t('category')}
                 </label>
                 <select
@@ -229,7 +231,7 @@ export function DraftTenderForm({
                 {fieldHint('categoryCode')}
               </div>
               <div>
-                <label htmlFor="amount" className="mb-2 block text-sm">
+                <label htmlFor="amount" className="field-label mb-2 block">
                   {t('amount')}
                 </label>
                 <input
@@ -244,7 +246,7 @@ export function DraftTenderForm({
                 {fieldHint('estimatedBalance.amount')}
               </div>
               <div>
-                <label htmlFor="currency" className="mb-2 block text-sm">
+                <label htmlFor="currency" className="field-label mb-2 block">
                   {t('currency')}
                 </label>
                 <input
@@ -260,7 +262,7 @@ export function DraftTenderForm({
               </div>
             </div>
           </TabsContent>
-          <TabsContent value="translations" keepMounted>
+          <TabsContent value="translations" keepMounted className="space-y-5 panel p-6">
             <h2 className="font-bold">{t('translations')}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{t('translationHint')}</p>
             <div className="mt-5 grid gap-6 xl:grid-cols-2">
@@ -268,8 +270,8 @@ export function DraftTenderForm({
                 <fieldset key={language} className="flex min-w-0 flex-col gap-4">
                   <legend className="mb-4 text-sm font-semibold">{t(language)}</legend>
                   <div>
-                    <label htmlFor={language + '-title'} className="mb-2 block text-sm">
-                      {t('titleIn', { language: t(language) })}
+                    <label htmlFor={language + '-title'} className="field-label mb-2 block">
+                      <FieldLabel optional>{t('titleIn', { language: t(language) })}</FieldLabel>
                     </label>
                     <input
                       id={language + '-title'}
@@ -284,8 +286,10 @@ export function DraftTenderForm({
                     {fieldHint(language + '.title')}
                   </div>
                   <div>
-                    <label htmlFor={language + '-description'} className="mb-2 block text-sm">
-                      {t('descriptionIn', { language: t(language) })}
+                    <label htmlFor={language + '-description'} className="field-label mb-2 block">
+                      <FieldLabel optional>
+                        {t('descriptionIn', { language: t(language) })}
+                      </FieldLabel>
                     </label>
                     <textarea
                       id={language + '-description'}
@@ -306,12 +310,9 @@ export function DraftTenderForm({
           </TabsContent>
         </fieldset>
       </Tabs>
-      <Link
-        href={base ? `/employee/tenders/${base.id}` : '/employee/tenders'}
-        className="self-start text-sm text-primary hover:underline"
-      >
+      <BackLink href={base ? `/employee/tenders/${base.id}` : '/employee/tenders'}>
         {t('back')}
-      </Link>
+      </BackLink>
     </form>
   );
 }

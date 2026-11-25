@@ -6,7 +6,7 @@ import { SiteHeader } from './SiteHeader';
 
 // Header controls reflect the current session and preserve translated errors.
 const mocks = vi.hoisted(() => ({
-  session: null as { user: { email: string; roles: string[] } } | null,
+  session: null as { user: { email: string; displayName: string; roles: string[] } } | null,
   signOut: vi.fn(),
 }));
 vi.mock('@/lib/useSession', () => ({
@@ -41,38 +41,54 @@ describe('SiteHeader', () => {
     expect(screen.getByRole('link', { name: 'Tenders' })).toHaveAttribute('aria-current', 'page');
   });
   it('links signed-in users to their profile', () => {
-    mocks.session = { user: { email: 'employee@akf-demo.test', roles: ['employee'] } };
+    mocks.session = {
+      user: { email: 'employee@akf-demo.test', displayName: 'Lina Haddad', roles: ['employee'] },
+    };
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <SiteHeader />
       </NextIntlClientProvider>,
     );
-    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: 'My profile: Lina Haddad' })).toHaveAttribute(
+      'href',
+      '/profile',
+    );
   });
   it.each([
     { role: 'legal_committee', label: 'Legal review queue', href: '/signup-reviews' },
     { role: 'admin', label: 'Raised sign-up requests', href: '/signup-requests' },
   ])('shows the $role queue without other staff navigation', ({ role, label }) => {
-    mocks.session = { user: { email: 'staff@example.test', roles: [role] } };
+    mocks.session = {
+      user: { email: 'staff@example.test', displayName: 'Rana Saleh', roles: [role] },
+    };
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <SiteHeader />
       </NextIntlClientProvider>,
     );
     expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'My profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: 'My profile: Rana Saleh' })).toHaveAttribute(
+      'href',
+      '/profile',
+    );
     expect(screen.queryByRole('link', { name: 'Manage tenders' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My tenders' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Supplier sign-up' })).not.toBeInTheDocument();
   });
-  it('shows the user email and signs out', async () => {
-    mocks.session = { user: { email: 'officer@akf-demo.test', roles: ['procurement_officer'] } };
+  it('shows the staff name and signs out', async () => {
+    mocks.session = {
+      user: {
+        email: 'officer@akf-demo.test',
+        displayName: 'Omar Khalil',
+        roles: ['procurement_officer'],
+      },
+    };
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <SiteHeader />
       </NextIntlClientProvider>,
     );
-    expect(screen.getByText('officer@akf-demo.test')).toBeInTheDocument();
+    expect(screen.getByText('Omar Khalil')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Manage tenders' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'My tenders' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));

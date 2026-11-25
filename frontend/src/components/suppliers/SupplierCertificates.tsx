@@ -26,7 +26,7 @@ export function SupplierCertificates({
 }) {
   const t = useTranslations('Suppliers');
   return (
-    <section className="panel space-y-3 p-5">
+    <section className="panel space-y-4 p-6">
       <h2 className="text-lg font-bold">{t('certificatesTitle')}</h2>
       <p className="text-sm text-muted-foreground">{t('certificatesHint')}</p>
       <ul>
@@ -148,10 +148,13 @@ function CertificateRow({
         <form
           noValidate
           onSubmit={(e) => void submit(e)}
-          className="grid gap-3 rounded-md border border-input p-4 sm:grid-cols-[minmax(0,1fr)_7rem]"
+          className="grid gap-y-3 rounded-md border border-input p-4 sm:grid-cols-[minmax(0,1fr)_7rem] sm:gap-x-3 sm:gap-y-1"
         >
-          <div className="space-y-2">
-            <label htmlFor={`${id}-file`} className="block text-sm font-semibold">
+          <div className="grid gap-1 sm:contents">
+            <label
+              htmlFor={`${id}-file`}
+              className="block text-sm font-semibold sm:col-start-1 sm:row-start-1"
+            >
               {t('newFile')}
             </label>
             <input
@@ -160,11 +163,14 @@ function CertificateRow({
               accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
               disabled={replace.isPending}
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="field-control"
+              className="field-control sm:col-start-1 sm:row-start-2"
             />
           </div>
-          <div className="space-y-2">
-            <label htmlFor={`${id}-language`} className="block text-sm font-semibold">
+          <div className="grid gap-1 sm:contents">
+            <label
+              htmlFor={`${id}-language`}
+              className="block text-sm font-semibold sm:col-start-2 sm:row-start-1"
+            >
               {t('fileLanguage')}
             </label>
             <input
@@ -174,10 +180,10 @@ function CertificateRow({
               value={language}
               disabled={replace.isPending}
               onChange={(e) => setLanguage(e.target.value.toLowerCase())}
-              className="field-control"
+              className="field-control sm:col-start-2 sm:row-start-2"
             />
           </div>
-          <div className="flex flex-wrap gap-2 sm:col-span-2">
+          <div className="flex flex-wrap gap-2 sm:col-span-2 sm:row-start-3">
             <Button type="submit" disabled={replace.isPending}>
               {t(replace.isPending ? 'uploading' : 'upload')}
             </Button>

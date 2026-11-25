@@ -39,6 +39,7 @@ const session = {
   user: {
     id: 'u-1',
     email: 'employee@akf-demo.test',
+    displayName: 'Lina Haddad',
     preferredLanguage: 'en' as const,
     roles: ['employee' as const],
   },

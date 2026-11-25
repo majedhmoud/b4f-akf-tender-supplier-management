@@ -1,6 +1,12 @@
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { AccessService } from '../auth/access.service.js';
+import { AuditService } from '../audit/audit.service.js';
+import { AwardsService } from '../awards/awards.service.js';
+import { IdempotencyService } from '../idempotency/idempotency.service.js';
 import type {
   CommitteeType,
+  FormInputType,
   Language,
   PartType,
   Prisma,
@@ -10,17 +16,14 @@ import type { PrismaService } from '../prisma/prisma.service.js';
 import type { SetupTokens } from '../account-setup/setup-tokens.js';
 import { accountSetupEmail } from '../notifications/email-templates.js';
 import type { FileStorage } from '../storage/file-storage.js';
+import { PART_TYPES, STANDARD_BID_FORM } from '../tenders/standard-bid-form.js';
 import { demoPdf } from './demo-pdf.js';
+import { tenderDescriptions } from './tender-descriptions.js';
 
-// Demo data for S1 (docs/06_SLICES/S1_TENDER_PUBLISHING.md, "Seed data").
-// Every name is fictional. Demo accounts use the reserved `.test` domain, so
-// they can never be real addresses, and the seed only touches those accounts
-// and their tenders.
-
-export const DEMO_DOMAIN = '@akf-demo.test';
-// A clearly labelled demo password, listed in the README as the submission
-// requirements ask. Never reuse it anywhere real.
-export const DEMO_PASSWORD = 'AKF-demo-2026';
+// Fictional fixtures for local development. Mail must go to a local catcher.
+export const DEMO_DOMAIN = '@akf.org';
+export const DEMO_STAFF_PASSWORD = 'AKF_staff_2026';
+export const DEMO_SUPPLIER_PASSWORD = 'supplier_2026';
 export const DEMO_MEMBER = { email: `member${DEMO_DOMAIN}`, displayName: 'Nadia Salim' };
 export const DEMO_NOMINEE = { email: `nominee${DEMO_DOMAIN}`, displayName: 'Rami Hassan' };
 // S5: the legal and financial members of the tender under evaluation. The
@@ -56,9 +59,7 @@ export const DEMO_ACCOUNTS = [
   { email: `admin${DEMO_DOMAIN}`, displayName: 'Karim Aziz', role: 'admin' as const },
 ];
 
-// Demo applicants' contact emails end with this reserved `.test` domain, so the
-// seed can find and reset their applications.
-export const DEMO_APPLICANT_DOMAIN = '.demo.test';
+export const DEMO_SUPPLIER_DOMAIN = '@example.com';
 
 interface DemoApplication {
   legalName: string;
@@ -79,14 +80,14 @@ const APPLICATIONS: DemoApplication[] = [
   {
     legalName: 'Al-Noor Engineering',
     registrationNumber: 'CR-DEMO-1001',
-    contactEmail: `tenders@alnoor${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `alnoor-engineering${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'ar',
     submittedDaysAgo: 1,
   },
   {
     legalName: 'Sahel Builders',
     registrationNumber: 'CR-DEMO-1002',
-    contactEmail: `bids@sahel${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `sahel-builders${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'en',
     submittedDaysAgo: 3,
     review: { decision: 'accepted', reason: null },
@@ -94,7 +95,7 @@ const APPLICATIONS: DemoApplication[] = [
   {
     legalName: 'Rawda Contracting',
     registrationNumber: 'CR-DEMO-1003',
-    contactEmail: `office@rawda${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `rawda-contracting${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'en',
     submittedDaysAgo: 5,
     review: { decision: 'rejected', reason: 'The registration certificate has expired.' },
@@ -102,7 +103,7 @@ const APPLICATIONS: DemoApplication[] = [
   {
     legalName: 'Wadi Supplies',
     registrationNumber: 'CR-DEMO-1004',
-    contactEmail: `sales@wadi${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `wadi-supplies${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'en',
     submittedDaysAgo: 4,
     review: { decision: 'accepted', reason: null },
@@ -111,7 +112,7 @@ const APPLICATIONS: DemoApplication[] = [
   {
     legalName: 'Cedar Supplies',
     registrationNumber: 'CR-DEMO-1005',
-    contactEmail: `supplier@cedar${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `cedar-supplies${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'en',
     submittedDaysAgo: 6,
     review: { decision: 'accepted', reason: null },
@@ -121,7 +122,7 @@ const APPLICATIONS: DemoApplication[] = [
   {
     legalName: 'Rafid Works',
     registrationNumber: 'CR-DEMO-1006',
-    contactEmail: `bids@rafid${DEMO_APPLICANT_DOMAIN}`,
+    contactEmail: `rafid-works${DEMO_SUPPLIER_DOMAIN}`,
     preferredLanguage: 'ar',
     submittedDaysAgo: 7,
     review: { decision: 'accepted', reason: null },
@@ -130,13 +131,20 @@ const APPLICATIONS: DemoApplication[] = [
   },
 ];
 
+const DEMO_STAFF_EMAILS = [
+  ...DEMO_ACCOUNTS.map(({ email }) => email),
+  ...DEMO_EVALUATORS.map(({ email }) => email),
+  DEMO_MEMBER.email,
+  DEMO_NOMINEE.email,
+];
+const DEMO_SUPPLIER_EMAILS = APPLICATIONS.map(({ contactEmail }) => contactEmail);
+
 const DAY = 86_400_000;
 const at = (days: number) => new Date(Date.now() + days * DAY);
 
 interface Translation {
   language: Language;
   title: string;
-  description: string;
 }
 
 interface DemoFile {
@@ -144,6 +152,32 @@ interface DemoFile {
   name: string;
   translations?: { language: string; name: string }[];
 }
+
+type BidScenario =
+  | 'open'
+  | 'closed'
+  | 'pending_evaluation'
+  | 'technical_pending'
+  | 'financial_pending'
+  | 'disqualified'
+  | 'tie'
+  | 'tie_resolved'
+  | 'award';
+
+type SeedDb = Prisma.TransactionClient;
+type SeedStorage = Pick<FileStorage, 'save'>;
+
+const SUPPLIER_PROFILES: Record<string, string> = {
+  'CR-DEMO-1004': 'Regional storage and scheduled last-mile dispatch with inventory traceability.',
+  'CR-DEMO-1005':
+    'Medical refrigeration and electrical equipment distributor with calibration technicians and a regional warranty workshop.',
+  'CR-DEMO-1006':
+    'Solar installation and rural logistics contractor with certified electricians and a field maintenance team.',
+};
+const SIGNATORIES: Record<string, string> = {
+  'CR-DEMO-1005': 'Dima Farah',
+  'CR-DEMO-1006': 'Samir Darwish',
+};
 
 interface DemoTender {
   status: TenderStatus;
@@ -153,8 +187,7 @@ interface DemoTender {
   translations: Translation[];
   scoring?: { technicalWeight: number; financialWeight: number; minimumTechnicalScore: number };
   deadlines?: [number, number, number];
-  // S6: an under_evaluation tender whose bids are already evaluated to a tie.
-  tie?: boolean;
+  bidScenario?: BidScenario;
   termsOfReference?: DemoFile;
   customField?: {
     partType: PartType;
@@ -164,6 +197,95 @@ interface DemoTender {
     labelAr: string;
   };
 }
+
+const additionalEvaluationTenders: DemoTender[] = (
+  [
+    {
+      kind: 'technical_pending',
+      category: 'maintenance_services',
+      title: 'Backup generator servicing at community centres',
+      arTitle: 'صيانة المولدات الاحتياطية في المراكز المجتمعية',
+      amount: '21000.00',
+    },
+    {
+      kind: 'financial_pending',
+      category: 'information_technology',
+      title: 'Network renewal for district offices',
+      arTitle: 'تحديث الشبكات في مكاتب المناطق',
+      amount: '47000.00',
+    },
+    {
+      kind: 'disqualified',
+      category: 'construction',
+      title: 'Accessible washrooms for learning centres',
+      arTitle: 'مرافق صحية ميسّرة في مراكز التعلّم',
+      amount: '43000.00',
+    },
+    {
+      kind: 'tie_resolved',
+      category: 'goods_and_supplies',
+      title: 'Water testing kits for community laboratories',
+      arTitle: 'أطقم فحص المياه للمختبرات المجتمعية',
+      amount: '42000.00',
+    },
+  ] as const
+).map((entry) => ({
+  status: 'under_evaluation',
+  categoryCode: entry.category,
+  amount: entry.amount,
+  createdDaysAgo: 36,
+  deadlines: [-20, -15, -10],
+  scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 70 },
+  bidScenario: entry.kind,
+  translations: [
+    { language: 'en', title: entry.title },
+    { language: 'ar', title: entry.arTitle },
+  ],
+}));
+
+const EXTRA_OPEN_TENDERS: DemoTender[] = (
+  [
+    {
+      title: 'Rehabilitation of community learning rooms',
+      arTitle: 'تأهيل قاعات التعلّم في المراكز المجتمعية',
+      categoryCode: 'construction',
+      amount: '34600.00',
+      applicationDays: 6,
+    },
+    {
+      title: 'Market assessment for small agricultural enterprises',
+      arTitle: 'دراسة سوق للمشروعات الزراعية الصغيرة',
+      categoryCode: 'consulting_services',
+      amount: '18700.00',
+      applicationDays: 9,
+    },
+    {
+      title: 'Preventive maintenance for clinic electrical systems',
+      arTitle: 'الصيانة الوقائية للأنظمة الكهربائية في العيادات',
+      categoryCode: 'maintenance_services',
+      amount: '24500.00',
+      applicationDays: 12,
+    },
+    {
+      title: 'Distribution of school hygiene kits',
+      arTitle: 'توزيع طرود النظافة المدرسية',
+      categoryCode: 'transport_and_logistics',
+      amount: '13900.00',
+      applicationDays: 16,
+    },
+  ] as const
+).map((entry) => ({
+  status: 'published',
+  categoryCode: entry.categoryCode,
+  amount: entry.amount,
+  createdDaysAgo: 4,
+  deadlines: [entry.applicationDays, entry.applicationDays + 7, entry.applicationDays + 14],
+  scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 65 },
+  translations: [
+    { language: 'en', title: entry.title },
+    { language: 'ar', title: entry.arTitle },
+  ],
+}));
 
 const TENDERS: DemoTender[] = [
   // S5: every deadline has passed and the bids wait for evaluation.
@@ -176,16 +298,16 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Solar panels for health clinics',
-        description: 'Supply and installation of solar panels for four rural health clinics.',
       },
       {
         language: 'ar',
         title: 'ألواح شمسية للعيادات الصحية',
-        description: 'توريد وتركيب ألواح شمسية لأربع عيادات صحية ريفية.',
       },
     ],
     scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 65 },
     deadlines: [-6, -3, -1],
+    bidScenario: 'pending_evaluation',
+    termsOfReference: { language: 'en', name: 'Clinic solar installation ToR.pdf' },
   },
   // S6: evaluated to a tie at the top, waiting for the officer's choice.
   {
@@ -197,17 +319,16 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Water pumps for farming cooperatives',
-        description: 'Supply of twelve solar water pumps for three farming cooperatives.',
       },
       {
         language: 'ar',
         title: 'مضخات مياه للتعاونيات الزراعية',
-        description: 'توريد اثنتي عشرة مضخة مياه تعمل بالطاقة الشمسية لثلاث تعاونيات زراعية.',
       },
     ],
     scoring: { technicalWeight: 50, financialWeight: 50, minimumTechnicalScore: 60 },
     deadlines: [-12, -8, -4],
-    tie: true,
+    bidScenario: 'tie',
+    termsOfReference: { language: 'en', name: 'Solar water pump specifications.pdf' },
   },
   {
     status: 'draft',
@@ -218,8 +339,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Roof repair at the Rawda school',
-        description:
-          'Repair and waterproof the roof of the Rawda primary school before the rainy season.',
+      },
+      {
+        language: 'ar',
+        title: 'إصلاح سقف مدرسة الروضة',
       },
     ],
   },
@@ -232,12 +355,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Evaluation of the teacher training programme',
-        description: 'An independent evaluation of the 2025–2026 teacher training programme.',
       },
       {
         language: 'ar',
         title: 'تقييم برنامج تدريب المعلمين',
-        description: 'تقييم مستقل لبرنامج تدريب المعلمين للعام 2025–2026.',
       },
     ],
     scoring: { technicalWeight: 70, financialWeight: 30, minimumTechnicalScore: 60 },
@@ -259,17 +380,15 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Laptops for teachers',
-        description:
-          'Supply of 120 laptops for teachers in partner schools, with a 3-year warranty.',
       },
       {
         language: 'ar',
         title: 'حواسيب محمولة للمعلمين',
-        description: 'توريد 120 حاسوبًا محمولًا لمعلمي المدارس الشريكة مع ضمان لمدة 3 سنوات.',
       },
     ],
     scoring: { technicalWeight: 60, financialWeight: 40, minimumTechnicalScore: 70 },
     deadlines: [10, 17, 24],
+    bidScenario: 'open',
     termsOfReference: {
       language: 'ar',
       name: 'الشروط المرجعية.pdf',
@@ -293,13 +412,54 @@ const TENDERS: DemoTender[] = [
       {
         language: 'ar',
         title: 'توريد لوازم مدرسية',
-        description: 'توريد دفاتر وأقلام وحقائب مدرسية لـ 500 طالب.',
       },
     ],
     scoring: { technicalWeight: 50, financialWeight: 50, minimumTechnicalScore: 50 },
     deadlines: [14, 21, 28],
     termsOfReference: { language: 'ar', name: 'لوازم مدرسية.pdf' },
   },
+  {
+    status: 'closed',
+    categoryCode: 'transport_and_logistics',
+    amount: '28000.00',
+    createdDaysAgo: 18,
+    translations: [
+      {
+        language: 'en',
+        title: 'Winter relief transport for rural communities',
+      },
+      {
+        language: 'ar',
+        title: 'نقل مساعدات الشتاء إلى المجتمعات الريفية',
+      },
+    ],
+    scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 65 },
+    deadlines: [-4, -1, 4],
+    bidScenario: 'closed',
+    termsOfReference: { language: 'en', name: 'Winter relief delivery requirements.pdf' },
+  },
+  {
+    // Starts under evaluation; the normal ranking service awards it during seeding.
+    status: 'under_evaluation',
+    categoryCode: 'goods_and_supplies',
+    amount: '54000.00',
+    createdDaysAgo: 32,
+    translations: [
+      {
+        language: 'en',
+        title: 'Vaccine cold-chain equipment for primary care centres',
+      },
+      {
+        language: 'ar',
+        title: 'تجهيزات سلسلة تبريد اللقاحات لمراكز الرعاية الأولية',
+      },
+    ],
+    scoring: { technicalWeight: 65, financialWeight: 35, minimumTechnicalScore: 70 },
+    deadlines: [-14, -10, -7],
+    bidScenario: 'award',
+    termsOfReference: { language: 'en', name: 'Cold-chain equipment specifications.pdf' },
+  },
+  ...additionalEvaluationTenders,
   {
     status: 'cancelled',
     categoryCode: 'maintenance_services',
@@ -311,7 +471,10 @@ const TENDERS: DemoTender[] = [
       {
         language: 'en',
         title: 'Water well maintenance in the north district',
-        description: 'Maintenance of six community water wells in the north district.',
+      },
+      {
+        language: 'ar',
+        title: 'صيانة آبار المياه في المنطقة الشمالية',
       },
     ],
     scoring: { technicalWeight: 70, financialWeight: 30, minimumTechnicalScore: 60 },
@@ -324,7 +487,7 @@ const TENDERS: DemoTender[] = [
 // can run again at any time.
 async function removeDemoData(prisma: PrismaService, storage: FileStorage) {
   const users = await prisma.userAccount.findMany({
-    where: { email: { endsWith: DEMO_DOMAIN } },
+    where: { email: { in: DEMO_STAFF_EMAILS } },
     select: { id: true },
   });
   const userIds = users.map((u) => u.id);
@@ -336,7 +499,7 @@ async function removeDemoData(prisma: PrismaService, storage: FileStorage) {
 
   // Demo applications, their files, reviews, and audit events.
   const applications = await prisma.supplierApplication.findMany({
-    where: { contactEmail: { endsWith: DEMO_APPLICANT_DOMAIN } },
+    where: { contactEmail: { in: DEMO_SUPPLIER_EMAILS } },
     select: {
       id: true,
       documents: { select: { document: { select: { id: true, storageKey: true } } } },
@@ -346,7 +509,7 @@ async function removeDemoData(prisma: PrismaService, storage: FileStorage) {
   const applicationDocuments = applications.flatMap((a) => a.documents.map((d) => d.document));
   // Supplier accounts created from demo applications, with their emails.
   const suppliers = await prisma.userAccount.findMany({
-    where: { email: { endsWith: DEMO_APPLICANT_DOMAIN } },
+    where: { email: { in: DEMO_SUPPLIER_EMAILS } },
     select: { id: true },
   });
   const supplierIds = suppliers.map((u) => u.id);
@@ -457,6 +620,7 @@ async function addSupplier(
         userId: user.id,
         legalName: demo.legalName,
         registrationNumber: demo.registrationNumber,
+        technicalInformation: SUPPLIER_PROFILES[demo.registrationNumber],
       },
     });
     if (demo.active) return;
@@ -475,14 +639,20 @@ async function addSupplier(
 }
 
 async function addTermsOfReference(
-  prisma: PrismaService,
-  storage: FileStorage,
+  prisma: SeedDb,
+  storage: SeedStorage,
   tenderId: string,
   uploadedByUserId: string,
   title: string,
+  scope: string,
   file: DemoFile,
 ) {
-  const content = demoPdf(title);
+  const content = demoPdf(title, [
+    scope,
+    'Submit a signed registration certificate, technical proposal and priced financial offer.',
+    'Use the separate deadlines in the tender portal.',
+    'Evaluation: legal eligibility, compliance with technical requirements, and cost.',
+  ]);
   const create = async (language: string, name: string, translationOfId: string | null) =>
     prisma.document.create({
       data: {
@@ -505,43 +675,38 @@ async function addTermsOfReference(
   }
 }
 
-// S5: a tender under evaluation with all three committees staffed and two
-// bids from the active demo suppliers. The reset removes it with the other
-// demo tenders: bids first, then assignments, committees and accounts.
-async function addEvaluationDemo(
-  prisma: PrismaService,
-  storage: FileStorage,
-  tenders: { id: string; tie: boolean }[],
-  technicalMemberId: string,
+interface SeededBidScenario {
+  id: string;
+  kind: BidScenario;
+  deadlines: [number, number, number];
+  createdDaysAgo: number;
+  minimumTechnicalScore: number;
+}
+
+// The demo covers partial bids, sealed evaluation, a tie, and a completed award.
+async function addBidScenarios(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  tenders: SeededBidScenario[],
+  members: Record<CommitteeType, string>,
   adminId: string,
-  passwordHash: string,
+  officerId: string,
+  awards: AwardsService,
 ) {
-  const members: Record<CommitteeType, string> = {
-    legal_committee: '',
-    technical_committee: technicalMemberId,
-    financial_committee: '',
-  };
-  for (const evaluator of DEMO_EVALUATORS) {
-    const user = await prisma.userAccount.create({
-      data: {
-        email: evaluator.email,
-        displayName: evaluator.displayName,
-        preferredLanguage: 'en',
-        status: 'active',
-        passwordHash,
-        emailVerifiedAt: new Date(),
-      },
-      select: { id: true },
-    });
-    members[evaluator.type] = user.id;
-  }
   const members_ = await prisma.userAccount.findMany({
     where: { id: { in: Object.values(members) } },
     select: { id: true, email: true, displayName: true },
   });
-  for (const { id: tenderId, tie } of tenders) {
+  for (const {
+    id: tenderId,
+    kind,
+    deadlines: [application, technical, financial],
+    createdDaysAgo,
+    minimumTechnicalScore,
+  } of tenders) {
+    const inEvaluation = kind !== 'open' && kind !== 'closed';
     const assignments: Partial<Record<CommitteeType, string>> = {};
-    for (const type of Object.keys(members) as CommitteeType[]) {
+    for (const type of inEvaluation ? (Object.keys(members) as CommitteeType[]) : []) {
       const committee = await prisma.tenderCommittee.create({
         data: { tenderId, type },
         select: { id: true },
@@ -556,8 +721,8 @@ async function addEvaluationDemo(
           userId: person.id,
           status: 'approved',
           approvedByUserId: adminId,
-          nominatedAt: at(-12),
-          decidedAt: at(-11),
+          nominatedAt: at(-createdDaysAgo + 2),
+          decidedAt: at(-createdDaysAgo + 3),
         },
         select: { id: true },
       });
@@ -568,106 +733,246 @@ async function addEvaluationDemo(
       where: {
         user: { email: { in: APPLICATIONS.filter((a) => a.active).map((a) => a.contactEmail) } },
       },
-      select: { id: true, userId: true, legalName: true },
+      select: { id: true, userId: true, legalName: true, registrationNumber: true },
       orderBy: { legalName: 'asc' },
     });
-    const files: Record<PartType, string> = {
-      legal_information: 'registration_certificate',
-      technical_offer: 'technical_proposal',
-      financial_offer: 'financial_proposal',
-    };
+    const { formFields, translations, currencyCode } = await prisma.tender.findUniqueOrThrow({
+      where: { id: tenderId },
+      select: { formFields: true, translations: true, currencyCode: true },
+    });
+    const tenderTitle =
+      translations.find(({ language }) => language === 'en')?.title ?? 'Local tender';
+    const bidIds: string[] = [];
     for (const [i, supplier] of suppliers.entries()) {
+      const submittedAt = at(Math.min(-1, application - 1));
       const bid = await prisma.bid.create({
         data: {
           tenderId,
           supplierId: supplier.id,
           bidderCode: `B-DEMO${i + 1}`,
-          submittedAt: at(-8),
+          submittedAt,
         },
         select: { id: true },
       });
-      if (tie) await addTiedEvaluations(prisma, tenderId, bid.id, assignments);
-      for (const partType of Object.keys(files) as PartType[]) {
+      bidIds.push(bid.id);
+      const parts = PART_TYPES.slice(
+        0,
+        kind === 'open' && i === 0 ? 1 : kind === 'closed' && i === 0 ? 2 : 3,
+      );
+      for (const partType of parts) {
         const part = await prisma.bidPart.create({
           data: {
             bidId: bid.id,
             partType,
             standardAnswers:
               partType === 'legal_information'
-                ? { authorizedSignatoryName: `${supplier.legalName} director` }
+                ? { authorizedSignatoryName: SIGNATORIES[supplier.registrationNumber] }
                 : {},
-            lastSubmittedAt: at(-8),
+            lastSubmittedAt:
+              partType === 'legal_information'
+                ? submittedAt
+                : at(Math.min(-1, (partType === 'technical_offer' ? technical : financial) - 1)),
           },
           select: { id: true },
         });
-        const content = demoPdf(`${supplier.legalName} - ${files[partType]}`);
-        await prisma.document.create({
-          data: {
-            ownerType: 'bid_part',
-            storageKey: await storage.save(content),
-            originalName: `${files[partType]}.pdf`,
-            mimeType: 'application/pdf',
-            sizeBytes: content.length,
-            language: 'en',
-            uploadedByUserId: supplier.userId,
-            bidPartLink: { create: { bidPartId: part.id, kind: files[partType] } },
-          },
-        });
+        const price = demoQuote(kind, i);
+        async function saveBidFile(label: string, kind: string | null, lines: string[]) {
+          const content = demoPdf(label, [supplier.legalName, ...lines]);
+          return prisma.document.create({
+            data: {
+              ownerType: 'bid_part',
+              storageKey: await storage.save(content),
+              originalName: label.toLowerCase().replaceAll(' ', '-') + '.pdf',
+              mimeType: 'application/pdf',
+              sizeBytes: content.length,
+              language: 'en',
+              uploadedByUserId: supplier.userId,
+              bidPartLink: { create: { bidPartId: part.id, kind } },
+            },
+            select: { id: true },
+          });
+        }
+        const standard = STANDARD_BID_FORM[partType].documents[0].kind;
+        const details =
+          partType === 'legal_information'
+            ? [
+                'Registration: ' + supplier.registrationNumber,
+                'Authorized signatory: ' + SIGNATORIES[supplier.registrationNumber],
+              ]
+            : partType === 'technical_offer'
+              ? [
+                  'Proposal: ' + tenderTitle,
+                  'Method: site inspection, delivery, commissioning and acceptance checks.',
+                  'Support: trained local team and a documented service schedule.',
+                ]
+              : [
+                  'Offer: ' + tenderTitle,
+                  'Total including transport and commissioning: ' + currencyCode + ' ' + price,
+                  'Price validity: 60 days. Payment follows verified delivery.',
+                ];
+        await saveBidFile(standard.replaceAll('_', ' '), standard, details);
+
+        for (const field of formFields.filter((field) => field.partType === partType)) {
+          const answer =
+            field.inputType === 'file'
+              ? {
+                  documentId: (
+                    await saveBidFile('Implementation schedule', null, [
+                      tenderTitle,
+                      'Week 1: verify sites and mobilize staff.',
+                      'Weeks 2-3: deliver and test. Week 4: train operators and hand over.',
+                    ])
+                  ).id,
+                }
+              : {
+                  scalarValue:
+                    field.inputType === 'number'
+                      ? field.unit === 'days'
+                        ? 60
+                        : Number(field.minimum ?? 0) + (i === 0 ? 8 : 4)
+                      : field.inputType === 'boolean'
+                        ? !(i === 1 && (kind === 'technical_pending' || kind === 'disqualified'))
+                        : 'Local service desk with one business day response and a named site coordinator.',
+                };
+          await prisma.bidFieldAnswer.create({
+            data: { bidPartId: part.id, fieldId: field.id, ...answer },
+          });
+        }
       }
+      if (inEvaluation && kind !== 'pending_evaluation') {
+        await addCompletedEvaluations(
+          prisma,
+          bid.id,
+          assignments,
+          minimumTechnicalScore,
+          financial,
+          kind,
+          i,
+        );
+      }
+    }
+    if (kind === 'tie' || kind === 'award' || kind === 'tie_resolved') {
+      await awards.rankAndAward(prisma, tenderId);
+    }
+    if (kind === 'tie_resolved') {
+      const winningBidId = bidIds[1];
+      await prisma.tenderAward.create({
+        data: {
+          tenderId,
+          winningBidId,
+          selection: 'tie_break',
+          tieBrokenByUserId: officerId,
+          awardedAt: at(financial + 4),
+        },
+      });
+      await prisma.tender.update({ where: { id: tenderId }, data: { status: 'awarded' } });
+      await awards.prepareDrafts(prisma, tenderId, winningBidId);
+      // Delivery-history examples only. The seed never sends these messages.
+      await prisma.emailMessage.updateMany({
+        where: { tenderId, kind: 'award_winner' },
+        data: {
+          status: 'sent',
+          sentByUserId: officerId,
+          sentAt: at(financial + 5),
+          preparedAt: at(financial + 4),
+        },
+      });
+      await prisma.emailMessage.updateMany({
+        where: { tenderId, kind: 'award_other' },
+        data: {
+          status: 'failed',
+          sentByUserId: officerId,
+          failureCode: 'DELIVERY_FAILED',
+          failedAt: at(financial + 5),
+          preparedAt: at(financial + 4),
+        },
+      });
+    }
+    if (kind === 'disqualified') {
+      await prisma.tender.update({
+        where: { id: tenderId },
+        data: {
+          status: 'cancelled',
+          cancellationReason: 'no_qualified_bid',
+          cancelledAt: at(financial + 2),
+        },
+      });
+      await awards.prepareDrafts(prisma, tenderId, null);
     }
   }
 }
 
-// Every stage done with equal scores, so the ranking ties at the top and the
-// tender waits for the procurement_officer (S6, W3).
-async function addTiedEvaluations(
-  prisma: PrismaService,
-  tenderId: string,
+function demoQuote(scenario: BidScenario, index: number) {
+  if (scenario === 'award') return index === 0 ? '50900.00' : '58000.00';
+  if (scenario === 'open') return index === 0 ? '82900.00' : '88600.00';
+  if (scenario === 'closed') return index === 0 ? '24800.00' : '27400.00';
+  if (scenario === 'technical_pending') return index === 0 ? '19600.00' : '20750.00';
+  if (scenario === 'financial_pending') return index === 0 ? '43900.00' : '45800.00';
+  return index === 0 ? '38000.00' : '39600.00';
+}
+
+async function addCompletedEvaluations(
+  prisma: SeedDb,
   bidId: string,
   assignments: Partial<Record<CommitteeType, string>>,
+  minimumTechnicalScore: number,
+  financialDeadline: number,
+  scenario: BidScenario,
+  index: number,
 ) {
-  const scoring = await prisma.tenderScoring.findUniqueOrThrow({ where: { tenderId } });
-  const [technicalScore, financialScore] = [80, 70];
+  const legalFailed =
+    (scenario === 'technical_pending' || scenario === 'disqualified') && index === 1;
   await prisma.legalEvaluation.create({
     data: {
       bidId,
       assignmentId: assignments.legal_committee!,
-      outcome: 'pass',
-      submittedAt: at(-3),
+      outcome: legalFailed ? 'fail' : 'pass',
+      reason: legalFailed
+        ? 'The bidder did not provide evidence of current registration for the required activity.'
+        : null,
+      submittedAt: at(financialDeadline + 1),
     },
   });
+  if (legalFailed || scenario === 'technical_pending') return;
+  const technicalScore =
+    scenario === 'disqualified' || (scenario === 'financial_pending' && index === 1)
+      ? 54
+      : scenario === 'tie' || scenario === 'tie_resolved'
+        ? 80
+        : index === 0
+          ? 92
+          : 79;
+  const meetsMinimum = technicalScore >= minimumTechnicalScore;
   await prisma.technicalEvaluation.create({
     data: {
       bidId,
       assignmentId: assignments.technical_committee!,
       technicalScore,
-      meetsMinimum: technicalScore >= scoring.minimumTechnicalScore,
-      submittedAt: at(-2),
+      meetsMinimum,
+      comments: meetsMinimum
+        ? 'The delivery plan, specifications and local warranty support meet the requirements.'
+        : 'The method statement does not cover site testing or ongoing maintenance support.',
+      submittedAt: at(financialDeadline + 2),
     },
   });
+  if (!meetsMinimum || scenario === 'financial_pending') return;
   await prisma.financialEvaluation.create({
     data: {
       bidId,
       assignmentId: assignments.financial_committee!,
-      financialScore,
-      confirmedTotalPrice: '38000.00',
-      submittedAt: at(-1),
-    },
-  });
-  const total = scoring.technicalWeight * technicalScore + scoring.financialWeight * financialScore;
-  await prisma.bidRanking.create({
-    data: {
-      bidId,
-      tenderId,
-      combinedScore: (total / 100).toFixed(2),
-      aboveEstimatedBalance: false,
+      financialScore:
+        scenario === 'tie' || scenario === 'tie_resolved' ? 70 : index === 0 ? 88 : 82,
+      confirmedTotalPrice: demoQuote(scenario, index),
+      comments:
+        'Confirmed against the signed commercial offer. The total includes delivery and commissioning.',
+      submittedAt: at(financialDeadline + 3),
     },
   });
 }
 
 // S3 fixtures stay attached to demo-owned tenders so the existing reset removes them.
 async function addDemoCommittees(
-  prisma: PrismaService,
+  prisma: SeedDb,
   tenders: { id: string; status: TenderStatus }[],
   memberId: string,
   adminId: string,
@@ -689,9 +994,9 @@ async function addDemoCommittees(
     select: { id: true },
   });
   const nominatedAt = new Date(Date.now() - 60_000);
-  await prisma.$transaction([
-    prisma.committeeAssignment.create({
-      data: {
+  await prisma.committeeAssignment.createMany({
+    data: [
+      {
         committeeId: approvedCommittee.id,
         tenderId: published.id,
         nomineeName: DEMO_MEMBER.displayName,
@@ -702,9 +1007,7 @@ async function addDemoCommittees(
         nominatedAt,
         decidedAt: new Date(),
       },
-    }),
-    prisma.committeeAssignment.create({
-      data: {
+      {
         committeeId: waitingCommittee.id,
         tenderId: accepted.id,
         nomineeName: DEMO_NOMINEE.displayName,
@@ -712,8 +1015,337 @@ async function addDemoCommittees(
         status: 'nominated',
         nominatedAt,
       },
-    }),
-  ]);
+    ],
+  });
+}
+
+function demoFields(demo: DemoTender): Prisma.TenderFormFieldCreateWithoutTenderInput[] {
+  const field = (
+    partType: PartType,
+    position: number,
+    inputType: FormInputType,
+    labels: [string, string],
+    instructions: [string, string],
+  ): Prisma.TenderFormFieldCreateWithoutTenderInput => ({
+    partType,
+    position,
+    inputType,
+    required: true,
+    translations: {
+      create: [
+        { language: 'en', label: labels[0], instructions: instructions[0] },
+        { language: 'ar', label: labels[1], instructions: instructions[1] },
+      ],
+    },
+  });
+  const numeric = demo.customField;
+  return [
+    field(
+      'legal_information',
+      0,
+      'boolean',
+      ['Registration is current', 'التسجيل ساري المفعول'],
+      [
+        'Confirm the attached certificate is valid at submission.',
+        'أكّد صلاحية الشهادة المرفقة عند تقديم العرض.',
+      ],
+    ),
+    field(
+      'technical_offer',
+      0,
+      'text',
+      ['Local support plan', 'خطة الدعم المحلي'],
+      ['Describe your support team and response time.', 'صف فريق الدعم ووقت الاستجابة.'],
+    ),
+    field(
+      'technical_offer',
+      1,
+      'file',
+      ['Implementation schedule', 'الجدول الزمني للتنفيذ'],
+      [
+        'Attach a PDF with milestones, testing and handover dates.',
+        'أرفق ملفًا يتضمن مراحل التنفيذ والاختبار ومواعيد التسليم.',
+      ],
+    ),
+    {
+      ...field(
+        'technical_offer',
+        2,
+        'number',
+        numeric
+          ? [numeric.label, numeric.labelAr]
+          : ['On-site support period', 'مدة الدعم الميداني'],
+        ['Enter the proposed quantity in the unit shown.', 'أدخل الكمية المقترحة بالوحدة الموضّحة.'],
+      ),
+      unit: numeric?.unit ?? 'months',
+      minimum: numeric?.minimum ?? 12,
+    },
+    {
+      ...field(
+        'financial_offer',
+        0,
+        'number',
+        ['Price validity period', 'مدة صلاحية السعر'],
+        [
+          'Enter the number of days the quoted price remains valid.',
+          'أدخل عدد الأيام التي يبقى فيها السعر صالحًا.',
+        ],
+      ),
+      unit: 'days',
+      minimum: 30,
+    },
+  ];
+}
+
+interface DemoTenderAccounts {
+  employee: string;
+  officer: string;
+  admin: string;
+  members: Record<CommitteeType, string>;
+}
+
+function fixtureAwards(prisma: PrismaService) {
+  return new AwardsService(
+    prisma,
+    new AccessService(prisma, new JwtService()),
+    new AuditService(prisma),
+    new IdempotencyService(prisma),
+  );
+}
+
+async function createDemoTender(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  accounts: Pick<DemoTenderAccounts, 'employee' | 'officer'>,
+  demo: DemoTender,
+) {
+  const details = tenderDescriptions[demo.translations[0].title];
+  if (!details) throw new Error('Missing demo tender description');
+  const translations = demo.translations.map((translation) => {
+    const description = details[translation.language];
+    if (!description) throw new Error('Missing demo tender translation');
+    return { ...translation, description };
+  });
+  // Only used when the tender has deadlines.
+  const [application, technical, financial] = demo.deadlines ?? [0, 0, 0];
+  const data: Prisma.TenderUncheckedCreateInput = {
+    status: demo.status,
+    categoryCode: demo.categoryCode,
+    requestedByUserId: accounts.employee,
+    estimatedBalance: demo.amount,
+    currencyCode: 'USD',
+    createdAt: at(-demo.createdDaysAgo),
+    translations: { create: translations },
+    ...(demo.scoring
+      ? { scoring: { create: demo.scoring }, acceptedAt: at(-demo.createdDaysAgo + 1) }
+      : {}),
+    ...(demo.deadlines
+      ? {
+          applicationDeadline: at(application),
+          technicalDeadline: at(technical),
+          financialDeadline: at(financial),
+          publishedAt: at(-demo.createdDaysAgo + 2),
+        }
+      : {}),
+    ...(demo.status === 'cancelled'
+      ? { cancellationReason: 'no_bids', cancelledAt: at(application) }
+      : {}),
+    ...(demo.scoring ? { formFields: { create: demoFields(demo) } } : {}),
+  };
+  const tender = await prisma.tender.create({ data, select: { id: true } });
+  if (demo.scoring) {
+    const primary = translations.find(({ language }) => language === 'en');
+    await addTermsOfReference(
+      prisma,
+      storage,
+      tender.id,
+      accounts.officer,
+      primary?.title ?? 'School materials - Terms of Reference',
+      primary?.description.split('\n\n')[0] ??
+        'Deliver durable school materials to 500 pupils and provide delivery notes by school.',
+      demo.termsOfReference ?? { language: 'en', name: 'Terms of Reference.pdf' },
+    );
+  }
+  return tender;
+}
+
+export async function addExtraOpenDemoTenders(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  accounts: Pick<DemoTenderAccounts, 'employee' | 'officer'>,
+) {
+  let added = 0;
+  for (const demo of EXTRA_OPEN_TENDERS) {
+    const existing = await prisma.tender.findFirst({
+      where: {
+        requestedByUserId: accounts.employee,
+        translations: { some: { language: 'en', title: demo.translations[0].title } },
+      },
+      select: { id: true },
+    });
+    if (existing) continue;
+    const tender = await createDemoTender(prisma, storage, accounts, demo);
+    await prisma.tenderCommittee.createMany({
+      data: (['legal_committee', 'technical_committee', 'financial_committee'] as const).map(
+        (type) => ({ tenderId: tender.id, type }),
+      ),
+    });
+    added++;
+  }
+  return added;
+}
+
+async function populateTenders(
+  prisma: SeedDb,
+  storage: SeedStorage,
+  accounts: DemoTenderAccounts,
+  awards: AwardsService,
+) {
+  const staffingTenders: { id: string; status: TenderStatus }[] = [];
+  const bidScenarios: SeededBidScenario[] = [];
+  for (const demo of TENDERS) {
+    const tender = await createDemoTender(prisma, storage, accounts, demo);
+    if (demo.status === 'accepted' || demo.status === 'published' || demo.status === 'closed')
+      staffingTenders.push({ id: tender.id, status: demo.status });
+    if (demo.bidScenario && demo.deadlines && demo.scoring) {
+      bidScenarios.push({
+        id: tender.id,
+        kind: demo.bidScenario,
+        deadlines: demo.deadlines,
+        createdDaysAgo: demo.createdDaysAgo,
+        minimumTechnicalScore: demo.scoring.minimumTechnicalScore,
+      });
+    }
+  }
+  await addExtraOpenDemoTenders(prisma, storage, accounts);
+
+  await addDemoCommittees(
+    prisma,
+    staffingTenders,
+    accounts.members.technical_committee,
+    accounts.admin,
+  );
+
+  await addBidScenarios(
+    prisma,
+    storage,
+    bidScenarios,
+    accounts.members,
+    accounts.admin,
+    accounts.officer,
+    awards,
+  );
+}
+
+function tenderSummary() {
+  return [...TENDERS, ...EXTRA_OPEN_TENDERS].map((t) => ({
+    title: t.translations[0].title,
+    status:
+      t.bidScenario === 'award' || t.bidScenario === 'tie_resolved'
+        ? 'awarded'
+        : t.bidScenario === 'disqualified'
+          ? 'cancelled'
+          : t.status,
+  }));
+}
+
+export async function refreshDemoTenders(prisma: PrismaService, storage: FileStorage) {
+  const created: string[] = [];
+  const trackedStorage: SeedStorage = {
+    async save(content) {
+      const key = await storage.save(content);
+      created.push(key);
+      return key;
+    },
+  };
+  let replaced: string[];
+  try {
+    replaced = await prisma.$transaction(
+      async (tx) => {
+        const find = (email: string) =>
+          tx.userAccount.findUniqueOrThrow({
+            where: { email },
+            select: { id: true },
+          });
+        const [employee, officer, admin, technical, legal, financial] = await Promise.all([
+          find('employee' + DEMO_DOMAIN),
+          find('officer' + DEMO_DOMAIN),
+          find('admin' + DEMO_DOMAIN),
+          find(DEMO_MEMBER.email),
+          find(DEMO_EVALUATORS[0].email),
+          find(DEMO_EVALUATORS[1].email),
+        ]);
+        const accounts: DemoTenderAccounts = {
+          employee: employee.id,
+          officer: officer.id,
+          admin: admin.id,
+          members: {
+            legal_committee: legal.id,
+            technical_committee: technical.id,
+            financial_committee: financial.id,
+          },
+        };
+        const tenders = await tx.tender.findMany({
+          where: { requestedByUserId: accounts.employee },
+          select: { id: true },
+        });
+        const tenderIds = tenders.map(({ id }) => id);
+        const scope = { tenderId: { in: tenderIds } };
+        const bids = await tx.bid.findMany({ where: scope, select: { id: true } });
+        const assignments = await tx.committeeAssignment.findMany({
+          where: scope,
+          select: { id: true },
+        });
+        const documents: Prisma.DocumentWhereInput = {
+          OR: [{ tenderLink: { is: scope } }, { bidPartLink: { is: { bidPart: { bid: scope } } } }],
+        };
+        const previous = await tx.document.findMany({
+          where: documents,
+          select: { storageKey: true },
+        });
+        await tx.auditEvent.deleteMany({
+          where: {
+            OR: [
+              { resourceType: 'tender', resourceId: { in: tenderIds } },
+              { resourceType: 'bid', resourceId: { in: bids.map(({ id }) => id) } },
+              {
+                resourceType: 'committee_assignment',
+                resourceId: { in: assignments.map(({ id }) => id) },
+              },
+            ],
+          },
+        });
+        await tx.emailMessage.deleteMany({ where: scope });
+        await tx.tenderAward.deleteMany({ where: scope });
+        await tx.document.deleteMany({ where: documents });
+        await tx.bid.deleteMany({ where: scope });
+        await tx.committeeAssignment.deleteMany({ where: scope });
+        await tx.tenderCommittee.deleteMany({ where: scope });
+        await tx.tender.updateMany({
+          where: { id: { in: tenderIds } },
+          data: { copiedFromTenderId: null },
+        });
+        await tx.tender.deleteMany({ where: { id: { in: tenderIds } } });
+
+        for (const [registrationNumber, technicalInformation] of Object.entries(
+          SUPPLIER_PROFILES,
+        )) {
+          await tx.supplier.updateMany({
+            where: { registrationNumber, technicalInformation: '' },
+            data: { technicalInformation },
+          });
+        }
+        await populateTenders(tx, trackedStorage, accounts, fixtureAwards(prisma));
+        return previous.map(({ storageKey }) => storageKey);
+      },
+      { timeout: 45_000 },
+    );
+  } catch (error) {
+    await Promise.allSettled(created.map((key) => storage.delete(key)));
+    throw error;
+  }
+  await Promise.all(replaced.map((key) => storage.delete(key)));
+  return tenderSummary();
 }
 
 export interface SeedSummary {
@@ -734,7 +1366,10 @@ export async function seed(
   });
   await removeDemoData(prisma, storage);
 
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+  const [passwordHash, supplierPasswordHash] = await Promise.all([
+    bcrypt.hash(DEMO_STAFF_PASSWORD, 12),
+    bcrypt.hash(DEMO_SUPPLIER_PASSWORD, 12),
+  ]);
   const ids: Record<string, string> = {};
   for (const account of DEMO_ACCOUNTS) {
     const user = await prisma.userAccount.create({
@@ -763,74 +1398,6 @@ export async function seed(
     },
     select: { id: true },
   });
-  const staffingTenders: { id: string; status: TenderStatus }[] = [];
-  const evaluationTenders: { id: string; tie: boolean }[] = [];
-  for (const demo of TENDERS) {
-    // Only used when the tender has deadlines.
-    const [application, technical, financial] = demo.deadlines ?? [0, 0, 0];
-    const data: Prisma.TenderUncheckedCreateInput = {
-      status: demo.status,
-      categoryCode: demo.categoryCode,
-      requestedByUserId: ids.employee,
-      estimatedBalance: demo.amount,
-      currencyCode: 'USD',
-      createdAt: at(-demo.createdDaysAgo),
-      translations: { create: demo.translations },
-      ...(demo.scoring
-        ? { scoring: { create: demo.scoring }, acceptedAt: at(-demo.createdDaysAgo + 1) }
-        : {}),
-      ...(demo.deadlines
-        ? {
-            applicationDeadline: at(application),
-            technicalDeadline: at(technical),
-            financialDeadline: at(financial),
-            publishedAt: at(-demo.createdDaysAgo + 2),
-          }
-        : {}),
-      ...(demo.status === 'cancelled'
-        ? { cancellationReason: 'no_bids', cancelledAt: at(application) }
-        : {}),
-      ...(demo.customField
-        ? {
-            formFields: {
-              create: {
-                partType: demo.customField.partType,
-                inputType: 'number',
-                position: 0,
-                required: true,
-                unit: demo.customField.unit,
-                minimum: demo.customField.minimum,
-                translations: {
-                  create: [
-                    { language: 'en', label: demo.customField.label },
-                    { language: 'ar', label: demo.customField.labelAr },
-                  ],
-                },
-              },
-            },
-          }
-        : {}),
-    };
-    const tender = await prisma.tender.create({ data, select: { id: true } });
-    if (demo.status === 'accepted' || demo.status === 'published')
-      staffingTenders.push({ id: tender.id, status: demo.status });
-    if (demo.status === 'under_evaluation')
-      evaluationTenders.push({ id: tender.id, tie: !!demo.tie });
-
-    if (demo.termsOfReference) {
-      await addTermsOfReference(
-        prisma,
-        storage,
-        tender.id,
-        ids.procurement_officer,
-        demo.translations[0].title,
-        demo.termsOfReference,
-      );
-    }
-  }
-
-  await addDemoCommittees(prisma, staffingTenders, member.id, ids.admin);
-
   for (const demo of APPLICATIONS) {
     const submittedAt = at(-demo.submittedDaysAgo);
     const application = await prisma.supplierApplication.create({
@@ -876,10 +1443,44 @@ export async function seed(
         },
       });
     }
-    if (demo.adminAccepted) await addSupplier(prisma, tokens, application.id, demo, passwordHash);
+    if (demo.adminAccepted)
+      await addSupplier(prisma, tokens, application.id, demo, supplierPasswordHash);
   }
 
-  await addEvaluationDemo(prisma, storage, evaluationTenders, member.id, ids.admin, passwordHash);
+  const members: Record<CommitteeType, string> = {
+    legal_committee: '',
+    technical_committee: member.id,
+    financial_committee: '',
+  };
+  for (const evaluator of DEMO_EVALUATORS) {
+    const user = await prisma.userAccount.create({
+      data: {
+        email: evaluator.email,
+        displayName: evaluator.displayName,
+        preferredLanguage: 'en',
+        status: 'active',
+        passwordHash,
+        emailVerifiedAt: new Date(),
+      },
+      select: { id: true },
+    });
+    members[evaluator.type] = user.id;
+  }
+  await prisma.$transaction(
+    (tx) =>
+      populateTenders(
+        tx,
+        storage,
+        {
+          employee: ids.employee,
+          officer: ids.procurement_officer,
+          admin: ids.admin,
+          members,
+        },
+        fixtureAwards(prisma),
+      ),
+    { timeout: 45_000 },
+  );
 
   return {
     categories: CATEGORIES.length,
@@ -892,7 +1493,7 @@ export async function seed(
         role: 'supplier (active)',
       })),
     ],
-    tenders: TENDERS.map((t) => ({ title: t.translations[0].title, status: t.status })),
+    tenders: tenderSummary(),
     applications: APPLICATIONS.map((a) => ({
       legalName: a.legalName,
       state: a.active

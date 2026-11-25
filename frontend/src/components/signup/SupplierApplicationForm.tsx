@@ -13,6 +13,7 @@ import { ApiError } from '@/lib/api/mutator';
 import { publicKey } from '@/lib/api/query-keys';
 import { useSession } from '@/lib/useSession';
 import { SignupField, signupControl } from './SignupFields';
+import { BackLink } from '@/components/ui/back-link';
 
 const kinds = ['registration_certificate', 'tax_certificate'] as const;
 const names = ['legalName', 'registrationNumber', 'contactEmail', 'preferredLanguage'] as const;
@@ -133,9 +134,9 @@ export function SupplierApplicationForm() {
     return (
       <div role="status">
         <EmptyState title={t('submitted')} hint={t('submittedHint')} />
-        <Link href="/tenders" className="mt-4 inline-block text-primary hover:underline">
+        <BackLink href="/tenders" className="mt-4">
           {t('backTenders')}
-        </Link>
+        </BackLink>
       </div>
     );
   if (spec.isError)
@@ -182,9 +183,14 @@ export function SupplierApplicationForm() {
       )}
 
       <fieldset disabled={mutation.isPending} className="space-y-5">
-        <section className="grid gap-5 panel p-5 sm:grid-cols-2">
+        <section className="grid gap-6 panel p-6 sm:grid-cols-2">
           {spec.data.fields.map((field) => (
-            <SignupField key={field.name} label={t(field.name)} error={fields[field.name]}>
+            <SignupField
+              key={field.name}
+              label={t(field.name)}
+              optional={!field.required}
+              error={fields[field.name]}
+            >
               {field.name === 'preferredLanguage' ? (
                 <select
                   className={signupControl}
@@ -222,14 +228,18 @@ export function SupplierApplicationForm() {
             </SignupField>
           ))}
         </section>
-        <section className="space-y-5 panel p-5">
+        <section className="space-y-6 panel p-6">
           <h2 className="font-bold">{t('documents')}</h2>
           <p className="text-xs text-muted-foreground">{t('filesHint')}</p>
           {spec.data.documents.map((document) => {
             const kind = document.kind as Kind;
             return (
               <div key={kind} className="grid gap-4 sm:grid-cols-2">
-                <SignupField label={t(kind)} error={fields[`files[${kind}]`]}>
+                <SignupField
+                  label={t(kind)}
+                  optional={!document.required}
+                  error={fields[`files[${kind}]`]}
+                >
                   <input
                     className={signupControl}
                     type="file"

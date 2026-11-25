@@ -29,6 +29,7 @@ export function AppSidebar() {
     ...(roles.includes('admin')
       ? [
           { href: '/signup-requests', label: t('Signup.adminQueue') },
+          { href: '/admin/employees', label: t('EmployeeAccounts.nav') },
           { href: '/admin/suppliers', label: t('Suppliers.navDirectory') },
           { href: '/admin/committee-nominations', label: t('Committees.navQueue') },
         ]
@@ -41,7 +42,7 @@ export function AppSidebar() {
     { href: '/profile', label: t('Nav.profile') },
   ];
   return (
-    <aside className="border-b border-border bg-card px-4 py-4 sm:px-6 lg:min-h-[calc(100dvh-4.5rem)] lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
+    <aside className="max-h-[40dvh] shrink-0 overflow-y-auto border-b border-sidebar-border bg-sidebar px-4 py-4 sm:px-6 lg:max-h-none lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
       <Button
         variant="outline"
         className="w-full justify-between lg:hidden"
@@ -63,7 +64,7 @@ export function AppSidebar() {
             href={href}
             onClick={() => setExpanded(false)}
             aria-current={pathname === href || pathname.startsWith(href + '/') ? 'page' : undefined}
-            className="min-h-11 rounded-md border border-transparent px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-input hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:border-primary aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary"
+            className="min-h-11 rounded-md border border-transparent px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-input hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:font-semibold aria-[current=page]:text-primary-foreground"
           >
             {label}
           </Link>

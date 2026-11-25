@@ -4,6 +4,7 @@ export * from './award/award';
 export * from './bids/bids';
 export * from './committees/committees';
 export * from './emails/emails';
+export * from './employee-accounts/employee-accounts';
 export * from './employee-tenders/employee-tenders';
 export * from './evaluations/evaluations';
 export * from './public-tenders/public-tenders';

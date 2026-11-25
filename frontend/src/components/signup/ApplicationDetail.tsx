@@ -7,7 +7,6 @@ import { useRef, useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@/i18n/navigation';
 import type { ApplicationDocumentView, SignupDecision } from '@/lib/api/generated/model';
 import {
   useLegalApplicationsDetail,
@@ -21,6 +20,7 @@ import { privateKey } from '@/lib/api/query-keys';
 import { formatDateTime, languageName } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { SignupApplicationFields, SignupField, signupControl } from './SignupFields';
+import { BackLink } from '@/components/ui/back-link';
 
 function LegalApplicationDocument({
   applicationId,
@@ -137,7 +137,7 @@ export function LegalDecisionForm({ applicationId }: { applicationId: string }) 
     RATE_LIMITED: 'rateLimited',
   };
   return (
-    <form onSubmit={submit} className="space-y-4 panel p-5">
+    <form onSubmit={submit} className="space-y-5 panel p-6">
       <h2 className="font-bold">{t('legalDecision')}</h2>
       {failure && <ErrorState title={t(errorLabels[failure] ?? 'decisionFailed')} />}
       <fieldset disabled={mutation.isPending || failure === 'NOT_FOUND'} className="space-y-4">
@@ -155,7 +155,11 @@ export function LegalDecisionForm({ applicationId }: { applicationId: string }) 
             <option value="rejected">{t('reject')}</option>
           </select>
         </SignupField>
-        <SignupField label={t('reason')} error={reasonInvalid ? t('invalidField') : undefined}>
+        <SignupField
+          label={t('reason')}
+          optional
+          error={reasonInvalid ? t('invalidField') : undefined}
+        >
           <textarea
             className={signupControl}
             rows={3}
@@ -210,14 +214,12 @@ export function LegalApplicationDetail({ applicationId }: { applicationId: strin
     return <DetailFailure error={query.error} retry={() => void query.refetch()} />;
   return (
     <article className="space-y-5">
-      <Link href="/signup-reviews" className="text-sm text-primary hover:underline">
-        {t('backQueue')}
-      </Link>
+      <BackLink href="/signup-reviews">{t('backQueue')}</BackLink>
       <h1 className="text-2xl font-bold">{t('legalDetail')}</h1>
-      <section className="panel p-5">
+      <section className="panel p-6">
         <SignupApplicationFields application={query.data} />
       </section>
-      <section className="panel p-5">
+      <section className="panel p-6">
         <h2 className="font-bold">{t('documents')}</h2>
         <ul>
           {query.data.documents.map((document) => (
@@ -316,9 +318,7 @@ export function AdminRequestDetail({ applicationId }: { applicationId: string })
   if (acceptedLanguage || failure === 'ALREADY_ACCEPTED')
     return (
       <article className="space-y-5">
-        <Link href="/signup-requests" className="text-sm text-primary hover:underline">
-          {t('backQueue')}
-        </Link>
+        <BackLink href="/signup-requests">{t('backQueue')}</BackLink>
         <h1 className="text-2xl font-bold">{t('adminDetail')}</h1>
         {outcome}
       </article>
@@ -333,15 +333,13 @@ export function AdminRequestDetail({ applicationId }: { applicationId: string })
     );
   return (
     <article className="space-y-5">
-      <Link href="/signup-requests" className="text-sm text-primary hover:underline">
-        {t('backQueue')}
-      </Link>
+      <BackLink href="/signup-requests">{t('backQueue')}</BackLink>
       <h1 className="text-2xl font-bold">{t('adminDetail')}</h1>
       {outcome}
-      <section className="panel p-5">
+      <section className="panel p-6">
         <SignupApplicationFields application={query.data} />
       </section>
-      <section className="space-y-4 panel p-5">
+      <section className="space-y-5 panel p-6">
         <h2 className="font-bold">{t('acceptedReview')}</h2>
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <div>

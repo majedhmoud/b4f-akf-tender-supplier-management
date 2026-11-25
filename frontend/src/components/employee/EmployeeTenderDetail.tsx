@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { TenderDeadlines } from '@/components/tenders/TenderDeadlines';
 import { useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { privateKey } from '@/lib/api/query-keys';
 import { directionOf, languageName } from '@/lib/format';
 import { useSession } from '@/lib/useSession';
 import { DraftTenderForm } from './DraftTenderForm';
+import { BackLink } from '@/components/ui/back-link';
 
 function EmployeeDocument({
   tenderId,
@@ -145,9 +147,7 @@ export function EmployeeTenderDetail({
   const documents = data.documents.flatMap((document) => [document, ...document.translations]);
   return (
     <article className="flex flex-col gap-5">
-      <Link href="/employee/tenders" className="self-start text-sm text-primary hover:underline">
-        {t('Employee.back')}
-      </Link>
+      <BackLink href="/employee/tenders">{t('Employee.back')}</BackLink>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1
@@ -187,7 +187,6 @@ export function EmployeeTenderDetail({
         <TabsList aria-label={t('Employee.sections')}>
           <TabsTrigger value="basics">{t('Employee.basics')}</TabsTrigger>
           <TabsTrigger value="translations">{t('Employee.translations')}</TabsTrigger>
-          <TabsTrigger value="documents">{t('Tender.documents')}</TabsTrigger>
         </TabsList>
         <TabsContent value="basics">
           <h2 className="mb-4 font-bold">{t('Employee.basics')}</h2>
@@ -222,20 +221,21 @@ export function EmployeeTenderDetail({
               </section>
             ))}
           </div>
-        </TabsContent>
-        <TabsContent value="documents">
-          <h2 className="font-bold">{t('Tender.documents')}</h2>
-          {documents.length ? (
-            <ul className="mt-3 divide-y">
-              {documents.map((document) => (
-                <EmployeeDocument key={document.id} tenderId={data.id} document={document} />
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">{t('Tender.noDocuments')}</p>
-          )}
+          <section className="mt-6 border-t pt-5">
+            <h2 className="font-bold">{t('Tender.documents')}</h2>
+            {documents.length ? (
+              <ul className="mt-3 divide-y">
+                {documents.map((document) => (
+                  <EmployeeDocument key={document.id} tenderId={data.id} document={document} />
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">{t('Tender.noDocuments')}</p>
+            )}
+          </section>
         </TabsContent>
       </Tabs>
+      {data.deadlines && <TenderDeadlines deadlines={data.deadlines} />}
     </article>
   );
 }

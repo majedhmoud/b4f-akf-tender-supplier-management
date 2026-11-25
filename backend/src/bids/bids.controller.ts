@@ -18,16 +18,20 @@ import {
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiConsumes,
   ApiCookieAuth,
   ApiCreatedResponse,
+  ApiExtraModels,
   ApiHeader,
   ApiOkResponse,
   ApiTags,
   ApiUnprocessableEntityResponse,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
+import { MobileBidRead } from '../auth/mobile-auth.metadata.js';
 import { RequireRole } from '../auth/require-role.guard.js';
 import {
   CurrentUser,
@@ -40,7 +44,7 @@ import { MAX_UPLOAD_BYTES } from '../storage/upload-rules.js';
 import { DownloadLink } from '../tenders/dto/managed-tender.dto.js';
 import { BidAccessGuard } from './bid-access.guard.js';
 import { BidsService, type BidUpload } from './bids.service.js';
-import { BidForm, BidPage, BidPartView, SupplierBid } from './dto/bid.dto.js';
+import { BidForm, BidPage, BidPartView, MobileSupplierBid, SupplierBid } from './dto/bid.dto.js';
 
 const uploads = AnyFilesInterceptor({
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 20, fields: 60 },
@@ -128,6 +132,8 @@ export class MyBidsController {
   constructor(private readonly bids: BidsService) {}
 
   @Get()
+  @MobileBidRead()
+  @ApiBearerAuth()
   @ApiOkResponse({ type: BidPage })
   list(
     @CurrentUser() user: AuthenticatedUser,
@@ -138,12 +144,20 @@ export class MyBidsController {
   }
 
   @Get(':bidId')
-  @ApiOkResponse({ type: SupplierBid })
+  @MobileBidRead()
+  @ApiBearerAuth()
+  @ApiExtraModels(SupplierBid, MobileSupplierBid)
+  @ApiOkResponse({
+    schema: {
+      anyOf: [{ $ref: getSchemaPath(SupplierBid) }, { $ref: getSchemaPath(MobileSupplierBid) }],
+    },
+  })
   detail(
     @CurrentUser() user: AuthenticatedUser,
     @Param('bidId', ParseUUIDPipe) bidId: string,
     @RequestedLanguage() language: Language,
-  ): Promise<SupplierBid> {
+  ): Promise<SupplierBid | MobileSupplierBid> {
+    if (user.sessionChannel === 'mobile') return this.bids.mobileDetail(user.id, bidId, language);
     return this.bids.detail(user.id, bidId, language);
   }
 

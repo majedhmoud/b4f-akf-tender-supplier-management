@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Language, Role } from '../../generated/prisma/client.js';
 
-// The signed-in user as the web and mobile apps see it
+// The signed-in user as the web app sees it
 // (API_CONTRACT.md, Auth). Account roles only; tender assignments come from
 // GET /me/assignments.
 export class SessionUser {
@@ -10,6 +10,9 @@ export class SessionUser {
 
   @ApiProperty({ example: 'rana@akf.org' })
   email: string;
+
+  @ApiProperty({ example: 'Rana Saleh' })
+  displayName: string;
 
   @ApiProperty({ enum: Language, enumName: 'Language' })
   preferredLanguage: Language;

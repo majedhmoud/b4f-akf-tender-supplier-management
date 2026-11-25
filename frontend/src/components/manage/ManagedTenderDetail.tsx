@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -16,14 +16,16 @@ import {
 } from '@/lib/api/generated/tender-management/tender-management';
 import { ApiError } from '@/lib/api/mutator';
 import { privateKey } from '@/lib/api/query-keys';
-import { directionOf, formatDateTime } from '@/lib/format';
+import { directionOf } from '@/lib/format';
+import { TenderDeadlines } from '@/components/tenders/TenderDeadlines';
 import { useSession } from '@/lib/useSession';
-import { ManagedDocuments } from './ManagedDocuments';
+import { ManagedDocument, ManagedDocuments } from './ManagedDocuments';
 import { TenderAward } from '@/components/awards/TenderAward';
 import { TenderEmails } from '@/components/awards/TenderEmails';
 import { TenderCommittees } from '@/components/committees/TenderCommittees';
 import { ManagedTenderForm, PublishTenderForm } from './ManagedTenderForm';
 import { ManagementFeedback, useManagementAction } from './ManagementFeedback';
+import { BackLink } from '@/components/ui/back-link';
 
 function TenderPanels({
   tender,
@@ -50,17 +52,10 @@ function TenderPanels({
     !tender.copiedIntoTenderId;
   const title =
     tender.translations.find((row) => row.language === locale) ?? tender.translations[0];
-  const panels = [
-    'overview',
-    ...(canAccept || canEdit ? ['edit'] : []),
-    'documents',
-    ...(canPublish ? ['publish'] : []),
-  ];
+  const panels = ['overview', ...(canAccept || canEdit ? ['edit'] : []), 'documents'];
   return (
     <article className="space-y-5">
-      <Link href="/manage/tenders" className="text-sm text-primary hover:underline">
-        {t('Manage.back')}
-      </Link>
+      <BackLink href="/manage/tenders">{t('Manage.back')}</BackLink>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1
@@ -77,16 +72,8 @@ function TenderPanels({
         <Badge variant="secondary">{t(`Statuses.${tender.status}`)}</Badge>
       </header>
       <ManagementFeedback error={action.error} reload={reload} />
-      {tender.status !== 'draft' && (
-        <Link
-          href={`/manage/tenders/${tender.id}/bid-form`}
-          className={buttonVariants({ variant: 'outline' })}
-        >
-          {t('Manage.bidForm')}
-        </Link>
-      )}
       {canCopy && (
-        <div className="space-y-3 panel p-4">
+        <div className="space-y-4 panel p-5">
           <p className="text-sm">{t('Manage.copyHint')}</p>
           {!confirmCopy ? (
             <Button variant="outline" onClick={() => setConfirmCopy(true)}>
@@ -117,22 +104,34 @@ function TenderPanels({
         </div>
       )}
       <div className="grid items-start gap-5 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        <nav aria-label={t('Employee.sections')} className="flex flex-col gap-2 panel p-4">
+        <nav aria-label={t('Employee.sections')} className="flex flex-col gap-2 panel p-5">
           {panels.map((item) => (
-            <Button
-              key={item}
-              variant={panel === item ? 'secondary' : 'ghost'}
-              aria-current={panel === item ? 'page' : undefined}
-              className="justify-start"
-              onClick={() => setPanel(item)}
-            >
-              {t(`Manage.panel_${item}`)}
-            </Button>
+            <Fragment key={item}>
+              <Button
+                variant={panel === item ? 'secondary' : 'ghost'}
+                aria-current={panel === item ? 'page' : undefined}
+                className="justify-start"
+                onClick={() => setPanel(item)}
+              >
+                {t(`Manage.panel_${item}`)}
+              </Button>
+              {item === 'documents' && tender.status !== 'draft' && (
+                <Link
+                  href={`/manage/tenders/${tender.id}/bid-form`}
+                  className={buttonVariants({
+                    variant: 'outline',
+                    className: 'w-full justify-start',
+                  })}
+                >
+                  {t('Manage.bidForm')}
+                </Link>
+              )}
+            </Fragment>
           ))}
         </nav>
         <div className="min-w-0">
           {panel === 'overview' && (
-            <section className="space-y-5 panel p-5">
+            <section className="space-y-6 panel p-6">
               <h2 className="text-lg font-bold">{t('Manage.panel_overview')}</h2>
               <dl className="grid gap-4 text-sm sm:grid-cols-2">
                 <div>
@@ -156,17 +155,6 @@ function TenderPanels({
                       </div>
                     ),
                   )}
-                {tender.deadlines &&
-                  (['application', 'technical', 'financial'] as const).map((key) => (
-                    <div key={key}>
-                      <dt className="text-muted-foreground">{t(`Manage.deadline_${key}`)}</dt>
-                      <dd>
-                        <time dateTime={tender.deadlines?.[key]}>
-                          {formatDateTime(locale, tender.deadlines![key])}
-                        </time>
-                      </dd>
-                    </div>
-                  ))}
               </dl>
               {tender.translations.map((row) => (
                 <section
@@ -181,6 +169,21 @@ function TenderPanels({
                   </p>
                 </section>
               ))}
+              <section className="border-t pt-5">
+                <h3 className="font-bold">{t('Tender.documents')}</h3>
+                {tender.documents.length ? (
+                  <ul className="mt-3">
+                    {tender.documents
+                      .flatMap((document) => [document, ...document.translations])
+                      .map((document) => (
+                        <ManagedDocument key={document.id} tenderId={tender.id} document={document} />
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">{t('Tender.noDocuments')}</p>
+                )}
+              </section>
+              {tender.deadlines && <TenderDeadlines deadlines={tender.deadlines} />}
               {tender.cancellationReason && (
                 <p className="text-sm">{t(`Manage.reason_${tender.cancellationReason}`)}</p>
               )}
@@ -211,14 +214,12 @@ function TenderPanels({
           {panel === 'documents' && (
             <ManagedDocuments tender={tender} done={done} reload={reload} />
           )}
-          {panel === 'publish' && canPublish && (
-            <PublishTenderForm tender={tender} done={done} reload={reload} />
-          )}
         </div>
       </div>
       <TenderCommittees tenderId={tender.id} status={tender.status} />
       <TenderAward tenderId={tender.id} status={tender.status} />
       <TenderEmails tenderId={tender.id} status={tender.status} />
+      {canPublish && <PublishTenderForm tender={tender} done={done} reload={reload} />}
     </article>
   );
 }

@@ -2,7 +2,7 @@
 
 Status: accepted.
 
-How code is written in `backend/` and `frontend/`: layout, naming, formatting, and the shape of each kind of file. The style comes from the team's earlier project, `b4f-board-final`, adapted where [ADR 0004](../05_ARCHITECTURE/ADR/0004_TECHNOLOGY_STACK.md) or the accepted design differs (see [section 5](#5-where-we-differ-from-b4f-board-final)).
+How code is written in `backend/`, `frontend/`, and `mobile/`: layout, naming, formatting, and file responsibilities. The backend and web conventions build on `b4f-board-final` (see [section 5](#5-where-we-differ-from-b4f-board-final)). The [S7 mobile conventions](#6-mobile-mobile) draw on how `b4f-board-mobile/src` separates navigation, features, and API access.
 
 Policies (security, access, response DTOs per audience, performance, audit, test scope) live in the [engineering standards](ENGINEERING_STANDARDS.md). This file links to them and does not restate them ([§6.6](ENGINEERING_STANDARDS.md#66-documentation)). Names follow the [glossary](../GLOSSARY.md).
 
@@ -193,6 +193,7 @@ frontend/src/
 - Every data view handles loading, empty, and error states.
 - No user-facing text is hard-coded; it comes from `messages/en.json` and `messages/ar.json` through next-intl.
 - Use logical Tailwind classes for direction (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`), so Arabic right-to-left layout works without separate styles.
+- Follow [ADR 0008](../05_ARCHITECTURE/ADR/0008_RESPONSIVE_ACCESSIBLE_WEB_PATTERNS.md) for card/table layouts, accessible loading states, target sizes, the compact header and focus restoration. Use the shared web utilities in `frontend/src/components/ui/` and `frontend/src/lib/useReturnFocus.ts`.
 
 ### 3.5 Tests
 
@@ -205,11 +206,14 @@ frontend/src/
 
 Branches, commits, and pull requests follow [GIT_WORKFLOW.md](GIT_WORKFLOW.md) and [standards §10](ENGINEERING_STANDARDS.md#10-git-and-code-review).
 
+- Review **standards** and **spec** separately. Under standards, cite the documented rule or label a code smell as a suggestion. Under spec, cite the requirement and describe the observed behaviour or missing case. Skip formatting and lint checks that tooling already covers.
+- Use smells as prompts for judgment. Ask whether names express intent, repeated logic really follows the same rule, a module changes for unrelated reasons, or a wrapper adds no behaviour. Prefer the smallest fix that addresses the finding. A documented project convention takes precedence over a generic smell.
+
 ## 5. Where we differ from `b4f-board-final`
 
 | `b4f-board-final` | Here | Why |
 |---|---|---|
-| Bearer token in the `Authorization` header | HttpOnly JWT cookie with CSRF | [ADR 0004](../05_ARCHITECTURE/ADR/0004_TECHNOLOGY_STACK.md), [API contract §1.1](../05_ARCHITECTURE/API_CONTRACT.md#11-session-csrf-refresh) |
+| Bearer token in the `Authorization` header | Web: HttpOnly JWT cookie with CSRF | [ADR 0004](../05_ARCHITECTURE/ADR/0004_TECHNOLOGY_STACK.md), [API contract §1.1](../05_ARCHITECTURE/API_CONTRACT.md#11-session-csrf-refresh) |
 | Server Actions and a server-only API client | TanStack Query with the Orval client | ADR 0004 |
 | Redux | React state and context | ADR 0004 |
 | Services return Prisma entities | Services return response DTOs | [Standards §2.7](ENGINEERING_STANDARDS.md#27-dtos) |
@@ -221,4 +225,20 @@ Branches, commits, and pull requests follow [GIT_WORKFLOW.md](GIT_WORKFLOW.md) a
 | Partial `strict` options, print width 95 and 100 | `strict: true`, print width 100 in both apps | One setting for the whole team |
 | English only | English and Arabic with logical direction classes | [V1 scope](../03_SCOPE/V1_SCOPE.md) |
 
-The mobile app (`mobile/`) gets its own section before S7.
+## 6. Mobile (`mobile/`)
+
+### 6.1 Routes and features
+
+- Keep Expo Router files in `mobile/src/app/`. A route reads and validates its parameters, then renders a feature screen. For example, a tender route rejects a malformed `tenderId` before making an API request. Layouts own navigation and providers.
+- Keep screens, hooks, and helpers for one feature together under `mobile/src/features/<feature>/`. Use kebab-case file names and named exports. Other features and routes import through that feature's `index.ts`, which exposes only what callers need. Put shared UI in `mobile/src/components/` after multiple features need it.
+
+### 6.2 API and session boundaries
+
+- Read and validate the API base URL in `mobile/src/config/env.ts`. Keep request handling and error normalization in `mobile/src/api/`. Feature hooks call named API functions such as `getTender`; route and screen components do not assemble requests. Follow the [API contract](../05_ARCHITECTURE/API_CONTRACT.md#19-mobile-supplier-sessions-s7) for paths and error codes.
+- Give one session provider ownership of session state and credential changes. Use explicit states such as `restoring`, `signedIn`, and `signedOut`. Keep device storage behind a credential-store module. Follow [ADR 0007](../05_ARCHITECTURE/ADR/0007_SUPPLIER_MOBILE_SIGN_IN.md): the access token stays in memory, only the refresh token goes in secure storage, and private data is cleared on sign-out or invalid session. Ignore responses from an earlier session after the active account changes.
+
+### 6.3 Screen states and language
+
+- Handle loading, empty, not found, and retryable errors explicitly. Reuse shared state UI where the behaviour matches. Give loading indicators and actions accessible labels and expose the appropriate accessibility role for controls.
+- Keep shared colors and control radii in `mobile/src/components/theme.ts`. Shared navigation and dialogs belong outside feature screens. Keep the supplier menu and its actions usable in both reading directions.
+- Use English and Arabic message files for user-facing text, including errors and accessibility labels. Use direction-aware layout, and render translated tender content according to the content's language and fallback state ([API contract §1.7](../05_ARCHITECTURE/API_CONTRACT.md#17-language)).

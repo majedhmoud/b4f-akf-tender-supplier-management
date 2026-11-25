@@ -431,7 +431,7 @@ erDiagram
 
 | Table | Columns | Rules |
 |---|---|---|
-| `SESSION` | `id` PK, `user_id` FK, `expires_at`, `revoked_at`, `created_at` | One row per sign-in. Sign-out sets `revoked_at`, and every request checks it. |
+| `SESSION` | `id` PK, `user_id` FK, `channel`, `expires_at`, `revoked_at`, `created_at` | One row per sign-in. The channel is `web` (default) or `mobile`, and credentials are valid only for their own channel. Sign-out sets `revoked_at`, and every request checks it. |
 | `SESSION_REFRESH_TOKEN` | `token_hash` PK, `session_id` FK, `issued_at`, `replaced_at` | A refresh consumes the current token and issues its successor atomically. Keep replaced hashes until session expiry. Reuse of a replaced token revokes the session. |
 | `IDEMPOTENCY_KEY` | `user_id` FK or `guest_scope_id`, `route`, `key`, `payload_hash`, `response_status`, `response_body`, `expires_at` | Exactly one owner. Separate partial unique indexes enforce (owner, route, key) for each owner type. Retain keys for 24 hours. |
 

@@ -48,7 +48,7 @@ export function TenderCommittees({ tenderId, status }: { tenderId: string; statu
   }
 
   return (
-    <section className="panel mt-6 space-y-4 p-5">
+    <section className="panel mt-6 space-y-5 p-6">
       <header>
         <h2 className="text-xl font-bold">{t('title')}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t(open ? 'hint' : 'closedHint')}</p>
@@ -74,7 +74,6 @@ export function TenderCommittees({ tenderId, status }: { tenderId: string; statu
                   {!committee && open && (
                     <Button
                       variant="outline"
-                      size="sm"
                       disabled={raise.isPending}
                       onClick={() => void raiseCommittee(type)}
                     >
@@ -169,7 +168,6 @@ function CommitteeMembers({
                 </Badge>
                 {n.status === 'nominated' && (
                   <Button
-                    size="sm"
                     variant="outline"
                     disabled={withdraw.isPending}
                     onClick={() => void remove(n.id)}

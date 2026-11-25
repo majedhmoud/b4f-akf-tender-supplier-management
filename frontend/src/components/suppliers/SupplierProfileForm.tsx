@@ -7,6 +7,7 @@ import { ErrorState } from '@/components/layout/States';
 import { SupplierCertificates } from '@/components/suppliers/SupplierCertificates';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FieldLabel } from '@/components/ui/field-label';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SupplierProfile } from '@/lib/api/generated/model';
 import {
@@ -114,7 +115,7 @@ function ProfileEditor({
           {t('suspendedNotice')}
         </p>
       )}
-      <form noValidate onSubmit={(e) => void save(e)} className="panel space-y-5 p-5">
+      <form noValidate onSubmit={(e) => void save(e)} className="panel space-y-6 p-6">
         {FIELDS.map(({ name, maxLength, multiline }) => {
           const id = `supplier-${name}`;
           const error = errors[name];
@@ -130,8 +131,10 @@ function ProfileEditor({
           };
           return (
             <div key={name} className="space-y-2">
-              <label htmlFor={id} className="block text-sm font-semibold">
-                {t(`fields.${name}`)}
+              <label htmlFor={id} className="field-label">
+                <FieldLabel optional={name === 'technicalInformation'}>
+                  {t(`fields.${name}`)}
+                </FieldLabel>
               </label>
               {multiline ? (
                 <textarea
