@@ -30,7 +30,23 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 
   // Arabic pages run right to left. See V1_SCOPE.md.
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
-  const footer = await getTranslations({ locale, namespace: 'PublicInfo' });
+  const tFooter = await getTranslations({ locale, namespace: 'PublicInfo' });
+
+  const footer = (
+    <footer className="mt-auto border-t border-border">
+      <nav
+        aria-label={tFooter('navigation')}
+        className="mx-auto flex max-w-portal flex-wrap gap-x-5 gap-y-2 px-4 py-4 text-sm sm:px-6"
+      >
+        <Link href={`/${locale}/about`} className="text-muted-foreground hover:underline">
+          {tFooter('about')}
+        </Link>
+        <Link href={`/${locale}/terms`} className="text-muted-foreground hover:underline">
+          {tFooter('terms')}
+        </Link>
+      </nav>
+    </footer>
+  );
 
   return (
     <html
@@ -51,23 +67,10 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
         >
           <NextIntlClientProvider>
             <Providers>
-              <AppShell>{children}</AppShell>
+              <AppShell footer={footer}>{children}</AppShell>
             </Providers>
           </NextIntlClientProvider>
         </Suspense>
-        <footer className="mt-auto border-t border-border">
-          <nav
-            aria-label={footer('navigation')}
-            className="mx-auto flex max-w-portal flex-wrap gap-x-5 gap-y-2 px-4 py-4 text-sm sm:px-6"
-          >
-            <Link href={`/${locale}/about`} className="text-muted-foreground hover:underline">
-              {footer('about')}
-            </Link>
-            <Link href={`/${locale}/terms`} className="text-muted-foreground hover:underline">
-              {footer('terms')}
-            </Link>
-          </nav>
-        </footer>
       </body>
     </html>
   );

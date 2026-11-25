@@ -12,7 +12,7 @@ export function TenderCard({ tender, now }: { tender: PublicTenderSummary; now: 
   const closed = now !== null && isPast(tender.applicationDeadline, now);
 
   return (
-    <Card className="grid min-w-0 gap-4 rounded-lg border-s-4 border-s-primary/50 px-5 py-5 ring-0 transition-colors hover:border-primary md:grid-cols-[minmax(0,1fr)_11rem] md:items-center">
+    <Card className="grid min-w-0 gap-4 rounded-lg border-s-4 border-s-primary/50 px-5 py-5 ring-0 transition-colors hover:border-primary">
       <CardHeader className="min-w-0 gap-3 px-0">
         <CardTitle className="text-lg font-semibold">
           <Link
@@ -45,23 +45,28 @@ export function TenderCard({ tender, now }: { tender: PublicTenderSummary; now: 
             {closed ? t('Statuses.closed') : t(`Statuses.${tender.status}`)}
           </Badge>
         </div>
-        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
-          <span>
-            {closed
-              ? t('Tenders.closed')
-              : t('Tenders.closes', {
-                  when:
-                    now === null ? '…' : formatRelative(locale, tender.applicationDeadline, now),
-                })}
-          </span>
-          <time dateTime={tender.applicationDeadline}>
-            {formatDateTime(locale, tender.applicationDeadline)}
-          </time>
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="flex min-w-0 flex-[1_1_10rem] flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-muted/60 px-3 py-3 text-sm text-muted-foreground">
+            <span>
+              {closed
+                ? t('Tenders.closed')
+                : t('Tenders.closes', {
+                    when:
+                      now === null ? '…' : formatRelative(locale, tender.applicationDeadline, now),
+                  })}
+            </span>
+            <time dateTime={tender.applicationDeadline}>
+              {formatDateTime(locale, tender.applicationDeadline)}
+            </time>
+          </p>
+          <Link
+            href={`/tenders/${tender.id}`}
+            className={buttonVariants({ size: 'lg', className: 'ms-auto' })}
+          >
+            {t('Tenders.view')}
+          </Link>
+        </div>
       </CardHeader>
-      <Link href={`/tenders/${tender.id}`} className={buttonVariants({ size: 'lg' })}>
-        {t('Tenders.view')}
-      </Link>
     </Card>
   );
 }

@@ -272,7 +272,7 @@ All examples use one data set. Tender `t-1001` has deadlines on 2026-12-10, 12-1
 `POST /auth/sign-in` with `{ "email": "rana@akf.org", "password": "••••••••" }` sets the cookies and returns `200`:
 
 ```json
-{ "user": { "id": "u-77", "email": "rana@akf.org", "preferredLanguage": "en",
+{ "user": { "id": "u-77", "email": "rana@akf.org", "displayName": "Rana Saleh", "preferredLanguage": "en",
     "roles": ["legal_committee"] },
   "supplier": null,
   "serverTime": "2026-11-23T09:00:00Z" }

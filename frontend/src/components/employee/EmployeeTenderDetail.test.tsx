@@ -74,11 +74,12 @@ describe('EmployeeTenderDetail', () => {
       'Repair the roof.',
     );
     expect(screen.queryByText('250.00')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'Terms of Reference' }));
-    expect(screen.getByRole('tabpanel', { name: 'Terms of Reference' })).toHaveTextContent(
+    const description = screen.getByText('Repair the roof.');
+    const terms = screen.getByRole('heading', { name: 'Terms of Reference' });
+    expect(description.compareDocumentPosition(terms) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('tabpanel', { name: 'Title and description' })).toHaveTextContent(
       messages.Tender.noDocuments,
     );
-    expect(screen.queryByText('Repair the roof.')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Basic information' }));
     expect(screen.getByRole('tabpanel', { name: 'Basic information' })).toHaveTextContent('250.00');
   });
@@ -120,7 +121,7 @@ describe('EmployeeTenderDetail', () => {
     const client = mount();
     const key = ['me', 'u-1', 'employee-tenders', 'en', 'download', 't-1', 'doc-1'];
     client.setQueryData(key, { url: '/temporary-signed-url' });
-    fireEvent.click(screen.getByRole('tab', { name: 'Terms of Reference' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Title and description' }));
     fireEvent.click(screen.getByRole('button', { name: 'Download' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('could not be downloaded');
     expect(client.getQueryData(key)).toBeUndefined();

@@ -37,6 +37,7 @@ export function UserProfile() {
     );
   if (isLoading || !session) return <Skeleton className="h-60 w-full" />;
   const { user } = session;
+  const isSupplier = user.roles.includes('supplier');
   return (
     <section className="max-w-3xl space-y-5">
       <div>
@@ -44,6 +45,14 @@ export function UserProfile() {
         <p className="mt-2 text-sm text-muted-foreground">{t('Profile.subtitle')}</p>
       </div>
       <dl className="divide-y divide-primary/20 rounded-md border border-primary/30 bg-card px-5">
+        {!isSupplier && user.displayName && (
+          <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-start sm:gap-5">
+            <dt className="text-sm font-medium text-foreground">{t('Profile.name')}</dt>
+            <dd dir="auto" className="min-w-0 break-words text-start font-medium">
+              {user.displayName}
+            </dd>
+          </div>
+        )}
         <div className="grid gap-2 py-4 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-start sm:gap-5">
           <dt className="text-sm font-medium text-foreground">{t('Profile.email')}</dt>
           <dd dir="ltr" className="min-w-0 break-all text-start font-medium">
@@ -75,7 +84,7 @@ export function UserProfile() {
         </div>
       </dl>
       {/* Suppliers keep their company information on this same page. */}
-      {user.roles.includes('supplier') && <SupplierProfileForm />}
+      {isSupplier && <SupplierProfileForm />}
     </section>
   );
 }

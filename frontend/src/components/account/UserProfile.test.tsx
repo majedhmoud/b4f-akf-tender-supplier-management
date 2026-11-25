@@ -32,7 +32,13 @@ function mount(locale = 'en') {
 }
 function signIn(roles: SessionView['user']['roles']) {
   mocks.session = {
-    user: { id: 'user-1', email: 'account@example.test', roles, preferredLanguage: 'ar' },
+    user: {
+      id: 'user-1',
+      email: 'account@example.test',
+      displayName: 'Account User',
+      roles,
+      preferredLanguage: 'ar',
+    },
     supplier: null,
     serverTime: '2026-11-24T00:00:00Z',
   };
@@ -53,6 +59,9 @@ describe('UserProfile', () => {
       expect(screen.getByText('account@example.test')).toHaveAttribute('dir', 'ltr');
       expect(screen.getByText(en.Profile.role[role])).toBeInTheDocument();
       expect(screen.getByText('Arabic')).toBeInTheDocument();
+      const staffName = screen.queryByText('Account User');
+      if (role === 'supplier') expect(staffName).not.toBeInTheDocument();
+      else expect(staffName).toHaveAttribute('dir', 'auto');
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       const supplierEditor = screen.queryByRole('region', { name: 'Supplier profile editor' });
       if (role === 'supplier') expect(supplierEditor).toBeInTheDocument();

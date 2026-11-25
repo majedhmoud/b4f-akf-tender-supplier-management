@@ -16,9 +16,10 @@ import {
 } from '@/lib/api/generated/tender-management/tender-management';
 import { ApiError } from '@/lib/api/mutator';
 import { privateKey } from '@/lib/api/query-keys';
-import { directionOf, formatDateTime } from '@/lib/format';
+import { directionOf } from '@/lib/format';
+import { TenderDeadlines } from '@/components/tenders/TenderDeadlines';
 import { useSession } from '@/lib/useSession';
-import { ManagedDocuments } from './ManagedDocuments';
+import { ManagedDocument, ManagedDocuments } from './ManagedDocuments';
 import { TenderAward } from '@/components/awards/TenderAward';
 import { TenderEmails } from '@/components/awards/TenderEmails';
 import { TenderCommittees } from '@/components/committees/TenderCommittees';
@@ -154,17 +155,6 @@ function TenderPanels({
                       </div>
                     ),
                   )}
-                {tender.deadlines &&
-                  (['application', 'technical', 'financial'] as const).map((key) => (
-                    <div key={key}>
-                      <dt className="text-muted-foreground">{t(`Manage.deadline_${key}`)}</dt>
-                      <dd>
-                        <time dateTime={tender.deadlines?.[key]}>
-                          {formatDateTime(locale, tender.deadlines![key])}
-                        </time>
-                      </dd>
-                    </div>
-                  ))}
               </dl>
               {tender.translations.map((row) => (
                 <section
@@ -179,6 +169,21 @@ function TenderPanels({
                   </p>
                 </section>
               ))}
+              <section className="border-t pt-5">
+                <h3 className="font-bold">{t('Tender.documents')}</h3>
+                {tender.documents.length ? (
+                  <ul className="mt-3">
+                    {tender.documents
+                      .flatMap((document) => [document, ...document.translations])
+                      .map((document) => (
+                        <ManagedDocument key={document.id} tenderId={tender.id} document={document} />
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">{t('Tender.noDocuments')}</p>
+                )}
+              </section>
+              {tender.deadlines && <TenderDeadlines deadlines={tender.deadlines} />}
               {tender.cancellationReason && (
                 <p className="text-sm">{t(`Manage.reason_${tender.cancellationReason}`)}</p>
               )}

@@ -38,10 +38,10 @@ function Deadlines({
   }, [clock.receivedAt]);
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, styles.deadlineSection]}>
       <Text
         accessibilityRole="header"
-        style={[styles.heading, textDirection(locale)]}
+        style={[styles.deadlineHeading, textDirection(locale)]}
       >
         {copy.deadlines}
       </Text>
@@ -61,10 +61,10 @@ function Deadlines({
               });
         return (
           <View key={kind} style={styles.deadline}>
-            <Text style={[styles.label, textDirection(locale)]}>
+            <Text style={[styles.deadlineLabel, textDirection(locale)]}>
               {copy[kind]}
             </Text>
-            <Text style={[styles.muted, textDirection(locale)]}>
+            <Text style={[styles.deadlineDate, textDirection(locale)]}>
               {formatDeadline(deadlines[kind], locale)}
             </Text>
             <Text
@@ -188,8 +188,8 @@ export function TenderDetailScreen({ tenderId }: { tenderId: string }) {
           {tender.content.description}
         </Text>
       </View>
-      <Deadlines deadlines={tender.deadlines} clock={clock} />
       <Terms tender={tender} />
+      <Deadlines deadlines={tender.deadlines} clock={clock} />
     </ScrollView>
   );
 }
@@ -225,13 +225,16 @@ const styles = StyleSheet.create({
   heading: { fontSize: 19, fontWeight: '800', color: colors.ink },
   description: { fontSize: 16, lineHeight: 24, color: colors.inverse },
   heroMuted: { fontSize: 13, color: colors.inverseMuted },
-  label: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  deadlineSection: { padding: 20, borderColor: colors.brand },
+  deadlineHeading: { fontSize: 21, fontWeight: '800', color: colors.ink },
+  deadlineLabel: { fontSize: 15, fontWeight: '700', color: colors.brand },
+  deadlineDate: { fontSize: 16, fontWeight: '700', color: colors.ink },
   muted: { fontSize: 14, color: colors.muted },
   deadline: {
-    gap: 4,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 10,
+    gap: 6,
+    borderRadius: radii.control,
+    backgroundColor: colors.tint,
+    padding: 12,
   },
   countdown: { color: colors.brand, fontWeight: '700' },
   deadlineBadge: {

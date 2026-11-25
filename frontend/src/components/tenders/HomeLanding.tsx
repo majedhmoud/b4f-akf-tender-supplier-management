@@ -31,14 +31,21 @@ export function HomeLanding() {
     <div className="flex flex-col gap-12">
       <section className="relative isolate flex min-h-[34rem] items-center overflow-hidden rounded-md bg-deep-green px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14 md:min-h-[32rem] lg:px-14">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <Image src={heroMap} alt="" fill sizes="100vw" className="object-cover opacity-75" />
+          <Image
+            src={heroMap}
+            alt=""
+            fill
+            loading="eager"
+            sizes="100vw"
+            className="object-cover opacity-75"
+          />
           <div className="absolute inset-0 bg-deep-green/30" />
         </div>
         <div className="relative z-10 w-full max-w-3xl space-y-5 lg:max-w-[58%]">
           <p className="text-sm font-semibold tracking-wide text-advisory-border">
             {t('Home.eyebrow')}
           </p>
-          <h1 className="max-w-2xl text-3xl leading-tight font-bold tracking-tight sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-2xl text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             {t('Home.title')}
           </h1>
           <p className="max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">

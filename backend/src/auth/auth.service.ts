@@ -221,6 +221,7 @@ export class AuthService {
       select: {
         id: true,
         email: true,
+        displayName: true,
         preferredLanguage: true,
         roles: { select: { role: true } },
       },

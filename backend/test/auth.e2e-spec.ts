@@ -137,7 +137,12 @@ describe('Auth (e2e)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
-      user: { email: email('active'), preferredLanguage: 'en', roles: ['employee'] },
+      user: {
+        email: email('active'),
+        displayName: 'Test active',
+        preferredLanguage: 'en',
+        roles: ['employee'],
+      },
       supplier: null,
     });
     const setCookie = (response.headers['set-cookie'] as unknown as string[]).join('\n');
@@ -146,7 +151,7 @@ describe('Auth (e2e)', () => {
 
     const session = await c.get('/api/v1/auth/session');
     expect(session.status).toBe(200);
-    expect(session.body.user.email).toBe(email('active'));
+    expect(session.body.user).toMatchObject({ email: email('active'), displayName: 'Test active' });
   });
 
   it('requires a session for protected endpoints', async () => {

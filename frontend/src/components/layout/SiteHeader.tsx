@@ -15,6 +15,10 @@ export function SiteHeader() {
   const { session, isLoading, signOut } = useSession();
   const legalOnly =
     session?.user.roles.length === 1 && session.user.roles.includes('legal_committee');
+  const user = session?.user;
+  const accountLabel = user?.roles.includes('supplier')
+    ? user.email
+    : user?.displayName || user?.email;
   const [signingOut, setSigningOut] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -31,11 +35,11 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card">
-      <div className="mx-auto flex min-h-16 max-w-portal flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6 md:flex-nowrap md:py-0 lg:px-8">
+    <header className="z-50 shrink-0 border-b border-border bg-card">
+      <div className="flex min-h-16 w-full flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:py-0">
         <Link
           href={legalOnly ? '/signup-reviews' : '/'}
-          className="inline-flex min-w-0 items-end gap-2 rounded-md text-lg font-bold tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="inline-flex min-w-0 items-end gap-2 justify-self-start rounded-md text-lg font-bold tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           <Image
             src={logo}
@@ -49,7 +53,7 @@ export function SiteHeader() {
         {!session && (
           <nav
             aria-label={t('Nav.main')}
-            className="order-last flex w-full flex-wrap items-center gap-x-5 gap-y-2 md:order-none md:w-auto md:self-stretch"
+            className="order-last flex w-full flex-wrap items-center gap-x-5 gap-y-2 md:order-none md:col-start-2 md:w-auto md:self-stretch"
           >
             <Link
               href="/tenders"
@@ -69,7 +73,7 @@ export function SiteHeader() {
             )}
           </nav>
         )}
-        <div className="flex min-w-0 items-center justify-end gap-2 text-sm sm:gap-3">
+        <div className="ms-auto flex min-w-0 items-center justify-end gap-2 text-sm sm:gap-3 md:col-start-3">
           <Suspense fallback={null}>
             <LanguageSwitch />
           </Suspense>
@@ -78,15 +82,13 @@ export function SiteHeader() {
               <>
                 <Link
                   href="/profile"
-                  // The email is truncated on phones; its accessible name keeps
-                  // it in full (ADR 0008, rule 4).
-                  aria-label={`${t('Nav.profile')}: ${session.user.email}`}
-                  title={session.user.email}
+                  aria-label={`${t('Nav.profile')}: ${accountLabel}`}
+                  title={accountLabel}
                   aria-current={pathname === '/profile' ? 'page' : undefined}
-                  dir="ltr"
+                  dir="auto"
                   className="inline-flex min-h-10 max-w-36 min-w-0 items-center rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-primary sm:max-w-72 transition-colors hover:border-primary hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:border-primary aria-[current=page]:bg-secondary"
                 >
-                  <span className="truncate">{session.user.email}</span>
+                  <span className="truncate">{accountLabel}</span>
                 </Link>
                 <Button
                   variant="outline"
@@ -108,7 +110,7 @@ export function SiteHeader() {
             ))}
         </div>
         {failed && (
-          <p role="alert" className="w-full pb-3 text-sm text-destructive">
+          <p role="alert" className="w-full pb-3 text-sm text-destructive md:col-span-full">
             {t('Auth.signOutFailed')}
           </p>
         )}

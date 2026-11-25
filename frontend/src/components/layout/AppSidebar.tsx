@@ -42,7 +42,7 @@ export function AppSidebar() {
     { href: '/profile', label: t('Nav.profile') },
   ];
   return (
-    <aside className="border-b border-sidebar-border bg-sidebar px-4 py-4 sm:px-6 lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:self-start lg:overflow-y-auto lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
+    <aside className="max-h-[40dvh] shrink-0 overflow-y-auto border-b border-sidebar-border bg-sidebar px-4 py-4 sm:px-6 lg:max-h-none lg:border-e lg:border-b-0 lg:px-4 lg:py-8">
       <Button
         variant="outline"
         className="w-full justify-between lg:hidden"

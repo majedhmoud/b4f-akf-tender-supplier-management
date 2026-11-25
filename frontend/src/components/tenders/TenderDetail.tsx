@@ -7,7 +7,6 @@ import { EmptyState, ErrorState } from '@/components/layout/States';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   getPublicTendersFindOneQueryKey,
@@ -15,12 +14,12 @@ import {
 } from '@/lib/api/generated/public-tenders/public-tenders';
 import { ApiError } from '@/lib/api/mutator';
 import { publicKey } from '@/lib/api/query-keys';
-import { directionOf, formatDateTime, formatRelative, isPast, languageName } from '@/lib/format';
+import { directionOf, languageName } from '@/lib/format';
 import { useServerNow } from '@/lib/useServerNow';
 import { TenderDocuments } from './TenderDocuments';
 import { BackLink } from '@/components/ui/back-link';
 
-const DEADLINES = ['application', 'technical', 'financial'] as const;
+import { TenderDeadlines } from './TenderDeadlines';
 
 export function TenderDetail({ tenderId }: { tenderId: string }) {
   const t = useTranslations();
@@ -96,67 +95,31 @@ export function TenderDetail({ tenderId }: { tenderId: string }) {
           </AlertDescription>
         </Alert>
       )}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
-        <section className="min-w-0 panel p-5 sm:p-6" aria-labelledby="tender-description">
-          <h2 id="tender-description" className="mb-3 text-base font-bold">
-            {t('Tender.description')}
-          </h2>
-          {/* Tender content keeps its own language and direction (API_CONTRACT.md §1.7). */}
-          <p
-            className="break-words text-sm leading-7 whitespace-pre-line text-muted-foreground"
-            lang={contentLanguage}
-            dir={directionOf(contentLanguage)}
-          >
-            {data.content.description}
-          </p>
-        </section>
-        <aside className="flex min-w-0 flex-col gap-4">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="grid min-w-0 gap-4">
+          <section className="min-w-0 panel p-5 sm:p-6" aria-labelledby="tender-description">
+            <h2 id="tender-description" className="mb-3 text-base font-bold">
+              {t('Tender.description')}
+            </h2>
+            {/* Tender content keeps its own language and direction (API_CONTRACT.md §1.7). */}
+            <p
+              className="break-words text-sm leading-7 whitespace-pre-line text-muted-foreground"
+              lang={contentLanguage}
+              dir={directionOf(contentLanguage)}
+            >
+              {data.content.description}
+            </p>
+          </section>
           <section className="panel p-5" aria-labelledby="tender-documents">
             <h2 id="tender-documents" className="mb-4 text-base font-bold">
               {t('Tender.documents')}
             </h2>
             <TenderDocuments tenderId={data.id} documents={data.documents} />
           </section>
+        </div>
+        <aside className="grid min-w-0 gap-4">
+          <TenderDeadlines deadlines={data.deadlines} now={now} />
           <TenderBidAction tenderId={data.id} />
-          <Card size="sm" className="rounded-md border py-5 ring-0">
-            <CardHeader className="px-5">
-              <CardTitle className="font-bold">{t('Tender.deadlines')}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5">
-              <dl className="flex flex-col divide-y text-sm">
-                {DEADLINES.map((key) => {
-                  const at = data.deadlines[key];
-                  const passed = now !== null && isPast(at, now);
-                  return (
-                    <div
-                      key={key}
-                      className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-3 first:pt-0 last:pb-0"
-                    >
-                      <dt className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span
-                          className="size-1.5 shrink-0 rounded-full bg-advisory-border"
-                          aria-hidden="true"
-                        />
-                        {t(`Tender.${key}`)}
-                      </dt>
-                      <dd className="ms-auto text-end">
-                        <time dateTime={at} className="block text-xs font-semibold">
-                          {formatDateTime(locale, at)}
-                        </time>
-                        <span className="mt-1 block text-xs text-muted-foreground">
-                          {passed
-                            ? t('Tender.passed')
-                            : t('Tender.closesIn', {
-                                when: now === null ? '…' : formatRelative(locale, at, now),
-                              })}
-                        </span>
-                      </dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </CardContent>
-          </Card>
         </aside>
       </div>
     </article>

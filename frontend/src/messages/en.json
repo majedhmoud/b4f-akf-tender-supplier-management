@@ -399,6 +399,7 @@
   "Profile": {
     "title": "My profile",
     "subtitle": "Your account information. Use the language switch to update your preferred language.",
+    "name": "Name",
     "email": "Email address",
     "roles": "Account roles",
     "language": "Preferred language",
