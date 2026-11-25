@@ -53,7 +53,7 @@ export function MyBids() {
           {query.data.data.map((bid) => (
             <li
               key={bid.bidId}
-              className="panel flex flex-wrap items-center justify-between gap-3 p-4"
+              className="panel flex flex-wrap items-center justify-between gap-4 p-5"
             >
               <div className="min-w-0 space-y-1">
                 <Link

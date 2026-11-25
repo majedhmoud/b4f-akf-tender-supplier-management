@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { FieldLabel } from '@/components/ui/field-label';
 import type { BidFormPart } from '@/lib/api/generated/model';
 
 // What the supplier has entered for one part, keyed like the API's fields.
@@ -74,35 +75,38 @@ export function BidPartInputs({
 }) {
   const t = useTranslations('Bids');
   const id = (key: string) => `${part.partType}-${key}`;
-  const error = (key: string) =>
+  const error = (key: string, className?: string) =>
     errors[key] ? (
-      <p role="alert" className="text-sm text-destructive">
+      <p role="alert" className={`text-sm text-destructive ${className ?? ''}`}>
         {t.has(`errors.${errors[key]}`) ? t(`errors.${errors[key]}`) : t('errors.INVALID')}
       </p>
     ) : null;
   const fileInput = (key: string, label: string, required: boolean) => (
-    <div key={key} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem]">
-      <div className="space-y-1">
-        <label htmlFor={id(`file-${key}`)} className="block text-sm font-semibold">
-          {label}
-          {required ? ' *' : ''}
+    <div key={key} className="grid gap-y-3 sm:grid-cols-[minmax(0,1fr)_7rem] sm:gap-x-3 sm:gap-y-1">
+      <div className="grid gap-1 sm:contents">
+        <label htmlFor={id(`file-${key}`)} className="field-label sm:col-start-1 sm:row-start-1">
+          <FieldLabel optional={!required}>{label}</FieldLabel>
         </label>
         <input
           id={id(`file-${key}`)}
           type="file"
           accept={ACCEPT}
           disabled={disabled}
+          aria-required={required}
           aria-invalid={!!errors[`file:${key}`]}
           onChange={(e) =>
             onChange({ ...draft, files: { ...draft.files, [key]: e.target.files?.[0] } })
           }
-          className="field-control"
+          className="field-control sm:col-start-1 sm:row-start-2"
         />
-        {error(`file:${key}`)}
+        {error(`file:${key}`, 'sm:col-start-1 sm:row-start-3')}
       </div>
-      <div className="space-y-1">
-        <label htmlFor={id(`language-${key}`)} className="block text-sm font-semibold">
-          {t('fileLanguage')}
+      <div className="grid gap-1 sm:contents">
+        <label
+          htmlFor={id(`language-${key}`)}
+          className="field-label sm:col-start-2 sm:row-start-1"
+        >
+          <FieldLabel optional>{t('fileLanguage')}</FieldLabel>
         </label>
         <input
           id={id(`language-${key}`)}
@@ -117,9 +121,9 @@ export function BidPartInputs({
               languages: { ...draft.languages, [key]: e.target.value.toLowerCase() },
             })
           }
-          className="field-control"
+          className="field-control sm:col-start-2 sm:row-start-2"
         />
-        {error(`language:${key}`)}
+        {error(`language:${key}`, 'sm:col-start-2 sm:row-start-3')}
       </div>
     </div>
   );
@@ -128,15 +132,15 @@ export function BidPartInputs({
     <div className="space-y-4">
       {part.fields.map((field) => (
         <div key={field.name} className="space-y-1">
-          <label htmlFor={id(field.name)} className="block text-sm font-semibold">
-            {t(`standardFields.${field.name}`)}
-            {field.required ? ' *' : ''}
+          <label htmlFor={id(field.name)} className="field-label">
+            <FieldLabel optional={!field.required}>{t(`standardFields.${field.name}`)}</FieldLabel>
           </label>
           <input
             id={id(field.name)}
             dir="auto"
             maxLength={field.maxLength}
             disabled={disabled}
+            aria-required={field.required}
             value={draft.values[field.name] ?? ''}
             aria-invalid={!!errors[field.name]}
             onChange={(e) =>
@@ -158,6 +162,7 @@ export function BidPartInputs({
                 <input
                   type="checkbox"
                   disabled={disabled}
+                  aria-required={field.required}
                   checked={draft.answers[field.fieldId] === true}
                   onChange={(e) =>
                     onChange({
@@ -167,13 +172,12 @@ export function BidPartInputs({
                   }
                   className="size-4 accent-primary"
                 />
-                {label}
+                <FieldLabel optional={!field.required}>{label}</FieldLabel>
               </label>
             ) : (
               <>
-                <label htmlFor={id(field.fieldId)} className="block text-sm font-semibold">
-                  {label}
-                  {field.required ? ' *' : ''}
+                <label htmlFor={id(field.fieldId)} className="field-label">
+                  <FieldLabel optional={!field.required}>{label}</FieldLabel>
                 </label>
                 <input
                   id={id(field.fieldId)}
@@ -182,6 +186,7 @@ export function BidPartInputs({
                   dir="auto"
                   maxLength={field.type === 'text' ? 2000 : undefined}
                   disabled={disabled}
+                  aria-required={field.required}
                   value={String(draft.answers[field.fieldId] ?? '')}
                   aria-invalid={!!errors[field.fieldId]}
                   onChange={(e) =>

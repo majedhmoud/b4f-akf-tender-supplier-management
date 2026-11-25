@@ -187,7 +187,7 @@ function PartPanel({
   }
 
   return (
-    <section className="panel space-y-3 p-5">
+    <section className="panel space-y-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">{t(`parts.${part.partType}`)}</h2>
         <Badge variant={part.locked ? 'secondary' : 'default'}>

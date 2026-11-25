@@ -61,7 +61,7 @@ describe('Managed tender list', () => {
       pathname: '/manage/tenders',
       query: { page: 3, status: 'accepted' },
     });
-    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'draft' } });
+    fireEvent.change(screen.getByLabelText('Status (Optional)'), { target: { value: 'draft' } });
     expect(mocks.replace).toHaveBeenCalledWith({
       pathname: '/manage/tenders',
       query: { page: 1, status: 'draft' },

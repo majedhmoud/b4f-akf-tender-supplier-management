@@ -16,6 +16,7 @@ vi.mock('@/i18n/navigation', () => ({
   ),
 }));
 vi.mock('@/lib/useServerNow', () => ({ useServerNow: () => Date.parse('2026-12-11T09:00:00Z') }));
+vi.mock('@/components/bids/TenderBidAction', () => ({ TenderBidAction: () => null }));
 vi.mock('@/lib/api/generated/public-tenders/public-tenders', () => ({
   usePublicTendersFindOne: vi.fn(),
   getPublicTendersFindOneQueryKey: () => ['/api/v1/tenders/t-1'],
