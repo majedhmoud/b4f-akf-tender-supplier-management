@@ -75,30 +75,32 @@ Check it at http://localhost:4000/api/v1/health. Swagger is at http://localhost:
 
 ### Demo accounts
 
-`npm run seed` creates the fictional accounts below and seven tender fixtures: a draft, an accepted tender, two published tenders (one Arabic only), a cancelled tender, a tender ready for sealed evaluation, and an evaluated tender awaiting a tie break. Wadi Supplies is the pending-setup fixture. Open Mailpit to inspect its setup email. Rerunning the seed resets demo data and is limited to a local database.
+Run `npm run seed -- --tenders-only` from `backend/` to replace tenders owned by the demo employee while keeping existing accounts and supplier applications. This also replaces associated bids, evaluations, and tender files. Back up the local database and uploads before running it.
+
+`npm run seed` creates thirteen fictional tenders covering draft, accepted, open bidding, closed with financial submission still open, separate legal, technical and financial evaluation queues, a tie awaiting the officer’s decision, automatic and officer-selected awards with draft, sent, and failed email examples, and both cancellation reasons. One public notice is Arabic only. Tender deadlines are relative to the date you run the seed. Wadi Supplies is the pending-setup fixture. Open Mailpit to inspect its setup email. Rerunning the seed resets demo data and is limited to a local database.
 
 | Role | Email | Password |
 |---|---|---|
-| `employee` | `employee@akf-demo.test` | `AKF-demo-2026` |
-| `procurement_officer` | `officer@akf-demo.test` | `AKF-demo-2026` |
-| `legal_committee` (sign-up review only) | `legal@akf-demo.test` | `AKF-demo-2026` |
-| `admin` | `admin@akf-demo.test` | `AKF-demo-2026` |
-| Committee member (no account role; approved technical assignment) | `member@akf-demo.test` | `AKF-demo-2026` |
-| Committee member (approved legal assignment) | `legal-member@akf-demo.test` | `AKF-demo-2026` |
-| Committee member (approved financial assignment) | `finance-member@akf-demo.test` | `AKF-demo-2026` |
-| `supplier` (Cedar Supplies) | `supplier@cedar.demo.test` | `AKF-demo-2026` |
-| `supplier` (Rafid Works) | `bids@rafid.demo.test` | `AKF-demo-2026` |
+| `employee` | `employee@akf.org` | `AKF_staff_2026` |
+| `procurement_officer` | `officer@akf.org` | `AKF_staff_2026` |
+| `legal_committee` (sign-up review only) | `legal@akf.org` | `AKF_staff_2026` |
+| `admin` | `admin@akf.org` | `AKF_staff_2026` |
+| Committee member (no account role; approved technical assignment) | `member@akf.org` | `AKF_staff_2026` |
+| Committee member (approved legal assignment) | `legal-member@akf.org` | `AKF_staff_2026` |
+| Committee member (approved financial assignment) | `finance-member@akf.org` | `AKF_staff_2026` |
+| `supplier` (Cedar Supplies) | `cedar-supplies@example.com` | `supplier_2026` |
+| `supplier` (Rafid Works) | `rafid-works@example.com` | `supplier_2026` |
 
-The password is for this demo only. Never reuse it anywhere real.
+These are local demo accounts. Keep SMTP pointed at Mailpit when using this dataset, and use these passwords for the demo only.
 
-The S3 seed raises legal, technical and financial committees on each accepted/published demo tender. `member@akf-demo.test` has one approved technical assignment on the first published tender. `nominee@akf-demo.test` has no account yet and waits for admin approval on the accepted tender's legal committee. Rerunning the seed removes these demo assignments/accounts and their associated setup emails/tokens before recreating the fixtures; do not use demo accounts for work you need to retain.
+The S3 seed raises legal, technical and financial committees on each accepted/published demo tender. `member@akf.org` has one approved technical assignment on the first published tender. `nominee@akf.org` has no account yet and waits for admin approval on the accepted tender's legal committee. Rerunning the seed removes these demo assignments/accounts and their associated setup emails/tokens before recreating the fixtures; do not use demo accounts for work you need to retain.
 
 S3 manual walkthrough:
 
 1. As the officer, open an accepted/published demo tender and nominate another fictional `.test` address. Those committees are already raised; to demonstrate raising one, first accept a new draft tender.
-2. As the admin, open Committee nominations, approve `nominee@akf-demo.test` and choose its account language.
+2. As the admin, open Committee nominations, approve `nominee@akf.org` and choose its account language.
 3. Open its email in Mailpit at http://localhost:8025 and follow the setup link. Set a password of at least 12 characters; the new member should land on My assignments.
-4. Alternatively, sign in as `member@akf-demo.test` to view an already-approved assignment. A standing legal reviewer without an approved tender assignment should have an empty assignment list.
+4. Alternatively, sign in as `member@akf.org` to view an already-approved assignment. A standing legal reviewer without an approved tender assignment should have an empty assignment list.
 
 These are manual demonstration steps, not a claim that the flow has been tested.
 

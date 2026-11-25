@@ -28,7 +28,7 @@ The managed tender page (`/manage/tenders/[tenderId]`) gains an Evaluation and a
 
 ## Demo fixtures
 
-"Water pumps for farming cooperatives" is seeded `under_evaluation` with both demo bids evaluated to a tie at 75.00, waiting for the officer (`officer@akf-demo.test`). Completing the S5 walkthrough on "Solar panels for health clinics" ranks it and awards a unique top score automatically.
+"Water pumps for farming cooperatives" is seeded `under_evaluation` with both demo bids evaluated to a tie at 75.00, waiting for the officer (`officer@akf.org`). Completing the S5 walkthrough on "Solar panels for health clinics" ranks it and awards a unique top score automatically.
 
 ## Status
 

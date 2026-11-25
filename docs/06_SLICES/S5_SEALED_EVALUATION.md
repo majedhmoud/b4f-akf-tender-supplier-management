@@ -30,7 +30,7 @@ S5 supplies the saved evaluations. When the financial stage completes, [S6](S6_A
 
 ## Demo fixtures
 
-The seed adds a tender already `under_evaluation` ("Solar panels for health clinics"), with bids from the two active demo suppliers (Cedar Supplies and Rafid Works) and approved members: `legal-member@akf-demo.test` (legal), `member@akf-demo.test` (technical) and `finance-member@akf-demo.test` (financial), all with the demo password and no account role.
+The seed adds a tender already `under_evaluation` ("Solar panels for health clinics"), with bids from the two active demo suppliers (Cedar Supplies and Rafid Works) and approved members: `legal-member@akf.org` (legal), `member@akf.org` (technical) and `finance-member@akf.org` (financial), all with the demo password and no account role.
 
 ## Status
 

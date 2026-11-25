@@ -1,9 +1,14 @@
 // Builds a small, valid one-page PDF, so the demo tenders have real Terms of
 // Reference files that pass the upload content check and open in a viewer.
-export function demoPdf(title: string): Buffer {
-  // PDF text strings: escape the characters PDF treats specially; keep ASCII.
-  const safe = title.replace(/[\\()]/g, (c) => `\\${c}`).replace(/[^\x20-\x7e]/g, '?');
-  const content = `BT /F1 18 Tf 72 720 Td (${safe}) Tj 0 -28 Td /F1 11 Tf (Demo Terms of Reference - fictional data) Tj ET`;
+export function demoPdf(title: string, details: string[] = []): Buffer {
+  const safe = (value: string) =>
+    value.replace(/[^\\x20-\\x7e]/g, '-').replace(/[\\\\()]/g, '\\\\$&');
+  const text = ['BT /F1 16 Tf 58 730 Td', '(' + safe(title) + ') Tj', '/F1 10 Tf'];
+  for (const detail of ['Fictional procurement demonstration', ...details]) {
+    const lines = detail.match(/.{1,86}(?:\\s|$)|\\S{86}/g) ?? [];
+    for (const line of lines) text.push('0 -17 Td (' + safe(line.trim()) + ') Tj');
+  }
+  const content = [...text, 'ET'].join('\\n');
 
   const objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',

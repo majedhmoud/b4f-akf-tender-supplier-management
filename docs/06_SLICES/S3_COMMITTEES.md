@@ -32,7 +32,7 @@ November 24, 2026: implemented in the back end and web app. No automated tests w
 
 ## Demo fixtures
 
-The seed creates all three committee types on each accepted/published demo tender. It adds one pending legal nomination on the accepted tender (`nominee@akf-demo.test`, no account yet), and one approved technical member on the first published tender (`member@akf-demo.test`, active account with no role). The approved member uses the existing demo password documented in the [README](../../README.md#demo-accounts).
+The seed creates all three committee types on each accepted/published demo tender. It adds one pending legal nomination on the accepted tender (`nominee@akf.org`, no account yet), and one approved technical member on the first published tender (`member@akf.org`, active account with no role). The approved member uses the existing demo password documented in the [README](../../README.md#demo-accounts).
 
 The reset removes demo assignment audit records, assignments, committees, recipient emails and accounts; setup tokens follow account deletion. It recreates the fixtures without changing non-demo accounts. Running the seed resets demo work, including approvals performed during the walkthrough. No tests were created or run; slice acceptance and the reported S3 review findings remain pending.
 
